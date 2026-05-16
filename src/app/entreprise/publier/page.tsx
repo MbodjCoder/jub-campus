@@ -2,6 +2,7 @@ import { Bouton } from "@/composants/ui/bouton";
 import { Champ, ChampEtiquete, Selecteur, ZoneTexte } from "@/composants/ui/champ";
 import { Carte, CorpsCarte, EnteteCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
 import { LIBELLES_CATEGORIE, LIBELLES_NIVEAU_PROJET, LIBELLES_MODE_REMUNERATION } from "@/lib/constantes";
+import { publierProjet } from "@/app/entreprise/actions";
 
 export const metadata = { title: "Publier un projet" };
 
@@ -15,7 +16,7 @@ export default function PagePublierProjet() {
             Le projet sera modéré par l&apos;équipe JUB avant publication (généralement sous 24h).
           </DescriptionCarte>
         </EnteteCarte>
-        <form action="/api/projets" method="post">
+        <form action={publierProjet}>
           <CorpsCarte className="space-y-5">
             <ChampEtiquete libelle="Titre du projet" pour="titre">
               <Champ id="titre" name="titre" required placeholder="Ex. Refonte de la billetterie en ligne" />

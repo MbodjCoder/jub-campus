@@ -4,7 +4,10 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Carte, CorpsCarte } from "@/composants/ui/carte";
 import { Insigne } from "@/composants/ui/insigne";
+import { Bouton } from "@/composants/ui/bouton";
+import { Champ } from "@/composants/ui/champ";
 import { formaterDate } from "@/lib/utils";
+import { deciderCandidature } from "@/app/entreprise/actions";
 
 export const metadata = { title: "Candidatures reçues" };
 export const dynamic = "force-dynamic";
@@ -69,7 +72,22 @@ export default async function PageEntrepriseCandidatures() {
                     {c.statut.replace("_", " ")}
                   </Insigne>
                 </div>
-                {c.lettre ? <p className="text-sm italic text-texte-discret">« {c.lettre.slice(0, 200)}{c.lettre.length > 200 ? "…" : ""} »</p> : null}
+                {c.lettre ? <p className="text-sm italic text-texte-discret">« {c.lettre.slice(0, 300)}{c.lettre.length > 300 ? "…" : ""} »</p> : null}
+
+                {c.statut === "EN_ATTENTE" ? (
+                  <form action={deciderCandidature} className="flex flex-wrap items-center gap-2 pt-2">
+                    <input type="hidden" name="candidatureId" value={c.id} />
+                    <Champ name="motif" placeholder="Motif (si refus)" className="max-w-xs" />
+                    <Bouton apparence="primaire" type="submit" name="decision" value="ACCEPTEE" taille="sm">
+                      Accepter
+                    </Bouton>
+                    <Bouton apparence="danger" type="submit" name="decision" value="REFUSEE" taille="sm">
+                      Refuser
+                    </Bouton>
+                  </form>
+                ) : c.motifReponse ? (
+                  <p className="text-xs italic text-texte-discret">Réponse : {c.motifReponse}</p>
+                ) : null}
               </CorpsCarte>
             </Carte>
           ))}
