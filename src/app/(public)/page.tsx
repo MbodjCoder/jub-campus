@@ -111,30 +111,28 @@ function SectionTroisPublics() {
       titre: "Prouve ce que tu sais faire.",
       desc: "Travaille sur des projets concrets, sois encadré par des pros, obtiens des certificats vérifiables et un portfolio public partageable sur LinkedIn.",
       href: "/inscription/etudiant",
-      libelleLien: "Créer mon compte étudiant",
+      libelleCta: "Créer mon compte",
       image: PHOTOS.etudiant,
-      gradient: "bg-gradient-to-br from-jub-sage-900/85 via-jub-sage-700/75 to-jub-sage-500/50",
-      accent: "text-jub-orange-400",
+      // Image bien visible : overlay sombre fin uniquement en bas (lisibilité texte)
+      overlay: "bg-gradient-to-t from-jub-sage-950/90 via-jub-sage-900/40 to-jub-sage-900/10",
     },
     {
       tag: "ENTREPRISES",
       titre: "Sourcer mieux, recruter sûr.",
       desc: "Publie un projet, vois les étudiants travailler en conditions réelles, choisis tes futurs talents sur preuves — pas sur CV.",
       href: "/entreprises",
-      libelleLien: "Découvrir nos offres",
+      libelleCta: "Découvrir",
       image: PHOTOS.entreprise,
-      gradient: "bg-gradient-to-br from-violet-950/85 via-violet-900/75 to-violet-700/50",
-      accent: "text-violet-200",
+      overlay: "bg-gradient-to-t from-violet-950/90 via-violet-900/40 to-violet-900/10",
     },
     {
       tag: "MENTORS",
       titre: "Forme par la pratique.",
       desc: "Propose un projet, encadre une équipe, valide les compétences. Tes recommandations comptent dans le score JUB de l'étudiant.",
       href: "/inscription/mentor",
-      libelleLien: "Devenir mentor",
+      libelleCta: "Devenir mentor",
       image: PHOTOS.mentor,
-      gradient: "bg-gradient-to-br from-sky-950/85 via-sky-900/75 to-sky-700/50",
-      accent: "text-sky-200",
+      overlay: "bg-gradient-to-t from-sky-950/90 via-sky-900/40 to-sky-900/10",
     },
   ] as const;
 
@@ -152,28 +150,48 @@ function SectionTroisPublics() {
 
       <div className="grid gap-5 md:grid-cols-3">
         {roles.map((r) => (
-          <Link key={r.tag} href={r.href} className="group block">
-            <div className="relative h-full overflow-hidden rounded-2xl border border-bordure bg-jub-sage-900 transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-2xl group-hover:shadow-jub-sage-900/20">
+          <Link key={r.tag} href={r.href} className="group block focus-visible:outline-none">
+            <article className="relative h-full min-h-[420px] overflow-hidden rounded-2xl border border-bordure bg-jub-sage-900 transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-2xl group-hover:shadow-jub-sage-900/30 group-hover:ring-2 group-hover:ring-jub-orange-500/50">
               <Image
                 src={r.image}
                 alt=""
                 fill
                 sizes="(min-width: 768px) 33vw, 100vw"
-                className="object-cover opacity-40 transition-all duration-500 group-hover:scale-105 group-hover:opacity-50"
+                className="object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
               />
-              <div className={cn("absolute inset-0", r.gradient)} />
-              <div className="relative z-10 flex h-full min-h-[320px] flex-col p-7 text-white">
-                <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/30 bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider backdrop-blur-sm">
-                  <span className={cn("h-1 w-1 rounded-full", r.accent.replace("text-", "bg-"))} />
+              {/* Overlay : sombre en bas pour lisibilité, transparent en haut pour voir l'image */}
+              <div className={cn("absolute inset-0", r.overlay)} />
+
+              <div className="relative z-10 flex h-full min-h-[420px] flex-col p-6 sm:p-7">
+                <span
+                  className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/40 bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white backdrop-blur-md shadow-lg"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-jub-orange-500" />
                   {r.tag}
                 </span>
-                <h3 className="mt-5 text-2xl font-semibold leading-tight">{r.titre}</h3>
-                <p className="mt-3 flex-1 text-sm text-white/80">{r.desc}</p>
-                <span className={cn("mt-6 inline-flex items-center gap-1.5 text-sm font-medium transition-transform group-hover:translate-x-1", r.accent)}>
-                  {r.libelleLien} <span aria-hidden>→</span>
-                </span>
+
+                <div className="mt-auto space-y-4">
+                  <h3
+                    className="text-2xl font-bold leading-tight text-white sm:text-[26px]"
+                    style={{ textShadow: "0 2px 14px rgba(0,0,0,0.55)" }}
+                  >
+                    {r.titre}
+                  </h3>
+                  <p
+                    className="text-sm leading-relaxed text-white/95"
+                    style={{ textShadow: "0 1px 6px rgba(0,0,0,0.6)" }}
+                  >
+                    {r.desc}
+                  </p>
+
+                  <span
+                    className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-jub-orange-500 px-5 py-2.5 text-sm font-bold text-jub-sage-950 shadow-lg shadow-jub-orange-500/40 transition-all group-hover:bg-jub-orange-400 group-hover:shadow-xl group-hover:shadow-jub-orange-500/50"
+                  >
+                    {r.libelleCta} <span aria-hidden>→</span>
+                  </span>
+                </div>
               </div>
-            </div>
+            </article>
           </Link>
         ))}
       </div>
