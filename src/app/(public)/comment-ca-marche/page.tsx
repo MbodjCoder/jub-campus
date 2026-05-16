@@ -71,13 +71,13 @@ export default function PageCommentCaMarche() {
       <section className="border-y border-bordure bg-fond-eleve py-20">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
           <div className="mb-12 flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-violet-900 font-bold">E</span>
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-jub-orange-100 text-jub-orange-700 font-bold">E</span>
             <h2 className="text-2xl font-bold tracking-tight">Côté entreprise</h2>
           </div>
-          <ol className="relative space-y-4 border-l-2 border-dashed border-violet-200 pl-8 sm:pl-10">
+          <ol className="relative space-y-4 border-l-2 border-dashed border-jub-orange-200 pl-8 sm:pl-10">
             {etapesEntreprise.map((e) => (
               <li key={e.num} className="relative">
-                <span className="absolute -left-[42px] flex h-10 w-10 items-center justify-center rounded-full bg-fond font-mono text-sm font-bold text-violet-700 ring-2 ring-violet-200 sm:-left-[50px]">
+                <span className="absolute -left-[42px] flex h-10 w-10 items-center justify-center rounded-full bg-fond font-mono text-sm font-bold text-jub-orange-700 ring-2 ring-jub-orange-200 sm:-left-[50px]">
                   {e.num}
                 </span>
                 <Carte>

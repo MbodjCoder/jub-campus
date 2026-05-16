@@ -24,7 +24,7 @@ export default function PageAPropos() {
           sizes="100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-jub-vert-950/95 via-jub-vert-950/75 to-jub-vert-950/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-jub-sage-950/95 via-jub-sage-900/75 to-jub-sage-700/30" />
         <div className="relative z-10 mx-auto max-w-4xl px-4 py-20 sm:px-6 sm:py-28">
           <Insigne ton="jaune">À propos</Insigne>
           <h1 className="mt-4 text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">

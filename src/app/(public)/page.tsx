@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { GraduationCap, Award, Banknote, Sparkles, type LucideIcon } from "lucide-react";
+import { GraduationCap, Award, Wallet, HeartHandshake, type LucideIcon } from "lucide-react";
 import { Bouton } from "@/composants/ui/bouton";
 import { Carte, CorpsCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
 import { Insigne } from "@/composants/ui/insigne";
@@ -269,6 +269,7 @@ function SectionTypesProjets() {
     /** Classe Tailwind du tag (texte + fond + bordure) */
     tag_class: string;
   }> = [
+    // Palette : 2 couples symétriques (Apprentissage = Rémunéré, Prime = Sponsorisé)
     {
       tag: "APPRENTISSAGE",
       titre: "Apprentissage certifiant",
@@ -293,21 +294,21 @@ function SectionTypesProjets() {
       tag: "RÉMUNÉRÉ",
       titre: "Rémunéré",
       desc: "Payé par une entreprise. Pour projets à forte valeur ajoutée.",
-      icone: Banknote,
-      fondIcone: "bg-jub-sage-700",
-      couleurIcone: "text-jub-orange-400",
-      gradient: "from-jub-sage-200/40 via-transparent to-transparent",
-      tag_class: "bg-jub-sage-700 text-jub-orange-400",
+      icone: Wallet,
+      fondIcone: "bg-jub-sage-500",
+      couleurIcone: "text-jub-orange-500",
+      gradient: "from-jub-sage-100/40 via-transparent to-transparent",
+      tag_class: "bg-jub-sage-500 text-jub-orange-500",
     },
     {
       tag: "SPONSORISÉ",
       titre: "Sponsorisé",
       desc: "Financé par une ONG, institution ou fondation thématique.",
-      icone: Sparkles,
-      fondIcone: "bg-jub-orange-400",
-      couleurIcone: "text-jub-sage-700",
-      gradient: "from-jub-orange-50/60 via-jub-sage-50/30 to-transparent",
-      tag_class: "bg-jub-orange-400 text-jub-sage-700",
+      icone: HeartHandshake,
+      fondIcone: "bg-jub-orange-500",
+      couleurIcone: "text-jub-sage-500",
+      gradient: "from-jub-orange-100/60 via-jub-orange-50/30 to-transparent",
+      tag_class: "bg-jub-orange-500 text-jub-sage-500",
     },
   ];
 

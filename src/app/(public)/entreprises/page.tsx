@@ -64,7 +64,7 @@ export default function PageEntreprises() {
           sizes="100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-950/90 via-jub-vert-950/85 to-jub-vert-900/60" />
+        <div className="absolute inset-0 bg-gradient-to-br from-jub-sage-950/92 via-jub-sage-900/85 to-jub-sage-700/60" />
         <div className="relative z-10 mx-auto max-w-5xl px-4 py-20 sm:px-6 sm:py-28">
           <Insigne ton="jaune">Pour les entreprises</Insigne>
           <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
@@ -92,7 +92,7 @@ export default function PageEntreprises() {
 
       <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
         <div className="mb-12 max-w-2xl">
-          <Insigne ton="violet">Pourquoi JUB Campus ?</Insigne>
+          <Insigne ton="orange">Pourquoi JUB Campus ?</Insigne>
           <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
             Trois bénéfices concrets, mesurables.
           </h2>
