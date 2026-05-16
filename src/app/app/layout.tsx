@@ -2,13 +2,15 @@ import Link from "next/link";
 import { NavApp } from "@/composants/app/nav-app";
 
 const liens = [
-  { libelle: "Tableau de bord", href: "/app" },
-  { libelle: "Projets recommandés", href: "/app/projets-recommandes" },
-  { libelle: "Mes candidatures", href: "/app/candidatures" },
-  { libelle: "Mes projets", href: "/app/mes-projets" },
-  { libelle: "Mes certificats", href: "/app/certificats" },
-  { libelle: "Mon portfolio", href: "/app/portfolio" },
-  { libelle: "Profil", href: "/app/profil" },
+  { libelle: "Tableau de bord",      href: "/app" },
+  { libelle: "Projets recommandés",  href: "/app/projets-recommandes" },
+  { libelle: "Mes candidatures",     href: "/app/candidatures" },
+  { libelle: "Mes projets",          href: "/app/mes-projets" },
+  { libelle: "Espace projet démo",   href: "/app/projet-demo" },
+  { libelle: "Mes certificats",      href: "/app/certificats" },
+  { libelle: "Mes compétences",      href: "/app/competences" },
+  { libelle: "Mon portfolio",        href: "/app/portfolio" },
+  { libelle: "Profil",               href: "/app/profil" },
 ];
 
 export default function MiseEtudiant({ children }: { children: React.ReactNode }) {
@@ -16,10 +18,13 @@ export default function MiseEtudiant({ children }: { children: React.ReactNode }
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-30 border-b border-bordure bg-fond-eleve/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-          <Link href="/app" className="flex items-center gap-2">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-jub-vert-900 text-white font-bold">J</span>
-            <span className="font-semibold tracking-tight">JUB Campus</span>
-            <span className="hidden sm:inline text-xs text-texte-discret">· Étudiant</span>
+          <Link href="/app" className="flex items-center gap-2.5">
+            <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-jub-orange-500 shadow-sm shadow-jub-orange-500/30">
+              <span className="block h-2.5 w-2.5 rounded-full bg-jub-sage-500" />
+            </span>
+            <span className="text-lg font-extrabold tracking-tight text-jub-orange-500">JUB</span>
+            <span className="text-sm font-semibold text-jub-sage-700">Campus</span>
+            <span className="ml-1 hidden text-xs text-texte-discret sm:inline">· Étudiant</span>
           </Link>
           <NavApp />
         </div>
@@ -31,7 +36,7 @@ export default function MiseEtudiant({ children }: { children: React.ReactNode }
               <Link
                 key={l.href}
                 href={l.href}
-                className="block rounded-md px-3 py-2 text-texte-discret hover:bg-jub-pierre-100 hover:text-texte"
+                className="block rounded-md px-3 py-2 text-texte-discret transition-colors hover:bg-jub-orange-50 hover:text-jub-orange-700"
               >
                 {l.libelle}
               </Link>
