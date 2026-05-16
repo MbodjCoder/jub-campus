@@ -211,12 +211,13 @@ function TopBarApp({
         {TITRES[chemin] ?? ""}
       </h1>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
         <button
           onClick={() => setShowSearch(true)}
           style={{
             display: "inline-flex",
             alignItems: "center",
+            justifyContent: "center",
             gap: 8,
             background: "white",
             border: "1px solid var(--bordure)",
@@ -226,6 +227,7 @@ function TopBarApp({
             color: "var(--sage-500)",
             cursor: "pointer",
             fontSize: 13,
+            flexShrink: 0,
           }}
           className="search-button"
         >
@@ -240,12 +242,14 @@ function TopBarApp({
             border: nonLues > 0 ? "1px solid var(--orange-500)" : "1px solid var(--bordure)",
             width: "auto",
             height: 36,
-            padding: nonLues > 0 ? "0 10px 0 12px" : 0,
+            padding: nonLues > 0 ? "0 12px" : 0,
             minWidth: 36,
+            flexShrink: 0,
             borderRadius: 999,
             position: "relative",
             display: "inline-flex",
             alignItems: "center",
+            justifyContent: "center",
             gap: 6,
             cursor: "pointer",
             boxShadow: nonLues > 0 ? "0 4px 14px -4px color-mix(in oklab, var(--orange-500) 60%, transparent)" : "none",
