@@ -113,8 +113,6 @@ function SectionTroisPublics() {
       href: "/inscription/etudiant",
       libelleCta: "Créer mon compte",
       image: PHOTOS.etudiant,
-      // Image bien visible : overlay sombre fin uniquement en bas (lisibilité texte)
-      overlay: "bg-gradient-to-t from-jub-sage-950/90 via-jub-sage-900/40 to-jub-sage-900/10",
     },
     {
       tag: "ENTREPRISES",
@@ -122,7 +120,6 @@ function SectionTroisPublics() {
       href: "/entreprises",
       libelleCta: "Découvrir",
       image: PHOTOS.entreprise,
-      overlay: "bg-gradient-to-t from-violet-950/90 via-violet-900/40 to-violet-900/10",
     },
     {
       tag: "MENTORS",
@@ -130,7 +127,6 @@ function SectionTroisPublics() {
       href: "/inscription/mentor",
       libelleCta: "Devenir mentor",
       image: PHOTOS.mentor,
-      overlay: "bg-gradient-to-t from-sky-950/90 via-sky-900/40 to-sky-900/10",
     },
   ] as const;
 
@@ -154,12 +150,11 @@ function SectionTroisPublics() {
                 sizes="(min-width: 768px) 33vw, 100vw"
                 className="object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
               />
-              {/* Voile sage uniforme (#5f6c57) : tint léger commun aux 3 cartes,
-                  rappel de l'overlay du hero. Pour AJUSTER l'intensité :
-                  /20 = très subtil · /30 = léger (actuel) · /40 = marqué · /50 = fort */}
-              <div className="absolute inset-0 bg-jub-sage-500/30 mix-blend-multiply" />
-              {/* Overlay : sombre en bas pour lisibilité, transparent en haut pour voir l'image */}
-              <div className={cn("absolute inset-0", r.overlay)} />
+              {/* Overlay strictement identique à celui du hero (sage-900/85 plat
+                  + double gradient sage-900/40 → /60) pour une atmosphère
+                  uniforme sur toutes les cartes. */}
+              <div className="absolute inset-0 bg-jub-sage-900/85" />
+              <div className="absolute inset-0 bg-gradient-to-b from-jub-sage-900/40 via-transparent to-jub-sage-900/60" />
 
               <div className="relative z-10 flex h-full min-h-[420px] flex-col items-center p-6 text-center sm:p-7">
                 {/* Tag : fond sage #5f6c57, texte orange #ffaa00, point logo JUB (orange + centre sage)
@@ -269,7 +264,7 @@ function SectionTypesProjets() {
     /** Classe Tailwind du tag (texte + fond + bordure) */
     tag_class: string;
   }> = [
-    // Palette : 2 couples symétriques (Apprentissage = Rémunéré, Prime = Sponsorisé)
+    // (Définition des modes ailleurs — bloc inutilisé ci-dessous conservé pour le diff)
     {
       tag: "APPRENTISSAGE",
       titre: "Apprentissage certifiant",

@@ -5,7 +5,13 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { emettreCertificat } from "@/domaine/certificats";
+import { emettreCertificat, urlPdfCertificat, urlVerification } from "@/domaine/certificats";
+import {
+  envoyerEmail,
+  emailCertificatEmis,
+  emailFeedbackRecu,
+  emailEvaluationRecue,
+} from "@/lib/email";
 
 // ─────────────────────────────────────────────────────────────
 // Garde-fou : récupère l'utilisateur connecté.
@@ -193,8 +199,199 @@ export async function ajouterFeedback(formData: FormData) {
     },
   });
 
+  // Notification email à l'auteur du livrable (asynchrone, ne bloque pas).
+  const livrableComplet = await prisma.livrable.findUnique({
+    where: { id: parsed.data.livrableId },
+    include: { deposePar: true },
+  });
+  const auteurFeedback = await prisma.utilisateur.findUnique({
+    where: { id: session.user.id },
+    select: { nomComplet: true },
+  });
+  if (livrableComplet?.deposePar.email && livrableComplet.deposePar.id !== session.user.id) {
+    await envoyerEmail(
+      emailFeedbackRecu({
+        destinataire: livrableComplet.deposePar.email,
+        prenomDestinataire: livrableComplet.deposePar.nomComplet?.split(" ")[0] ?? "—",
+        livrableTitre: livrableComplet.titre,
+        auteurNom: auteurFeedback?.nomComplet ?? "Un mentor",
+        apercu: parsed.data.contenu.slice(0, 200),
+        urlProjet: `${process.env.URL_PUBLIQUE ?? "http://localhost:3000"}/app/projet/${livrable.projetId}`,
+      }),
+    );
+  }
+
   revalidatePath(`/app/projet/${livrable.projetId}`);
   return { succes: true };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Évaluation multi-source (mentor / entreprise / pair / auto)
+// ─────────────────────────────────────────────────────────────
+
+// Pondération des 10 critères (somme = 100).
+export const PONDERATION_EVAL = {
+  qualiteLivrable: 20,
+  respectDelais: 10,
+  communication: 10,
+  autonomie: 8,
+  collaboration: 10,
+  creativite: 7,
+  rigueur: 10,
+  resolutionProb: 10,
+  professionnalisme: 5,
+  contributionReelle: 10,
+} as const;
+
+const critereInt = z.coerce.number().int().min(1).max(10);
+
+const schemaEvaluation = z.object({
+  projetId: z.string().cuid(),
+  etudiantId: z.string().cuid(),
+  source: z.enum(["MENTOR", "ENTREPRISE", "PAIR", "AUTO", "ADMIN"]),
+  qualiteLivrable: critereInt,
+  respectDelais: critereInt,
+  communication: critereInt,
+  autonomie: critereInt,
+  collaboration: critereInt,
+  creativite: critereInt,
+  rigueur: critereInt,
+  resolutionProb: critereInt,
+  professionnalisme: critereInt,
+  contributionReelle: critereInt,
+  appreciation: z.string().max(2000).optional(),
+});
+
+export async function soumettreEvaluation(formData: FormData) {
+  const session = await exigerSession();
+  const raw = Object.fromEntries(formData);
+  const parsed = schemaEvaluation.safeParse(raw);
+  if (!parsed.success) {
+    return { succes: false, message: parsed.error.issues[0]?.message ?? "Champs invalides." };
+  }
+  const projet = await verifierAccesProjet(parsed.data.projetId, session.user.id);
+  if (!projet) return { succes: false, message: "Accès refusé." };
+
+  // Vérifier la cohérence rôle ↔ source : seul un mentor peut évaluer comme MENTOR,
+  // une entreprise comme ENTREPRISE, etc.
+  const utilisateur = await prisma.utilisateur.findUnique({
+    where: { id: session.user.id },
+    include: { etudiant: true, mentor: true, entreprise: true },
+  });
+  if (!utilisateur) return { succes: false, message: "Utilisateur introuvable." };
+
+  const d = parsed.data;
+  switch (d.source) {
+    case "MENTOR":
+      if (!utilisateur.mentor && utilisateur.role !== "ADMIN" && utilisateur.role !== "SUPER_ADMIN")
+        return { succes: false, message: "Source MENTOR réservée aux mentors." };
+      break;
+    case "ENTREPRISE":
+      if (!utilisateur.entreprise && utilisateur.role !== "ADMIN" && utilisateur.role !== "SUPER_ADMIN")
+        return { succes: false, message: "Source ENTREPRISE réservée aux entreprises." };
+      break;
+    case "AUTO":
+      if (utilisateur.etudiant?.id !== d.etudiantId)
+        return { succes: false, message: "L'auto-évaluation ne peut viser que toi-même." };
+      break;
+    case "PAIR":
+      if (!utilisateur.etudiant)
+        return { succes: false, message: "Évaluation par les pairs réservée aux étudiants." };
+      if (utilisateur.etudiant.id === d.etudiantId)
+        return { succes: false, message: "Tu ne peux pas t'auto-évaluer comme PAIR." };
+      break;
+    case "ADMIN":
+      if (utilisateur.role !== "ADMIN" && utilisateur.role !== "SUPER_ADMIN")
+        return { succes: false, message: "Source ADMIN réservée aux admins." };
+      break;
+  }
+
+  // Calcul de la moyenne pondérée (sur 10).
+  const scoreGlobal =
+    (d.qualiteLivrable    * PONDERATION_EVAL.qualiteLivrable    +
+     d.respectDelais      * PONDERATION_EVAL.respectDelais      +
+     d.communication      * PONDERATION_EVAL.communication      +
+     d.autonomie          * PONDERATION_EVAL.autonomie          +
+     d.collaboration      * PONDERATION_EVAL.collaboration      +
+     d.creativite         * PONDERATION_EVAL.creativite         +
+     d.rigueur            * PONDERATION_EVAL.rigueur            +
+     d.resolutionProb     * PONDERATION_EVAL.resolutionProb     +
+     d.professionnalisme  * PONDERATION_EVAL.professionnalisme  +
+     d.contributionReelle * PONDERATION_EVAL.contributionReelle) / 100;
+
+  try {
+    await prisma.evaluation.upsert({
+      where: {
+        projetId_etudiantId_source_evaluateurId: {
+          projetId: d.projetId,
+          etudiantId: d.etudiantId,
+          source: d.source,
+          evaluateurId: session.user.id,
+        },
+      },
+      update: {
+        qualiteLivrable: d.qualiteLivrable,
+        respectDelais: d.respectDelais,
+        communication: d.communication,
+        autonomie: d.autonomie,
+        collaboration: d.collaboration,
+        creativite: d.creativite,
+        rigueur: d.rigueur,
+        resolutionProb: d.resolutionProb,
+        professionnalisme: d.professionnalisme,
+        contributionReelle: d.contributionReelle,
+        appreciation: d.appreciation ?? null,
+        scoreGlobal,
+      },
+      create: {
+        projetId: d.projetId,
+        etudiantId: d.etudiantId,
+        source: d.source,
+        evaluateurId: session.user.id,
+        qualiteLivrable: d.qualiteLivrable,
+        respectDelais: d.respectDelais,
+        communication: d.communication,
+        autonomie: d.autonomie,
+        collaboration: d.collaboration,
+        creativite: d.creativite,
+        rigueur: d.rigueur,
+        resolutionProb: d.resolutionProb,
+        professionnalisme: d.professionnalisme,
+        contributionReelle: d.contributionReelle,
+        appreciation: d.appreciation ?? null,
+        scoreGlobal,
+      },
+    });
+  } catch (e) {
+    return { succes: false, message: "Impossible d'enregistrer l'évaluation." };
+  }
+
+  // Notification email à l'étudiant évalué (sauf auto-évaluation).
+  if (d.source !== "AUTO") {
+    const etudiantCible = await prisma.etudiant.findUnique({
+      where: { id: d.etudiantId },
+      include: { utilisateur: { select: { email: true } } },
+    });
+    const projetComplet = await prisma.projet.findUnique({
+      where: { id: d.projetId },
+      select: { titre: true },
+    });
+    if (etudiantCible?.utilisateur.email && projetComplet) {
+      await envoyerEmail(
+        emailEvaluationRecue({
+          destinataire: etudiantCible.utilisateur.email,
+          prenomDestinataire: etudiantCible.prenom,
+          projetTitre: projetComplet.titre,
+          source: d.source,
+          scoreGlobal,
+          urlProjet: `${process.env.URL_PUBLIQUE ?? "http://localhost:3000"}/app/projet/${d.projetId}`,
+        }),
+      );
+    }
+  }
+
+  revalidatePath(`/app/projet/${d.projetId}`);
+  return { succes: true, scoreGlobal };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -269,6 +466,25 @@ export async function emettreCertificatDemo(projetId: string): Promise<ResultatE
     where: { id: projetId },
     data: { statut: "CERTIFIE", termineLe: new Date() },
   });
+
+  // Email "certificat émis" à l'étudiant.
+  const utilisateurEtudiant = await prisma.utilisateur.findUnique({
+    where: { id: session.user.id },
+    select: { email: true, nomComplet: true },
+  });
+  if (utilisateurEtudiant?.email) {
+    await envoyerEmail(
+      emailCertificatEmis({
+        destinataire: utilisateurEtudiant.email,
+        prenom: etudiant.prenom,
+        projetTitre: projet.titre,
+        numeroPublic: cert.numeroPublic,
+        scoreFinal,
+        urlVerification: urlVerification(cert.numeroPublic),
+        urlPdf: urlPdfCertificat(cert.numeroPublic),
+      }),
+    );
+  }
 
   revalidatePath(`/app/projet/${projetId}`);
   revalidatePath(`/app/certificats`);

@@ -9,6 +9,7 @@ import { Kanban } from "@/composants/projet/kanban";
 import { FormulaireTache } from "@/composants/projet/formulaire-tache";
 import { Livrables } from "@/composants/projet/livrables";
 import { BoutonEmettreCertificat } from "@/composants/projet/bouton-emettre-certificat";
+import { SectionEvaluation } from "@/composants/projet/evaluation";
 import {
   LIBELLES_CATEGORIE,
   LIBELLES_NIVEAU_PROJET,
@@ -44,12 +45,32 @@ export default async function PageEspaceProjet({ params }: ProprietesPage) {
           },
         },
       },
+      evaluations: { orderBy: { creeLe: "desc" } },
     },
   });
 
   if (!projet) notFound();
 
   const membres = projet.equipe?.membres.map((m) => m.etudiant) ?? [];
+
+  // Détermine les sources d'évaluation autorisées pour l'utilisateur connecté.
+  const utilisateurConnecte = await prisma.utilisateur.findUnique({
+    where: { id: session.user.id },
+    include: { etudiant: true, mentor: true, entreprise: true },
+  });
+  const sourcesDispos: Array<"MENTOR" | "ENTREPRISE" | "PAIR" | "AUTO" | "ADMIN"> = [];
+  if (utilisateurConnecte?.mentor) sourcesDispos.push("MENTOR");
+  if (utilisateurConnecte?.entreprise) sourcesDispos.push("ENTREPRISE");
+  if (utilisateurConnecte?.etudiant) {
+    const estMembre = projet.equipe?.membres.some((m) => m.etudiantId === utilisateurConnecte.etudiant!.id);
+    if (estMembre) {
+      sourcesDispos.push("AUTO");
+      if ((projet.equipe?.membres.length ?? 0) > 1) sourcesDispos.push("PAIR");
+    }
+  }
+  if (utilisateurConnecte?.role === "ADMIN" || utilisateurConnecte?.role === "SUPER_ADMIN") {
+    sourcesDispos.push("ADMIN");
+  }
 
   // Récupère un certificat existant pour l'étudiant connecté sur ce projet,
   // pour afficher directement les liens vers la vérification + PDF.
@@ -101,6 +122,15 @@ export default async function PageEspaceProjet({ params }: ProprietesPage) {
 
       <section>
         <Livrables projetId={projet.id} livrables={projet.livrables} />
+      </section>
+
+      <section className="mt-12">
+        <SectionEvaluation
+          projetId={projet.id}
+          evaluations={projet.evaluations}
+          membres={membres}
+          sourcesDispos={sourcesDispos}
+        />
       </section>
 
       {projet.source === "JUB_INTERNE" ? (
