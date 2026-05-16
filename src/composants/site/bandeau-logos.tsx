@@ -100,7 +100,7 @@ function CarteLogo({ partenaire }: { partenaire: Partenaire }) {
   return (
     <div
       title={partenaire.nomComplet}
-      className="group flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-md transition-all hover:scale-105 hover:shadow-xl sm:h-20 sm:w-20 sm:p-1.5"
+      className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-transparent p-0 transition-all hover:scale-110 sm:h-14 sm:w-14"
     >
       {!echec ? (
         // eslint-disable-next-line @next/next/no-img-element
