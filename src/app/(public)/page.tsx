@@ -156,10 +156,13 @@ function SectionTroisPublics() {
               {/* Overlay : sombre en bas pour lisibilité, transparent en haut pour voir l'image */}
               <div className={cn("absolute inset-0", r.overlay)} />
 
-              <div className="relative z-10 flex h-full min-h-[420px] flex-col p-6 sm:p-7">
-                {/* Tag : fond sage #5f6c57, texte orange #ffaa00, point logo JUB (orange + centre sage) */}
+              <div className="relative z-10 flex h-full min-h-[420px] flex-col items-center p-6 text-center sm:p-7">
+                {/* Tag : fond sage #5f6c57, texte orange #ffaa00, point logo JUB (orange + centre sage)
+                    Pour changer la COULEUR DU TEXTE du tag, modifie la classe
+                    text-jub-orange-500 ci-dessous (voir tableau dans la conversation
+                    ou globals.css pour la liste complète des tokens). */}
                 <span
-                  className="inline-flex w-fit items-center gap-2 rounded-full bg-jub-sage-500 px-4 py-1.5 text-base font-extrabold uppercase tracking-wider text-jub-orange-500 shadow-xl backdrop-blur-md sm:text-lg"
+                  className="inline-flex items-center gap-2 rounded-full bg-jub-sage-500 px-4 py-1.5 text-base font-extrabold uppercase tracking-wider text-jub-orange-500 shadow-xl backdrop-blur-md sm:text-lg"
                 >
                   <span className="relative flex h-4 w-4 items-center justify-center rounded-full bg-jub-orange-500 sm:h-5 sm:w-5">
                     <span className="block h-1.5 w-1.5 rounded-full bg-jub-sage-500 sm:h-2 sm:w-2" />
@@ -167,7 +170,7 @@ function SectionTroisPublics() {
                   {r.tag}
                 </span>
 
-                <div className="mt-auto space-y-4">
+                <div className="mt-auto flex flex-col items-center gap-4">
                   <h3
                     className="text-lg font-semibold italic leading-snug text-white sm:text-xl"
                     style={{ textShadow: "0 2px 14px rgba(0,0,0,0.55)" }}
@@ -176,7 +179,7 @@ function SectionTroisPublics() {
                   </h3>
 
                   <span
-                    className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-jub-orange-500 px-5 py-2.5 text-sm font-bold text-jub-sage-950 shadow-lg shadow-jub-orange-500/40 transition-all group-hover:bg-jub-orange-400 group-hover:shadow-xl group-hover:shadow-jub-orange-500/50"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-jub-orange-500 px-5 py-2.5 text-sm font-bold text-jub-sage-950 shadow-lg shadow-jub-orange-500/40 transition-all group-hover:bg-jub-orange-400 group-hover:shadow-xl group-hover:shadow-jub-orange-500/50"
                   >
                     {r.libelleCta} <span aria-hidden>→</span>
                   </span>
