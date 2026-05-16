@@ -209,7 +209,11 @@ html, body {
   max-width: 100%;
 }
 
-body { min-height: 100vh; }
+body {
+  min-height: 100vh;
+  /* Les mots/URL longs se coupent au lieu de forcer la largeur du parent. */
+  overflow-wrap: break-word;
+}
 
 /* Aucun média ne déborde de son conteneur. */
 img, svg, video, canvas { max-width: 100%; }
