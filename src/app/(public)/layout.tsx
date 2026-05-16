@@ -17,7 +17,7 @@ export default async function MisePublique({ children }: { children: React.React
   return (
     <>
       <EnTeteSite session={infos} />
-      <main className="flex-1 pt-16">{children}</main>
+      <main className="flex-1">{children}</main>
       <PiedSite />
     </>
   );

@@ -46,6 +46,13 @@ export function slugifier(texte: string): string {
     .slice(0, 80);
 }
 
+// Horodatage courant en millisecondes.
+// Indirection volontaire : dans un composant serveur (un rendu = une requête),
+// lire l'heure est déterministe et correct.
+export function maintenantMs(): number {
+  return Date.now();
+}
+
 // Tronque un texte à n caractères en ajoutant une ellipse.
 export function tronquer(texte: string, n: number): string {
   if (texte.length <= n) return texte;

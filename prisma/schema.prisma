@@ -517,6 +517,7 @@ model Projet {
   @@index([categorie, niveau])
   @@index([source])
   @@index([entrepriseId])
+  @@index([statut, visibilite, publieLe])
 }
 
 model CompetenceProjet {
@@ -813,22 +814,26 @@ model Notification {
   destinataire Utilisateur @relation(fields: [destinataireId], references: [id], onDelete: Cascade)
 
   @@index([destinataireId, lue])
+  @@index([destinataireId, creeLe])
 }
 
 model Message {
   id             String   @id @default(cuid())
   expediteurId   String
-  destinataireId String
+  // destinataireId null = message de fil d'équipe (diffusé à toute l'équipe
+  // du projet). Renseigné = message direct 1-à-1.
+  destinataireId String?
   projetId       String?
   contenu        String   @db.Text
   lu             Boolean  @default(false)
   creeLe         DateTime @default(now())
 
-  expediteur   Utilisateur @relation("MessagesEnvoyes", fields: [expediteurId], references: [id])
-  destinataire Utilisateur @relation("MessagesRecus", fields: [destinataireId], references: [id])
+  expediteur   Utilisateur  @relation("MessagesEnvoyes", fields: [expediteurId], references: [id])
+  destinataire Utilisateur? @relation("MessagesRecus", fields: [destinataireId], references: [id])
 
   @@index([destinataireId, lu])
   @@index([expediteurId])
+  @@index([projetId, creeLe])
 }
 
 model Signalement {

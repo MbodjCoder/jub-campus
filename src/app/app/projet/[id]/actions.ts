@@ -371,7 +371,7 @@ export async function soumettreEvaluation(formData: FormData) {
         scoreGlobal,
       },
     });
-  } catch (e) {
+  } catch {
     return { succes: false, message: "Impossible d'enregistrer l'évaluation." };
   }
 
@@ -503,6 +503,36 @@ export async function emettreCertificatDemo(projetId: string): Promise<ResultatE
   revalidatePath(`/v/${cert.numeroPublic}`);
 
   return { succes: true, numeroPublic: cert.numeroPublic };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Fil de discussion d'équipe (messages projet)
+// ─────────────────────────────────────────────────────────────
+
+const schemaMessageProjet = z.object({
+  projetId: z.string().cuid(),
+  contenu: z.string().min(1, "Message vide.").max(2000),
+});
+
+export async function posterMessageProjet(formData: FormData) {
+  const session = await exigerSession();
+  const parsed = schemaMessageProjet.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { succes: false, message: parsed.error.issues[0]?.message ?? "Champs invalides." };
+  }
+  const projet = await verifierAccesProjet(parsed.data.projetId, session.user.id);
+  if (!projet) return { succes: false, message: "Accès refusé." };
+
+  await prisma.message.create({
+    data: {
+      expediteurId: session.user.id,
+      projetId: parsed.data.projetId,
+      contenu: parsed.data.contenu,
+    },
+  });
+
+  revalidatePath(`/app/projet/${parsed.data.projetId}`);
+  return { succes: true };
 }
 
 // Changer le statut d'un livrable (mentor / entreprise uniquement

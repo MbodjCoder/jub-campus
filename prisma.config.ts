@@ -13,6 +13,9 @@ for (const fichier of [".env.local", ".env"]) {
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
-  migrations: { path: "prisma/migrations" },
+  migrations: {
+    path: "prisma/migrations",
+    seed: "npx tsx prisma/seed/index.ts",
+  },
   datasource: { url: process.env["DATABASE_URL"] },
 });

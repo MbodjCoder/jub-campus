@@ -1,11 +1,19 @@
 import { type HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export function Carte({ className, ...reste }: HTMLAttributes<HTMLDivElement>) {
+type VarianteCarte = "defaut" | "plate" | "sombre";
+
+interface ProprietesCarte extends HTMLAttributes<HTMLDivElement> {
+  variante?: VarianteCarte;
+}
+
+export function Carte({ className, variante = "defaut", ...reste }: ProprietesCarte) {
   return (
     <div
       className={cn(
-        "rounded-lg border border-bordure bg-fond-eleve shadow-sm overflow-hidden",
+        "carte overflow-hidden",
+        variante === "plate" && "carte--plate",
+        variante === "sombre" && "carte--sombre",
         className,
       )}
       {...reste}
@@ -22,13 +30,13 @@ export function CorpsCarte({ className, ...reste }: HTMLAttributes<HTMLDivElemen
 }
 
 export function PiedCarte({ className, ...reste }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("p-5 border-t border-bordure bg-jub-pierre-50", className)} {...reste} />;
+  return <div className={cn("p-5 border-t border-bordure", className)} {...reste} />;
 }
 
 export function TitreCarte({ className, ...reste }: HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn("text-lg font-semibold text-texte tracking-tight", className)} {...reste} />;
+  return <h3 className={cn("t-h3", className)} {...reste} />;
 }
 
 export function DescriptionCarte({ className, ...reste }: HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-sm text-texte-discret mt-1", className)} {...reste} />;
+  return <p className={cn("t-small mt-1", className)} {...reste} />;
 }

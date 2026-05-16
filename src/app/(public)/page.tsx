@@ -1,440 +1,339 @@
-import Link from "next/link";
-import Image from "next/image";
-import { GraduationCap, Award, Wallet, HeartHandshake, type LucideIcon } from "lucide-react";
-import { auth } from "@/auth";
-import { Bouton } from "@/composants/ui/bouton";
-import { Carte, CorpsCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
-import { Insigne } from "@/composants/ui/insigne";
-import { BandeauLogos } from "@/composants/site/bandeau-logos";
-import { cn } from "@/lib/utils";
-import { urlsParRole } from "@/lib/role";
+// Landing — port 1:1 de la maquette (screens-public.jsx · Landing).
+// setEcran → liens Next ; PROJETS mock → projets réels Prisma.
 
-// Photos Unsplash retenues (URLs stables, libres de droits).
-const PHOTOS = {
-  hero: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=2400&q=85",
-  etudiant: "https://images.unsplash.com/photo-1531058020387-3be344556be6?auto=format&fit=crop&w=1200&q=80",
-  entreprise: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80",
-  mentor: "https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=1200&q=80",
-  ctaFinal: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=2400&q=85",
-} as const;
+import Link from "next/link";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { urlsParRole } from "@/lib/role";
+import { PHOTOS } from "@/lib/medias";
+import { versApercu, SELECT_APERCU } from "@/lib/projet-apercu";
+import { Bouton } from "@/composants/maquette/primitifs";
+import { Icon } from "@/composants/maquette/icones";
+import { LignePrjet } from "@/composants/maquette/lignes-job";
+import type { StatutProjet } from "@/generated/prisma/client";
+
+export const dynamic = "force-dynamic";
+
+const STATUTS_OUVERTS: StatutProjet[] = ["PUBLIE", "CANDIDATURES_OUVERTES", "EQUIPE_EN_CONSTITUTION"];
 
 export default async function PageAccueil() {
   const session = await auth();
   const urlEspace = session?.user?.id ? urlsParRole(session.user.role).espace : null;
+
+  const projets = await prisma.projet.findMany({
+    where: { statut: { in: STATUTS_OUVERTS }, visibilite: "PUBLIQUE" },
+    orderBy: { publieLe: "desc" },
+    take: 3,
+    select: SELECT_APERCU,
+  });
+  const apercus = projets.map(versApercu);
+
   return (
-    <>
+    <main className="fadein">
       <Hero urlEspace={urlEspace} />
-      <SectionTroisPublics />
-      <SectionFonctionnement />
-      <SectionTypesProjets />
-      <SectionAppelAction urlEspace={urlEspace} />
-    </>
+      <JobsOuverts projets={apercus} />
+      <Parcours />
+      <CtaFinal urlEspace={urlEspace} />
+    </main>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Hero — image plein écran + texte sage + stats + logos défilants
-// ─────────────────────────────────────────────────────────────
-
+// ── Hero ────────────────────────────────────────────────────────
 function Hero({ urlEspace }: { urlEspace: string | null }) {
   return (
-    <section className="relative -mt-16 flex min-h-screen flex-col overflow-hidden">
-      <Image
-        src={PHOTOS.hero}
-        alt="Étudiants travaillant en équipe"
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover"
+    <section
+      style={{
+        position: "relative",
+        marginTop: -64,
+        minHeight: "92vh",
+        display: "flex",
+        alignItems: "flex-end",
+        color: "white",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${PHOTOS.hero})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          filter: "saturate(0.85)",
+        }}
       />
-      {/* Overlay sage uniforme pour respecter la direction artistique */}
-      <div className="absolute inset-0 bg-jub-sage-900/85" />
-      <div className="absolute inset-0 bg-gradient-to-b from-jub-sage-900/40 via-transparent to-jub-sage-900/60" />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(20,26,19,0.55) 0%, rgba(20,26,19,0.40) 40%, rgba(20,26,19,0.88) 100%)",
+        }}
+      />
 
-      <div className="relative z-10 flex flex-1 flex-col pt-28 sm:pt-32">
-        <div className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6">
-          <h1
-            className="text-[clamp(3rem,9vw,7.5rem)] font-bold leading-[1.02] tracking-tight text-jub-sage-500"
-            style={{ textShadow: "0 4px 30px rgba(0,0,0,0.25)" }}
+      <div style={{ position: "relative", maxWidth: 1180, margin: "0 auto", padding: "120px 20px 64px", width: "100%" }}>
+        <h1
+          style={{
+            marginTop: 0,
+            fontSize: "clamp(2.75rem, 8vw, 5.5rem)",
+            fontWeight: 600,
+            letterSpacing: "-0.035em",
+            lineHeight: 0.98,
+            color: "white",
+            textShadow: "0 4px 30px rgba(0,0,0,0.3)",
+          }}
+        >
+          L&apos;expérience pro
+          <br />
+          <span className="t-display" style={{ color: "var(--orange-400)", fontSize: "1.08em" }}>
+            qui change tout.
+          </span>
+        </h1>
+
+        <div style={{ marginTop: 32, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+          <Bouton
+            as={Link}
+            href={urlEspace ?? "/inscription"}
+            variant="accent"
+            taille="lg"
+            iconRight={<Icon.Arrow size={16} />}
           >
-            L&apos;experience<br />
-            Qui change tout&nbsp;!
-          </h1>
-
-          <div className="mt-10 flex flex-wrap gap-3">
-            {urlEspace ? (
-              <>
-                <Link href={urlEspace}>
-                  <Bouton apparence="accent" taille="lg" className="shadow-2xl shadow-jub-orange-500/40">
-                    Mon espace JUB →
-                  </Bouton>
-                </Link>
-                <Link href="/projets">
-                  <Bouton
-                    apparence="contour"
-                    taille="lg"
-                    className="border-jub-sage-100/30 bg-jub-sage-100/10 text-jub-sage-100 backdrop-blur-md hover:bg-jub-sage-100/20"
-                  >
-                    Voir les projets
-                  </Bouton>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/inscription/etudiant">
-                  <Bouton apparence="accent" taille="lg" className="shadow-2xl shadow-jub-orange-500/40">
-                    Commencer gratuitement →
-                  </Bouton>
-                </Link>
-                <Link href="/comment-ca-marche">
-                  <Bouton
-                    apparence="contour"
-                    taille="lg"
-                    className="border-jub-sage-100/30 bg-jub-sage-100/10 text-jub-sage-100 backdrop-blur-md hover:bg-jub-sage-100/20"
-                  >
-                    Comment ça marche
-                  </Bouton>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="mx-auto mt-16 grid w-full max-w-7xl grid-cols-2 gap-6 px-4 pb-8 sm:px-6 sm:pb-12">
-          <Stat valeur="+20 000" libelle="Partenaires" />
-          <Stat valeur="+200" libelle="Emplois" />
-        </div>
-
-        <div className="border-t border-jub-sage-100/10 bg-jub-sage-900/60 backdrop-blur-sm">
-          <BandeauLogos surFondSombre />
+            {urlEspace ? "Mon espace" : "Commencer"}
+          </Bouton>
+          <Link
+            href="/projets"
+            style={{
+              background: "rgba(255,255,255,0.12)",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255,255,255,0.22)",
+              color: "white",
+              fontWeight: 600,
+              fontSize: 14,
+              padding: "12px 20px",
+              borderRadius: 999,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              cursor: "pointer",
+            }}
+          >
+            Voir les jobs <Icon.Arrow size={14} />
+          </Link>
         </div>
       </div>
     </section>
   );
 }
 
-function Stat({ valeur, libelle }: { valeur: string; libelle: string }) {
+// ── Jobs ouverts ────────────────────────────────────────────────
+function JobsOuverts({ projets }: { projets: ReturnType<typeof versApercu>[] }) {
   return (
-    <div className="flex items-baseline justify-center gap-3 sm:justify-start sm:gap-4">
-      <span className="text-[clamp(2rem,5vw,3.75rem)] font-bold tracking-tight text-jub-orange-500">
-        {valeur}
-      </span>
-      <span className="text-[clamp(1rem,2.5vw,1.75rem)] font-medium italic text-jub-sage-100">
-        {libelle}
-      </span>
-    </div>
+    <section style={{ padding: "64px 20px 32px", maxWidth: 1180, margin: "0 auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 24 }}>
+        <h2
+          style={{
+            fontSize: "clamp(1.25rem, 2vw, 1.375rem)",
+            fontWeight: 600,
+            letterSpacing: "-0.01em",
+            margin: 0,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <Icon.Briefcase size={18} style={{ color: "var(--sage-500)" }} />
+          Jobs ouverts
+        </h2>
+        <Link
+          href="/projets"
+          className="t-small"
+          style={{
+            background: "transparent",
+            border: 0,
+            color: "var(--orange-600)",
+            fontWeight: 600,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+          }}
+        >
+          Tout voir <Icon.Arrow size={13} />
+        </Link>
+      </div>
+      {projets.length === 0 ? (
+        <div className="carte" style={{ padding: 48, textAlign: "center" }}>
+          <p className="t-small" style={{ margin: 0 }}>
+            Aucun job ouvert pour l&apos;instant. Reviens vite&nbsp;!
+          </p>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gap: 1,
+            background: "var(--bordure)",
+            border: "1px solid var(--bordure)",
+            borderRadius: 14,
+            overflow: "hidden",
+          }}
+        >
+          {projets.map((p) => (
+            <LignePrjet key={p.slug} projet={p} />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// 3 publics avec images de fond
-// ─────────────────────────────────────────────────────────────
-
-function SectionTroisPublics() {
-  const roles = [
-    {
-      tag: "ÉTUDIANTS",
-      titre: "Prouve ce que tu sais faire.",
-      href: "/inscription/etudiant",
-      libelleCta: "Créer mon compte",
-      image: PHOTOS.etudiant,
-    },
-    {
-      tag: "ENTREPRISES",
-      titre: "Sourcer mieux, recruter sûr.",
-      href: "/entreprises",
-      libelleCta: "Découvrir",
-      image: PHOTOS.entreprise,
-    },
-    {
-      tag: "MENTORS",
-      titre: "Forme par la pratique.",
-      href: "/inscription/mentor",
-      libelleCta: "Devenir mentor",
-      image: PHOTOS.mentor,
-    },
-  ] as const;
-
+// ── Parcours ────────────────────────────────────────────────────
+function Parcours() {
+  const etapes = [
+    { n: "01", icon: <Icon.Briefcase size={20} />, t: "Postuler", d: "Au job qui te parle", href: "/projets" },
+    { n: "02", icon: <Icon.Kanban size={20} />, t: "Travailler", d: "Avec ton équipe et mentor", href: "/comment-ca-marche" },
+    { n: "03", icon: <Icon.ShieldCheck size={20} />, t: "Certifier", d: "PDF + QR vérifiable", href: "/verifier" },
+  ];
   return (
-    <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6">
-      <div className="mb-14 max-w-2xl">
-        <Insigne ton="vert">Pour qui ?</Insigne>
-        <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-          Trois publics. Une même promesse.
-        </h2>
-      </div>
-
-      <div className="grid gap-5 md:grid-cols-3">
-        {roles.map((r) => (
-          <Link key={r.tag} href={r.href} className="group block focus-visible:outline-none">
-            <article className="relative h-full min-h-[420px] overflow-hidden rounded-2xl border border-bordure bg-jub-sage-900 transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-2xl group-hover:shadow-jub-sage-900/30 group-hover:ring-2 group-hover:ring-jub-orange-500/50">
-              <Image
-                src={r.image}
-                alt=""
-                fill
-                sizes="(min-width: 768px) 33vw, 100vw"
-                className="object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
-              />
-              {/* Overlay strictement identique à celui du hero (sage-900/85 plat
-                  + double gradient sage-900/40 → /60) pour une atmosphère
-                  uniforme sur toutes les cartes. */}
-              <div className="absolute inset-0 bg-jub-sage-900/85" />
-              <div className="absolute inset-0 bg-gradient-to-b from-jub-sage-900/40 via-transparent to-jub-sage-900/60" />
-
-              <div className="relative z-10 flex h-full min-h-[420px] flex-col items-center p-6 text-center sm:p-7">
-                {/* Tag : fond sage #5f6c57, texte orange #ffaa00, point logo JUB (orange + centre sage)
-                    Pour changer la COULEUR DU TEXTE du tag, modifie la classe
-                    text-jub-orange-500 ci-dessous (voir tableau dans la conversation
-                    ou globals.css pour la liste complète des tokens). */}
-                <span
-                  className="inline-flex items-center gap-2 rounded-full bg-jub-sage-100 px-4 py-1.5 text-base font-extrabold uppercase tracking-wider text-jub-sage-600	 shadow-xl backdrop-blur-md sm:text-lg"
-                >
-                  <span className="relative flex h-4 w-4 items-center justify-center rounded-full bg-jub-orange-500 sm:h-5 sm:w-5">
-                    <span className="block h-1.5 w-1.5 rounded-full bg-jub-sage-500 sm:h-2 sm:w-2" />
-                  </span>
-                  {r.tag}
-                </span>
-
-                <div className="mt-auto flex flex-col items-center gap-4">
-                  <h3
-                    className="text-lg font-semibold italic leading-snug text-white sm:text-xl"
-                    style={{ textShadow: "0 2px 14px rgba(0,0,0,0.55)" }}
-                  >
-                    {r.titre}
-                  </h3>
-
-                  <span
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-jub-orange-500 px-5 py-2.5 text-sm font-bold text-jub-sage-950 shadow-lg shadow-jub-orange-500/40 transition-all group-hover:bg-jub-orange-400 group-hover:shadow-xl group-hover:shadow-jub-orange-500/50"
-                  >
-                    {r.libelleCta} <span aria-hidden>→</span>
-                  </span>
-                </div>
+    <section style={{ padding: "56px 20px 32px", maxWidth: 1180, margin: "0 auto" }}>
+      <h2
+        style={{
+          fontSize: "clamp(1.25rem, 2vw, 1.375rem)",
+          fontWeight: 600,
+          letterSpacing: "-0.01em",
+          margin: "0 0 24px",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <Icon.Sparkles size={18} style={{ color: "var(--sage-500)" }} />
+        En 3 temps
+      </h2>
+      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr" }} className="parcours-grid">
+        {etapes.map((e) => (
+          <Link
+            key={e.n}
+            href={e.href}
+            className="lift"
+            style={{
+              textAlign: "left",
+              cursor: "pointer",
+              background: "var(--fond-eleve)",
+              border: "1px solid var(--bordure)",
+              borderRadius: 16,
+              padding: 20,
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: "var(--sage-700)",
+                  color: "var(--orange-400)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {e.icon}
               </div>
-            </article>
+              <span className="t-display" style={{ fontSize: 22, color: "var(--orange-600)", lineHeight: 1 }}>
+                {e.n}
+              </span>
+            </div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 600 }}>{e.t}</div>
+              <div className="t-small" style={{ marginTop: 2 }}>
+                {e.d}
+              </div>
+            </div>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                fontSize: 12,
+                fontWeight: 600,
+                color: "var(--orange-600)",
+              }}
+            >
+              Y aller <Icon.Arrow size={12} />
+            </span>
           </Link>
         ))}
       </div>
+      <style>{`@media (min-width: 720px) { .parcours-grid { grid-template-columns: repeat(3, 1fr) !important; } }`}</style>
     </section>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Comment ça marche — timeline horizontale
-// ─────────────────────────────────────────────────────────────
-
-function SectionFonctionnement() {
-  const etapes = [
-    { num: "01", titre: "Crée ton profil", desc: "Université, niveau, compétences, objectifs. Cinq minutes." },
-    { num: "02", titre: "Postule à un projet", desc: "Catalogue filtré par domaine, niveau, durée, rémunération." },
-    { num: "03", titre: "Travaille avec l'équipe", desc: "Kanban tâches, livrables, feedback du mentor — tout au même endroit." },
-    { num: "04", titre: "Reçois ton certificat", desc: "PDF + QR vérifiable publiquement. Portfolio mis à jour automatiquement." },
-  ];
-
+// ── CTA final ───────────────────────────────────────────────────
+function CtaFinal({ urlEspace }: { urlEspace: string | null }) {
   return (
-    <section className="relative border-y border-bordure bg-jub-pierre-100 py-24">
-      <div className="absolute inset-0 -z-0 opacity-30 [background:radial-gradient(circle_at_top_left,_var(--jub-sage-200),_transparent_50%),radial-gradient(circle_at_bottom_right,_var(--jub-orange-300)_-30%,_transparent_50%)]" />
-
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="mb-16 max-w-2xl">
-          <Insigne ton="vert">Comment ça marche</Insigne>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            De la candidature au certificat, en quatre temps.
+    <section style={{ padding: "64px 20px 32px", maxWidth: 1180, margin: "0 auto" }}>
+      <div
+        style={{
+          position: "relative",
+          borderRadius: 20,
+          overflow: "hidden",
+          minHeight: 240,
+          padding: "48px 28px",
+          color: "white",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 24,
+          flexWrap: "wrap",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `url(${PHOTOS.campus})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(135deg, rgba(20,26,19,0.88), rgba(20,26,19,0.70))",
+          }}
+        />
+        <div style={{ position: "relative", maxWidth: 540 }}>
+          <h2
+            style={{
+              fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
+              fontWeight: 600,
+              letterSpacing: "-0.025em",
+              margin: 0,
+              lineHeight: 1.05,
+              color: "white",
+            }}
+          >
+            Ton prochain job{" "}
+            <span className="t-display" style={{ color: "var(--orange-400)", fontSize: "1.1em" }}>
+              t&apos;attend.
+            </span>
           </h2>
         </div>
-
-        <ol className="relative grid gap-8 lg:grid-cols-4 lg:gap-4">
-          <div className="absolute left-0 right-0 top-7 hidden h-px bg-gradient-to-r from-transparent via-jub-sage-300 to-transparent lg:block" />
-          {etapes.map((e, i) => (
-            <li key={e.num} className="relative">
-              <div className="relative z-10 mb-5 flex items-center gap-3 lg:block">
-                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-jub-sage-700 text-lg font-bold text-white shadow-lg shadow-jub-sage-700/30 ring-4 ring-jub-pierre-100">
-                  {e.num}
-                </span>
-                {i < etapes.length - 1 ? (
-                  <span aria-hidden className="h-px flex-1 bg-jub-sage-300 lg:hidden" />
-                ) : null}
-              </div>
-              <h3 className="text-lg font-semibold tracking-tight">{e.titre}</h3>
-              <p className="mt-1.5 text-sm text-texte-discret">{e.desc}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// 4 modes de rémunération
-// ─────────────────────────────────────────────────────────────
-
-function SectionTypesProjets() {
-  // Chaque mode reçoit une icône lucide pro + une palette JUB cohérente.
-  // Icônes sémantiques :
-  //  - GraduationCap → apprentissage (formation/certification)
-  //  - Award         → prime (récompense forfaitaire)
-  //  - Banknote      → rémunéré (paiement)
-  //  - Sparkles      → sponsorisé (financement institutionnel)
-  const types: Array<{
-    tag: string;
-    titre: string;
-    desc: string;
-    icone: LucideIcon;
-    /** Classe Tailwind du fond de la pastille icône */
-    fondIcone: string;
-    /** Classe Tailwind du contenu de la pastille icône */
-    couleurIcone: string;
-    /** Classe Tailwind du gradient diffus en arrière-plan de la carte */
-    gradient: string;
-    /** Classe Tailwind du tag (texte + fond + bordure) */
-    tag_class: string;
-  }> = [
-    // (Définition des modes ailleurs — bloc inutilisé ci-dessous conservé pour le diff)
-    {
-      tag: "APPRENTISSAGE",
-      titre: "Apprentissage certifiant",
-      desc: "Court, encadré, certifié. L'option idéale pour démarrer.",
-      icone: GraduationCap,
-      fondIcone: "bg-jub-sage-500",
-      couleurIcone: "text-jub-orange-500",
-      gradient: "from-jub-sage-100/40 via-transparent to-transparent",
-      tag_class: "bg-jub-sage-500 text-jub-orange-500",
-    },
-    {
-      tag: "PRIME",
-      titre: "Avec prime",
-      desc: "Récompense forfaitaire à la fin si le projet est livré.",
-      icone: Award,
-      fondIcone: "bg-jub-orange-500",
-      couleurIcone: "text-jub-sage-500",
-      gradient: "from-jub-orange-100/60 via-jub-orange-50/30 to-transparent",
-      tag_class: "bg-jub-orange-500 text-jub-sage-500",
-    },
-    {
-      tag: "RÉMUNÉRÉ",
-      titre: "Rémunéré",
-      desc: "Payé par une entreprise. Pour projets à forte valeur ajoutée.",
-      icone: Wallet,
-      fondIcone: "bg-jub-sage-500",
-      couleurIcone: "text-jub-orange-500",
-      gradient: "from-jub-sage-100/40 via-transparent to-transparent",
-      tag_class: "bg-jub-sage-500 text-jub-orange-500",
-    },
-    {
-      tag: "SPONSORISÉ",
-      titre: "Sponsorisé",
-      desc: "Financé par une ONG, institution ou fondation thématique.",
-      icone: HeartHandshake,
-      fondIcone: "bg-jub-orange-500",
-      couleurIcone: "text-jub-sage-500",
-      gradient: "from-jub-orange-100/60 via-jub-orange-50/30 to-transparent",
-      tag_class: "bg-jub-orange-500 text-jub-sage-500",
-    },
-  ];
-
-  return (
-    <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6">
-      <div className="mb-14 max-w-2xl">
-        <Insigne ton="vert">Quatre modes</Insigne>
-        <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-          Tous les projets ne se valent pas.<br className="hidden sm:inline" /> Et c&apos;est tant mieux.
-        </h2>
-        <p className="mt-3 text-texte-discret">
-          La rémunération est transparente sur chaque projet. Aucun étudiant ne paie jamais JUB Campus.
-        </p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {types.map((t) => {
-          const Icone = t.icone;
-          return (
-            <div
-              key={t.tag}
-              className="group relative overflow-hidden rounded-2xl border border-bordure bg-fond-eleve p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-jub-orange-400 hover:shadow-xl"
-            >
-              <div className={cn("absolute inset-0 -z-0 bg-gradient-to-br", t.gradient)} />
-
-              <div className="relative z-10 flex flex-col items-center text-center">
-                {/* Icône pastille — taille généreuse, fond brand, ring sage subtil */}
-                <span
-                  className={cn(
-                    "flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg ring-4 ring-jub-sage-50 transition-transform group-hover:scale-110 group-hover:rotate-3",
-                    t.fondIcone,
-                  )}
-                >
-                  <Icone className={cn("h-8 w-8", t.couleurIcone)} strokeWidth={2.25} />
-                </span>
-
-                {/* Tag : taille XL, fond brand contrasté */}
-                <span
-                  className={cn(
-                    "mt-5 inline-flex items-center rounded-full px-4 py-1 text-sm font-extrabold uppercase tracking-widest shadow-md",
-                    t.tag_class,
-                  )}
-                >
-                  {t.tag}
-                </span>
-
-                <h3 className="mt-3 text-base font-semibold italic leading-snug text-jub-sage-900">
-                  {t.titre}
-                </h3>
-                <p className="mt-2 text-sm text-texte-discret">{t.desc}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Appel à action final
-// ─────────────────────────────────────────────────────────────
-
-function SectionAppelAction({ urlEspace }: { urlEspace: string | null }) {
-  return (
-    <section className="relative overflow-hidden bg-jub-sage-900 text-white">
-      <Image
-        src={PHOTOS.ctaFinal}
-        alt=""
-        fill
-        sizes="100vw"
-        className="object-cover opacity-25"
-      />
-      <div className="absolute inset-0 bg-gradient-to-br from-jub-sage-900 via-jub-sage-900/95 to-jub-sage-700/70" />
-      <div className="absolute inset-0 opacity-40 [background:radial-gradient(circle_at_top_right,_var(--jub-orange-500),_transparent_60%)]" />
-
-      <div className="relative z-10 mx-auto max-w-4xl px-4 py-24 text-center sm:px-6">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-          Ton prochain projet t&apos;attend.
-        </h2>
-        <p className="mt-4 text-lg text-jub-sage-100">
-          Crée ton compte gratuit, ajoute tes compétences, postule au premier projet qui te parle.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          {urlEspace ? (
-            <Link href={urlEspace}>
-              <Bouton apparence="accent" taille="lg" className="shadow-xl shadow-jub-orange-500/40">
-                Rejoindre mon espace
-              </Bouton>
-            </Link>
-          ) : (
-            <Link href="/inscription/etudiant">
-              <Bouton apparence="accent" taille="lg" className="shadow-xl shadow-jub-orange-500/40">
-                Je crée mon compte
-              </Bouton>
-            </Link>
-          )}
-          <Link href="/projets">
-            <Bouton
-              apparence="contour"
-              taille="lg"
-              className="border-white/30 bg-transparent text-white hover:bg-white/10"
-            >
-              Voir les projets
-            </Bouton>
-          </Link>
+        <div style={{ position: "relative" }}>
+          <Bouton
+            as={Link}
+            href={urlEspace ?? "/inscription"}
+            variant="accent"
+            taille="lg"
+            iconRight={<Icon.Arrow size={16} />}
+          >
+            {urlEspace ? "Rejoindre mon espace" : "Créer mon compte"}
+          </Bouton>
         </div>
       </div>
     </section>

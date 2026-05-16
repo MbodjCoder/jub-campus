@@ -1,20 +1,23 @@
 // Domaine du matching étudiant ↔ projet.
 // Phase 1 : pondération déterministe. Les embeddings sémantiques arrivent en V1.2.
+//
+// Types STRUCTURELS minimaux : seuls les champs réellement lus sont exigés.
+// Permet d'appeler l'algorithme avec des résultats Prisma `select` ciblés
+// (perf : on ne sur-charge pas les requêtes).
 
-import type { Etudiant, Projet, Competence, CompetenceProjet, CompetenceEtudiant } from "@/generated/prisma/client";
-
-interface EtudiantAvecCompetences extends Etudiant {
-  competences: (CompetenceEtudiant & { competence: Competence })[];
+export interface EtudiantAvecCompetences {
+  niveau: string;
+  disponibilite: string;
+  scoreJub: number;
+  filiere: string | null;
+  competences: { competenceId: string; niveau: number; niveauValide: number | null }[];
 }
 
-// Type "souple" : on contraint seulement les champs réellement lus par
-// l'algorithme + on laisse passer toutes les relations supplémentaires
-// que la page de consommation aurait fetché (entreprise, équipe, etc.).
-type ProjetAvecCompetences = Projet & {
-  competencesRequises: (CompetenceProjet & { competence: Competence })[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [autresRelations: string]: any;
-};
+export interface ProjetAvecCompetences {
+  niveau: string;
+  categorie: string;
+  competencesRequises: { competenceId: string; niveauRequis: number }[];
+}
 
 // Ordre lexicographique pour comparer les niveaux de cursus.
 const ORDRE_NIVEAUX = ["L1", "L2", "L3", "M1", "M2", "DOCTORAT"] as const;
@@ -118,10 +121,11 @@ export function calculerScoreMatching(
 }
 
 // Trie une liste de projets pour un étudiant donné, du meilleur match au pire.
-export function trierProjetsPourEtudiant(
+// Générique : conserve le type complet des projets passés (relations incluses).
+export function trierProjetsPourEtudiant<P extends ProjetAvecCompetences>(
   etudiant: EtudiantAvecCompetences,
-  projets: ProjetAvecCompetences[],
-): Array<{ projet: ProjetAvecCompetences; score: number }> {
+  projets: P[],
+): Array<{ projet: P; score: number }> {
   return projets
     .map((p) => ({ projet: p, score: calculerScoreMatching(etudiant, p).score }))
     .sort((a, b) => b.score - a.score);

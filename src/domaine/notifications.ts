@@ -4,7 +4,10 @@
 
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { envoyerEmail, emailNotification } from "@/lib/email";
 import type { TypeNotification } from "@/generated/prisma/client";
+
+const URL_BASE = process.env.URL_PUBLIQUE ?? "http://localhost:3000";
 
 export interface ParametresNotification {
   destinataireId: string;
@@ -14,8 +17,8 @@ export interface ParametresNotification {
   lien?: string | null;
 }
 
-// Crée une notification. Best-effort : capture les erreurs pour ne
-// jamais bloquer le flux métier qui l'appelle.
+// Crée une notification in-app + double par email (best-effort).
+// Ne bloque ni ne lève jamais : la notification reste nice-to-have.
 export async function creerNotification(p: ParametresNotification): Promise<void> {
   try {
     await prisma.notification.create({
@@ -28,7 +31,28 @@ export async function creerNotification(p: ParametresNotification): Promise<void
       },
     });
   } catch {
-    // ignoré : la notification est nice-to-have
+    return; // si l'insert échoue, on n'envoie pas non plus l'email
+  }
+
+  // Email best-effort — n'interrompt jamais le flux métier appelant.
+  try {
+    const u = await prisma.utilisateur.findUnique({
+      where: { id: p.destinataireId },
+      select: { email: true, nomComplet: true },
+    });
+    if (u?.email) {
+      await envoyerEmail(
+        emailNotification({
+          destinataire: u.email,
+          prenom: u.nomComplet?.split(" ")[0] ?? "",
+          titre: p.titre,
+          contenu: p.contenu,
+          url: p.lien ? `${URL_BASE}${p.lien}` : URL_BASE,
+        }),
+      );
+    }
+  } catch {
+    // email best-effort
   }
 }
 

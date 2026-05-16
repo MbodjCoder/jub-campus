@@ -3,6 +3,7 @@
 // Idempotent : utilise upsert sur les clés uniques.
 
 import { PrismaPg } from "@prisma/adapter-pg";
+import bcrypt from "bcryptjs";
 import { config as chargerDotenv } from "dotenv";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -124,7 +125,134 @@ async function semer() {
   }
   console.log(`  ${BADGES.length} badges OK`);
 
+  await semerComptesEtProjets();
+
   console.log("✓ Seed terminé.");
+}
+
+// ─────────────────────────────────────────────────────────────
+// Comptes de démonstration + projets — pour tester l'app localement.
+// Mot de passe commun : « campus123 ».
+// ─────────────────────────────────────────────────────────────
+async function semerComptesEtProjets() {
+  const motDePasseHash = bcrypt.hashSync("campus123", 10);
+  const ugb = await prisma.universite.findUniqueOrThrow({ where: { acronyme: "UGB" } });
+
+  // ── Admin ────────────────────────────────────────────────
+  await prisma.utilisateur.upsert({
+    where: { email: "admin@jubcampus.sn" },
+    update: { motDePasseHash, role: "ADMIN" },
+    create: {
+      email: "admin@jubcampus.sn", motDePasseHash, role: "ADMIN",
+      nomComplet: "Admin JUB", emailVerifieLe: new Date(),
+    },
+  });
+
+  // ── Mentor ───────────────────────────────────────────────
+  const uMentor = await prisma.utilisateur.upsert({
+    where: { email: "mentor@jubcampus.sn" },
+    update: { motDePasseHash, role: "MENTOR" },
+    create: {
+      email: "mentor@jubcampus.sn", motDePasseHash, role: "MENTOR",
+      nomComplet: "Awa Diallo", emailVerifieLe: new Date(),
+    },
+  });
+  await prisma.mentor.upsert({
+    where: { utilisateurId: uMentor.id },
+    update: {},
+    create: {
+      utilisateurId: uMentor.id, prenom: "Awa", nom: "Diallo",
+      type: "PROFESSIONNEL", universiteId: ugb.id,
+      titreOuPoste: "Lead Developer @ Orange Digital Center",
+      specialites: ["Next.js", "Architecture logicielle", "Mentorat"],
+      biographie: "10 ans d'expérience en développement web. Passionnée par la transmission.",
+      estVerifie: true,
+    },
+  });
+
+  // ── Étudiants ────────────────────────────────────────────
+  const ETUDIANTS = [
+    { email: "etudiant@jubcampus.sn", prenom: "Mamadou", nom: "Ndiaye", niveau: "L3" as const,
+      filiere: "Informatique", bio: "Étudiant en L3 MAI, curieux de tout ce qui touche au web." },
+    { email: "fatou@jubcampus.sn", prenom: "Fatou", nom: "Sarr", niveau: "M1" as const,
+      filiere: "Data Science", bio: "Passionnée de données et d'IA appliquée à l'agriculture." },
+  ];
+  for (const e of ETUDIANTS) {
+    const u = await prisma.utilisateur.upsert({
+      where: { email: e.email },
+      update: { motDePasseHash, role: "ETUDIANT" },
+      create: {
+        email: e.email, motDePasseHash, role: "ETUDIANT",
+        nomComplet: `${e.prenom} ${e.nom}`, emailVerifieLe: new Date(),
+      },
+    });
+    await prisma.etudiant.upsert({
+      where: { utilisateurId: u.id },
+      update: {},
+      create: {
+        utilisateurId: u.id, prenom: e.prenom, nom: e.nom,
+        slug: slugifier(`${e.prenom}-${e.nom}`),
+        universiteId: ugb.id, niveau: e.niveau, filiere: e.filiere,
+        biographie: e.bio, disponibilite: "DISPONIBLE",
+      },
+    });
+  }
+
+  // ── Entreprise (validée) ─────────────────────────────────
+  const uEntreprise = await prisma.utilisateur.upsert({
+    where: { email: "entreprise@jubcampus.sn" },
+    update: { motDePasseHash, role: "ENTREPRISE" },
+    create: {
+      email: "entreprise@jubcampus.sn", motDePasseHash, role: "ENTREPRISE",
+      nomComplet: "Sénégal Digital", emailVerifieLe: new Date(),
+    },
+  });
+  const entreprise = await prisma.entreprise.upsert({
+    where: { utilisateurId: uEntreprise.id },
+    update: { statutValidation: "VALIDEE" },
+    create: {
+      utilisateurId: uEntreprise.id, raisonSociale: "Sénégal Digital",
+      slug: "senegal-digital", secteur: "Numérique", taille: "PETITE",
+      ville: "Dakar", siteWeb: "https://senegaldigital.sn",
+      description: "Studio de développement web et mobile basé à Dakar.",
+      statutValidation: "VALIDEE", valideeLe: new Date(),
+    },
+  });
+
+  // ── Projets de démonstration ─────────────────────────────
+  const PROJETS = [
+    { titre: "Refonte du site vitrine d'une coopérative agricole",
+      resume: "Concevoir et développer un nouveau site vitrine moderne pour une coopérative de Saint-Louis.",
+      description: "La coopérative agricole de la vallée souhaite un site vitrine moderne, responsive et multilingue (français/wolof). Tu travailleras sur la maquette, le développement front-end avec Next.js et l'intégration de contenu.\n\nLivrables attendus : maquette Figma, site déployé, documentation.",
+      categorie: "WEB" as const, niveau: "INTERMEDIAIRE" as const,
+      modeRemuneration: "REMUNERE" as const, montantFcfa: 150000, dureeJours: 30, placesMax: 3 },
+    { titre: "Tableau de bord d'analyse des ventes",
+      resume: "Construire un dashboard interactif pour visualiser les données de ventes mensuelles.",
+      description: "Une PME de distribution cherche à mieux comprendre ses ventes. Le projet consiste à nettoyer les données, créer des indicateurs clés et concevoir un tableau de bord Power BI ou web.\n\nCompétences : SQL, Power BI ou React, analyse de données.",
+      categorie: "DATA" as const, niveau: "INTERMEDIAIRE" as const,
+      modeRemuneration: "PRIME" as const, montantFcfa: 75000, dureeJours: 21, placesMax: 2 },
+    { titre: "Campagne de communication digitale pour un événement étudiant",
+      resume: "Imaginer et déployer la stratégie de communication d'un hackathon universitaire.",
+      description: "L'UGB organise son premier hackathon. Tu seras en charge de la stratégie réseaux sociaux, des visuels et du calendrier éditorial.\n\nUn projet idéal pour développer ton portfolio en communication digitale.",
+      categorie: "COMMUNICATION" as const, niveau: "DEBUTANT" as const,
+      modeRemuneration: "APPRENTISSAGE" as const, montantFcfa: null, dureeJours: 14, placesMax: 4 },
+  ];
+  for (const p of PROJETS) {
+    const slug = slugifier(p.titre);
+    await prisma.projet.upsert({
+      where: { slug },
+      update: {},
+      create: {
+        slug, titre: p.titre, resume: p.resume, description: p.description,
+        source: "ENTREPRISE", categorie: p.categorie, niveau: p.niveau,
+        modeRemuneration: p.modeRemuneration, montantFcfa: p.montantFcfa,
+        dureeJours: p.dureeJours, placesMax: p.placesMax,
+        statut: "CANDIDATURES_OUVERTES", visibilite: "PUBLIQUE",
+        publieLe: new Date(), publieParId: uEntreprise.id, entrepriseId: entreprise.id,
+      },
+    });
+  }
+  console.log(`  ${ETUDIANTS.length + 3} comptes démo + ${PROJETS.length} projets OK`);
 }
 
 semer()

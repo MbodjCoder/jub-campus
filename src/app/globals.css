@@ -1,18 +1,136 @@
 @import "tailwindcss";
 
-/* ─────────────────────────────────────────────────────────────
-   Palette officielle JUB Campus
-   - Marque    : #ffaa00 (orange chaud)
-   - Sage      : #5f6c57 (vert kaki — texte hero, fonds sombres)
-   - Gris clair: #ced4d2 (labels nav, texte secondaire sur sage)
+/* ═══════════════════════════════════════════════════════════════
+   JUB Campus — Système de design (refonte 2026)
+   ───────────────────────────────────────────────────────────────
+   Source : maquette Design_JUB. Stratégie de performance :
+   - Tout le style repose sur des CLASSES STATIQUES + tokens CSS.
+     Aucun calcul au runtime, aucune lib CSS-in-JS → CSS minifié,
+     mis en cache, zéro coût de rendu côté client.
+   - Les tokens sont déclarés une seule fois dans :root.
+   - @theme expose les mêmes valeurs (littéraux hex obligatoires
+     pour que Tailwind 4 génère bien les utilitaires).
+   ═══════════════════════════════════════════════════════════════ */
 
-   Tailwind 4 : on définit les tokens avec @theme + valeurs hex
-   littérales pour que les utilitaires (text-, bg-, border-) soient
-   générés correctement.
-   ───────────────────────────────────────────────────────────── */
+:root {
+  /* ── Palette orange (marque) ─────────────────────────────── */
+  --orange-50:  #fff7e6;
+  --orange-100: #ffecb3;
+  --orange-200: #ffd980;
+  --orange-300: #ffc04d;
+  --orange-400: #ffb31a;
+  --orange-500: #ffaa00;
+  --orange-600: #cc8800;
+  --orange-700: #996600;
 
+  /* ── Palette sage (vert kaki) ────────────────────────────── */
+  --sage-50:  #eef0ed;
+  --sage-100: #ced4d2;
+  --sage-200: #b3bcb1;
+  --sage-300: #97a092;
+  --sage-400: #7d8a75;
+  --sage-500: #5f6c57;
+  --sage-600: #4a5444;
+  --sage-700: #3a443a;
+  --sage-800: #2a3328;
+  --sage-900: #1f2820;
+  --sage-950: #141a13;
+
+  /* ── Neutres pierre ──────────────────────────────────────── */
+  --pierre-50:  #fafaf9;
+  --pierre-100: #f5f5f4;
+  --pierre-200: #e7e5e4;
+  --pierre-300: #d6d3d1;
+  --pierre-500: #78716c;
+  --pierre-700: #44403c;
+  --pierre-900: #1c1917;
+
+  /* ── Sémantique ──────────────────────────────────────────── */
+  --fond: #ececea;
+  --fond-eleve: #f5f4f1;
+  --texte: #1c1917;
+  --texte-discret: #78716c;
+  --bordure: #e3e0db;
+  --bordure-forte: #cbc6bd;
+  --succes: #2f7d4f;
+  --alerte: #c2410c;
+  --danger: #b91c1c;
+  --info: #2563eb;
+
+  /* ── Rayons ──────────────────────────────────────────────── */
+  --rayon-xs: 6px;
+  --rayon-sm: 10px;
+  --rayon-md: 14px;
+  --rayon-lg: 18px;
+  --rayon-xl: 26px;
+  --rayon-pill: 999px;
+
+  /* ── Typographie ─────────────────────────────────────────── */
+  --fonte-ui: var(--font-geist-sans), 'Inter', system-ui, -apple-system, sans-serif;
+  --fonte-display: var(--font-instrument-serif), 'New York', Georgia, serif;
+  --fonte-mono: var(--font-geist-mono), 'JetBrains Mono', ui-monospace, monospace;
+
+  /* ── Ombres calibrées sur fond chaud ─────────────────────── */
+  --ombre-xs: 0 1px 2px rgba(31, 40, 32, 0.06);
+  --ombre-sm: 0 2px 6px -1px rgba(31, 40, 32, 0.08);
+  --ombre-md: 0 6px 20px -8px rgba(31, 40, 32, 0.18);
+  --ombre-lg: 0 18px 40px -16px rgba(31, 40, 32, 0.30);
+
+  /* ── Compat : anciens noms utilisés dans le code existant ── */
+  --jub-orange-500: #ffaa00;
+  --jub-sage-500: #5f6c57;
+  --jub-sage-700: #3a443a;
+  --jub-sage-900: #1f2820;
+  --jub-sage-950: #141a13;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   @theme — utilitaires Tailwind (text-*, bg-*, border-*, rounded-*)
+   Littéraux hex obligatoires (Tailwind 4 n'évalue pas var() ici).
+   ─────────────────────────────────────────────────────────────── */
 @theme {
-  /* Échelle orange (marque) */
+  --color-orange-50:  #fff7e6;
+  --color-orange-100: #ffecb3;
+  --color-orange-200: #ffd980;
+  --color-orange-300: #ffc04d;
+  --color-orange-400: #ffb31a;
+  --color-orange-500: #ffaa00;
+  --color-orange-600: #cc8800;
+  --color-orange-700: #996600;
+
+  --color-sage-50:  #eef0ed;
+  --color-sage-100: #ced4d2;
+  --color-sage-200: #b3bcb1;
+  --color-sage-300: #97a092;
+  --color-sage-400: #7d8a75;
+  --color-sage-500: #5f6c57;
+  --color-sage-600: #4a5444;
+  --color-sage-700: #3a443a;
+  --color-sage-800: #2a3328;
+  --color-sage-900: #1f2820;
+  --color-sage-950: #141a13;
+
+  --color-pierre-50:  #fafaf9;
+  --color-pierre-100: #f5f5f4;
+  --color-pierre-200: #e7e5e4;
+  --color-pierre-300: #d6d3d1;
+  --color-pierre-500: #78716c;
+  --color-pierre-700: #44403c;
+  --color-pierre-900: #1c1917;
+
+  --color-fond: #ececea;
+  --color-fond-eleve: #f5f4f1;
+  --color-texte: #1c1917;
+  --color-texte-discret: #78716c;
+  --color-bordure: #e3e0db;
+  --color-bordure-forte: #cbc6bd;
+  --color-accent: #ffaa00;
+  --color-succes: #2f7d4f;
+  --color-alerte: #c2410c;
+  --color-danger: #b91c1c;
+  --color-info: #2563eb;
+
+  /* Alias de rétrocompatibilité (code existant non encore migré) */
   --color-jub-orange-50:  #fff7e6;
   --color-jub-orange-100: #ffecb3;
   --color-jub-orange-200: #ffd980;
@@ -21,8 +139,6 @@
   --color-jub-orange-500: #ffaa00;
   --color-jub-orange-600: #cc8800;
   --color-jub-orange-700: #996600;
-
-  /* Échelle sage (vert kaki) */
   --color-jub-sage-50:  #eef0ed;
   --color-jub-sage-100: #ced4d2;
   --color-jub-sage-200: #b3bcb1;
@@ -34,13 +150,9 @@
   --color-jub-sage-800: #2a3328;
   --color-jub-sage-900: #1f2820;
   --color-jub-sage-950: #141a13;
-
-  /* Alias jaune → orange (rétrocompat) */
   --color-jub-jaune-400: #ffb31a;
   --color-jub-jaune-500: #ffaa00;
   --color-jub-jaune-600: #cc8800;
-
-  /* Alias vert → sage (rétrocompat) */
   --color-jub-vert-50:  #eef0ed;
   --color-jub-vert-100: #ced4d2;
   --color-jub-vert-200: #b3bcb1;
@@ -48,8 +160,6 @@
   --color-jub-vert-700: #3a443a;
   --color-jub-vert-900: #2a3328;
   --color-jub-vert-950: #1f2820;
-
-  /* Neutres pierre (héritage Tailwind stone-like) */
   --color-jub-pierre-50:  #fafaf9;
   --color-jub-pierre-100: #f5f5f4;
   --color-jub-pierre-200: #e7e5e4;
@@ -57,105 +167,340 @@
   --color-jub-pierre-500: #78716c;
   --color-jub-pierre-700: #44403c;
   --color-jub-pierre-900: #1c1917;
-  --color-jub-pierre-950: #0c0a09;
-
-  /* Sémantique projet
-     --color-fond : couleur de fond globale (pages, sections claires).
-     Choisie volontairement légèrement plus chaude/grise que le blanc
-     pur pour adoucir l'effet agressif du blanc. */
-  --color-fond: #ececea;
-  --color-fond-eleve: #f5f4f1;
-  --color-texte: #1c1917;
-  --color-texte-discret: #78716c;
-  --color-bordure: #e7e5e4;
   --color-primaire: #3a443a;
-  --color-primaire-texte: #ffffff;
-  --color-accent: #ffaa00;
-  --color-succes: #16a34a;
-  --color-alerte: #dc2626;
-  --color-info: #0ea5e9;
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-instrument-serif);
 
-  --radius-xs: 4px;
-  --radius-sm: 6px;
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
   --radius: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
   --radius-2xl: 28px;
+
+  --shadow-xs: 0 1px 2px rgba(31, 40, 32, 0.06);
+  --shadow-sm: 0 2px 6px -1px rgba(31, 40, 32, 0.08);
+  --shadow-md: 0 6px 20px -8px rgba(31, 40, 32, 0.18);
+  --shadow-lg: 0 18px 40px -16px rgba(31, 40, 32, 0.30);
 }
 
-/* Variables CSS héritées exposées pour les usages bruts (radial-gradient
-   et autres expressions CSS qui prennent var()). */
-:root {
-  --jub-orange-50:  #fff7e6;
-  --jub-orange-100: #ffecb3;
-  --jub-orange-200: #ffd980;
-  --jub-orange-300: #ffc04d;
-  --jub-orange-400: #ffb31a;
-  --jub-orange-500: #ffaa00;
-  --jub-orange-600: #cc8800;
-  --jub-orange-700: #996600;
+/* ═══════════════════════════════════════════════════════════════
+   Base
+   ═══════════════════════════════════════════════════════════════ */
 
-  --jub-sage-50:  #eef0ed;
-  --jub-sage-100: #ced4d2;
-  --jub-sage-200: #b3bcb1;
-  --jub-sage-300: #97a092;
-  --jub-sage-400: #7d8a75;
-  --jub-sage-500: #5f6c57;
-  --jub-sage-600: #4a5444;
-  --jub-sage-700: #3a443a;
-  --jub-sage-800: #2a3328;
-  --jub-sage-900: #1f2820;
-  --jub-sage-950: #141a13;
+* { box-sizing: border-box; }
 
-  --jub-vert-200: #b3bcb1;
-  --jub-vert-700: #3a443a;
-  --jub-vert-900: #2a3328;
-  --jub-vert-950: #1f2820;
-
-  --jub-jaune-400: #ffb31a;
-  --jub-jaune-500: #ffaa00;
-}
-
-body {
-  background: var(--color-fond);
-  color: var(--color-texte);
-  font-family: var(--font-sans), system-ui, sans-serif;
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: var(--fonte-ui);
+  font-feature-settings: 'cv11', 'ss01';
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
+body { min-height: 100vh; }
+
+button { font: inherit; }
+
+img { display: block; max-width: 100%; }
+
+::selection { background: var(--orange-500); color: var(--sage-950); }
+
 *:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--orange-500);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: var(--color-jub-pierre-300); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: var(--color-jub-pierre-500); }
+::-webkit-scrollbar-thumb { background: var(--pierre-300); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--pierre-500); }
 
-::selection {
-  background: #ffaa00;
-  color: #1f2820;
+/* ═══════════════════════════════════════════════════════════════
+   Échelle typographique
+   ═══════════════════════════════════════════════════════════════ */
+
+.t-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--sage-500);
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Animation marquee : défilement infini horizontal des logos.
-   Duplication du contenu + translation -50% = boucle sans saut.
-   ───────────────────────────────────────────────────────────── */
+.t-display {
+  font-family: var(--fonte-display);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  line-height: 0.95;
+}
 
-@keyframes jub-defiler-logos {
+.t-h1 {
+  font-size: clamp(2rem, 5.5vw, 3.5rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.04;
+}
+
+.t-h2 {
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.t-h3 {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.t-body { font-size: 0.9375rem; line-height: 1.55; color: var(--texte); }
+.t-small { font-size: 0.8125rem; line-height: 1.5; color: var(--texte-discret); }
+.t-xs { font-size: 0.75rem; line-height: 1.4; }
+.t-mono { font-family: var(--fonte-mono); font-feature-settings: 'tnum'; }
+.t-discret { color: var(--texte-discret); }
+
+/* ═══════════════════════════════════════════════════════════════
+   Composants atomiques
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Pilule (chip) ───────────────────────────────────────────── */
+.pilule {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--rayon-pill);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--sage-50);
+  color: var(--sage-700);
+  border: 1px solid var(--bordure);
+  white-space: nowrap;
+}
+.pilule--orange { background: color-mix(in oklab, var(--orange-500) 14%, transparent); color: var(--orange-700); border-color: color-mix(in oklab, var(--orange-500) 25%, transparent); }
+.pilule--sage   { background: var(--sage-700); color: var(--sage-50); border-color: var(--sage-700); }
+.pilule--neutre { background: white; color: var(--sage-800); border-color: var(--bordure); }
+.pilule--vert   { background: color-mix(in oklab, var(--succes) 14%, transparent); color: var(--succes); border-color: color-mix(in oklab, var(--succes) 30%, transparent); }
+.pilule--rouge  { background: color-mix(in oklab, var(--danger) 12%, transparent); color: var(--danger); border-color: color-mix(in oklab, var(--danger) 28%, transparent); }
+.pilule--ghost  { background: transparent; }
+
+/* ── Boutons ─────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: var(--rayon-pill);
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease, color 120ms ease;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.5; pointer-events: none; }
+.btn--sm { height: 32px; padding: 0 14px; font-size: 0.8125rem; }
+.btn--lg { height: 48px; padding: 0 22px; font-size: 0.9375rem; }
+.btn--xl { height: 56px; padding: 0 28px; font-size: 1rem; }
+.btn--icone { width: 40px; padding: 0; }
+
+.btn--primaire { background: var(--sage-700); color: white; }
+.btn--primaire:hover { background: var(--sage-800); }
+
+.btn--accent { background: var(--orange-500); color: var(--sage-950); box-shadow: 0 6px 18px -8px color-mix(in oklab, var(--orange-500) 70%, transparent); }
+.btn--accent:hover { background: var(--orange-400); }
+
+.btn--contour { background: transparent; color: var(--sage-800); border-color: var(--bordure-forte); }
+.btn--contour:hover { background: var(--sage-50); }
+
+.btn--fantome { background: transparent; color: var(--sage-700); }
+.btn--fantome:hover { background: var(--sage-50); }
+
+.btn--sombre { background: white; color: var(--sage-900); }
+.btn--sombre:hover { background: var(--sage-50); }
+
+.btn--danger { background: var(--danger); color: white; }
+.btn--danger:hover { background: #991b1b; }
+
+.btn--lien { background: transparent; color: var(--orange-600); padding: 0; height: auto; }
+.btn--lien:hover { color: var(--orange-700); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── Cartes ──────────────────────────────────────────────────── */
+.carte {
+  background: var(--fond-eleve);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-lg);
+}
+.carte--plate  { background: white; }
+.carte--sombre { background: var(--sage-900); color: var(--sage-100); border-color: var(--sage-800); }
+
+/* ── Champs ──────────────────────────────────────────────────── */
+.champ {
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  background: white;
+  border: 1px solid var(--bordure-forte);
+  border-radius: var(--rayon-sm);
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--texte);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.champ:focus {
+  outline: none;
+  border-color: var(--sage-500);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--sage-500) 22%, transparent);
+}
+.champ--ta { height: auto; padding: 12px 14px; resize: vertical; }
+
+/* ── Logo JUB ────────────────────────────────────────────────── */
+.logo-pastille {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--rayon-pill);
+  background: var(--orange-500);
+  flex: 0 0 auto;
+}
+.logo-pastille::after {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: var(--rayon-pill);
+  background: var(--sage-500);
+}
+.logo-pastille--lg { width: 40px; height: 40px; }
+.logo-pastille--lg::after { width: 13px; height: 13px; }
+.logo-pastille--xl { width: 56px; height: 56px; }
+.logo-pastille--xl::after { width: 18px; height: 18px; }
+.logo-pastille--blanc { background: white; }
+.logo-pastille--blanc::after { background: var(--sage-700); }
+
+.logo-mot {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--orange-500);
+}
+
+/* ── Avatar ──────────────────────────────────────────────────── */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--rayon-pill);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sage-50);
+  background: var(--sage-700);
+  border: 2px solid var(--fond-eleve);
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+/* ── Séparateur ──────────────────────────────────────────────── */
+.sep { height: 1px; background: var(--bordure); border: 0; margin: 0; }
+
+/* ═══════════════════════════════════════════════════════════════
+   Animations & utilitaires
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes jub-fadein {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fadein { animation: jub-fadein 280ms ease both; }
+
+@keyframes jub-pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.pulse-dot { animation: jub-pulse-dot 1.6s ease-in-out infinite; }
+
+@keyframes jub-slidein {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+.slidein { animation: jub-slidein 240ms ease both; }
+
+@keyframes jub-defiler {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
+.marquee {
+  display: flex;
+  width: max-content;
+  animation: jub-defiler 50s linear infinite;
+}
+.marquee-pause:hover .marquee { animation-play-state: paused; }
 
-.jub-marquee {
-  animation: jub-defiler-logos 45s linear infinite;
+/* Lift au survol */
+.lift { transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease; }
+.lift:hover { transform: translateY(-2px); box-shadow: var(--ombre-md); border-color: var(--bordure-forte); }
+
+/* Voile / overlay */
+.backdrop { background: rgba(20, 26, 19, 0.55); backdrop-filter: blur(8px); }
+
+/* Placeholder image coloré */
+.ph-img {
+  background:
+    radial-gradient(circle at 30% 20%, color-mix(in oklab, var(--orange-500) 40%, transparent), transparent 50%),
+    radial-gradient(circle at 80% 70%, color-mix(in oklab, var(--sage-500) 60%, transparent), transparent 55%),
+    linear-gradient(135deg, var(--sage-800), var(--sage-900));
+  position: relative;
+  overflow: hidden;
 }
 
-.jub-marquee:hover {
-  animation-play-state: paused;
+/* Fond pointillé sombre */
+.dotted-dark {
+  background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
+
+/* Accessibilité : lien d'évitement */
+.skip { position: absolute; left: -9999px; }
+.skip:focus { left: 12px; top: 12px; z-index: 200; background: white; padding: 8px 12px; border-radius: 8px; }
+
+/* Ratios d'aspect */
+.ar-16x9 { aspect-ratio: 16 / 9; }
+.ar-4x3  { aspect-ratio: 4 / 3; }
+.ar-3x2  { aspect-ratio: 3 / 2; }
+.ar-1x1  { aspect-ratio: 1 / 1; }
+
+.shrink-0 { flex: 0 0 auto; }
+
+/* CTA collant mobile */
+.sticky-cta {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  background: linear-gradient(180deg, transparent, var(--fond) 30%);
+  padding: 16px;
+}
+
+/* Helpers responsive */
+@media (max-width: 680px) { .hide-sm { display: none !important; } }
+@media (min-width: 681px) { .show-sm-only { display: none !important; } }
+@media (max-width: 600px) { .hide-xs { display: none !important; } }

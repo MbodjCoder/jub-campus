@@ -23,6 +23,7 @@ const ROUTES_PUBLIQUES: RegExp[] = [
   /^\/temoignages$/,
   /^\/inscription/,
   /^\/connexion$/,
+  /^\/verifier$/,
   /^\/u\//,
   /^\/v\//,
   /^\/api\/auth\//,

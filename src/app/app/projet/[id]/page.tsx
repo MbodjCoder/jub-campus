@@ -10,6 +10,7 @@ import { FormulaireTache } from "@/composants/projet/formulaire-tache";
 import { Livrables } from "@/composants/projet/livrables";
 import { BoutonEmettreCertificat } from "@/composants/projet/bouton-emettre-certificat";
 import { SectionEvaluation } from "@/composants/projet/evaluation";
+import { FilEquipe } from "@/composants/projet/fil-equipe";
 import {
   LIBELLES_CATEGORIE,
   LIBELLES_NIVEAU_PROJET,
@@ -85,6 +86,17 @@ export default async function PageEspaceProjet({ params }: ProprietesPage) {
       })
     : null;
 
+  // Fil de discussion d'équipe.
+  const messages = await prisma.message.findMany({
+    where: { projetId: projet.id },
+    orderBy: { creeLe: "asc" },
+    take: 100,
+    select: {
+      id: true, contenu: true, creeLe: true, expediteurId: true,
+      expediteur: { select: { nomComplet: true } },
+    },
+  });
+
   return (
     <>
       <Link
@@ -141,6 +153,19 @@ export default async function PageEspaceProjet({ params }: ProprietesPage) {
           />
         </section>
       ) : null}
+
+      <section className="mt-12">
+        <FilEquipe
+          projetId={projet.id}
+          messages={messages.map((m) => ({
+            id: m.id,
+            contenu: m.contenu,
+            creeLe: m.creeLe,
+            auteur: m.expediteur.nomComplet ?? "—",
+            moi: m.expediteurId === session.user.id,
+          }))}
+        />
+      </section>
 
       <section className="mt-12">
         <Carte>

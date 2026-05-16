@@ -1,9 +1,13 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
+// En-tête public — port 1:1 de la maquette (screens-public.jsx · HeaderPublic).
+// Adaptations réelles : navigation Next (router/pathname) et menu utilisateur
+// quand une session existe.
+
+import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Logo } from "@/composants/maquette/primitifs";
+import { Icon } from "@/composants/maquette/icones";
 import { MenuUtilisateur } from "@/composants/site/menu-utilisateur";
 import type { Role } from "@/generated/prisma/client";
 
@@ -15,254 +19,122 @@ interface InfosSession {
   role: Role;
 }
 
-interface Proprietes {
-  /** Session sérialisée. null = non connecté. */
-  session: InfosSession | null;
-}
-
-// En-tête JUB Campus :
-//  - Pilule logo à gauche
-//  - Pilule de navigation au centre/droite
-//  - À droite : MenuUtilisateur si connecté, sinon « Connexion + Commencer »
-//  - Toujours fixée en haut (visible au défilement)
-//  - Sur l'accueil : transparente sur l'image jusqu'au scroll
-//  - Mobile (< md) : burger plein écran
-export function EnTeteSite({ session }: Proprietes) {
+export function EnTeteSite({ session }: { session: InfosSession | null }) {
   const chemin = usePathname();
-  const surAccueil = chemin === "/";
+  const router = useRouter();
   const [defile, setDefile] = useState(false);
-  const [menuOuvert, setMenuOuvert] = useState(false);
+  const [q, setQ] = useState("");
 
   useEffect(() => {
-    const onScroll = () => setDefile(window.scrollY > 24);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const h = () => setDefile(window.scrollY > 20);
+    h();
+    window.addEventListener("scroll", h, { passive: true });
+    return () => window.removeEventListener("scroll", h);
   }, []);
 
-  useEffect(() => { setMenuOuvert(false); }, [chemin]);
+  // Fond sombre tant qu'on est en haut de l'accueil.
+  const sombre = chemin === "/" && !defile;
 
-  useEffect(() => {
-    if (menuOuvert) {
-      document.body.style.overflow = "hidden";
-      return () => { document.body.style.overflow = ""; };
-    }
-  }, [menuOuvert]);
-
-  const surFondSombre = surAccueil && !defile;
-  const fondPilule = surFondSombre ? "bg-jub-sage-700/70" : "bg-jub-sage-700/90";
-
-  const liens = [
-    { href: "/projets",     l: "Projets" },
-    { href: "/entreprises", l: "Entreprises" },
-    { href: "/a-propos",    l: "À propos" },
-  ];
+  const onSearch = () => {
+    const t = q.trim();
+    router.push(t ? `/projets?q=${encodeURIComponent(t)}` : "/projets");
+  };
 
   return (
-    <>
-      <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-6 sm:pt-4">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-          <LogoJub fondPilule={fondPilule} />
+    <header
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 40,
+        padding: "12px 20px",
+        background: sombre ? "rgba(20,26,19,0.32)" : "var(--fond)",
+        backdropFilter: sombre ? "blur(10px)" : "none",
+        borderBottom: "1px solid " + (sombre ? "rgba(255,255,255,0.08)" : "transparent"),
+        transition: "background 220ms ease, border-color 220ms ease",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 14,
+          maxWidth: 1180,
+          margin: "0 auto",
+        }}
+      >
+        {/* Logo — couleur FIXE (toujours orange) */}
+        <button
+          onClick={() => router.push("/")}
+          style={{ display: "flex", alignItems: "center", gap: 9, background: "transparent", border: 0, padding: 0, flexShrink: 0, cursor: "pointer" }}
+        >
+          <Logo mot blanc={false} />
+        </button>
 
-          {/* Nav desktop (≥ md) */}
-          <nav
-            className={cn(
-              "hidden items-center gap-1 rounded-full px-2 py-1.5 backdrop-blur-md transition-all md:flex lg:px-3 lg:py-2",
-              fondPilule,
-            )}
+        {/* Barre de recherche centrée, équidistante */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSearch();
+          }}
+          style={{
+            flex: "0 1 360px",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            background: sombre ? "rgba(255,255,255,0.10)" : "white",
+            border: "1px solid " + (sombre ? "rgba(255,255,255,0.16)" : "var(--bordure)"),
+            borderRadius: 999,
+            padding: "6px 14px",
+            transition: "background 220ms, border-color 220ms",
+          }}
+        >
+          <Icon.Search size={15} style={{ color: sombre ? "rgba(255,255,255,0.65)" : "var(--sage-500)", flexShrink: 0 }} />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Chercher un job…"
+            style={{
+              flex: 1,
+              border: 0,
+              outline: 0,
+              background: "transparent",
+              font: "inherit",
+              fontSize: 13.5,
+              color: sombre ? "white" : "var(--texte)",
+              padding: "6px 0",
+              minWidth: 0,
+            }}
+          />
+        </form>
+
+        {/* Nav droite */}
+        <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+          <button
+            onClick={() => router.push("/projets")}
+            className="hide-xs"
+            style={{ padding: "8px 12px", background: "transparent", border: 0, fontWeight: 600, fontSize: 13.5, color: sombre ? "rgba(255,255,255,0.9)" : "var(--sage-700)", cursor: "pointer" }}
           >
-            {liens.map((item) => {
-              const actif = chemin === item.href || chemin.startsWith(item.href + "/");
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "rounded-full px-4 py-1.5 text-sm font-semibold transition-colors lg:px-5",
-                    actif ? "bg-jub-sage-900/40 text-white" : "text-jub-sage-100 hover:text-white",
-                  )}
-                >
-                  {item.l}
-                </Link>
-              );
-            })}
-            {/* Sans session : Connexion en orange. Avec session : Menu Utilisateur */}
-            {!session ? (
-              <Link
-                href="/connexion"
-                className="rounded-full px-4 py-1.5 text-sm font-bold text-jub-orange-500 transition-colors hover:text-jub-orange-400 lg:px-5"
+            Jobs
+          </button>
+          {session ? (
+            <MenuUtilisateur session={session} surFondSombre={sombre} />
+          ) : (
+            <>
+              <button
+                onClick={() => router.push("/connexion")}
+                className="hide-xs"
+                style={{ padding: "8px 12px", background: "transparent", border: 0, fontWeight: 600, fontSize: 13.5, color: sombre ? "rgba(255,255,255,0.9)" : "var(--sage-700)", cursor: "pointer" }}
               >
                 Connexion
-              </Link>
-            ) : null}
-          </nav>
-
-          {/* Zone droite : menu user (si connecté) ou burger mobile */}
-          {session ? (
-            <div className="hidden md:block">
-              <MenuUtilisateur session={session} surFondSombre={surFondSombre} />
-            </div>
-          ) : null}
-
-          {/* Bouton burger (< md) — toujours visible */}
-          <button
-            type="button"
-            aria-label={menuOuvert ? "Fermer le menu" : "Ouvrir le menu"}
-            aria-expanded={menuOuvert}
-            onClick={() => setMenuOuvert((v) => !v)}
-            className={cn(
-              "flex h-12 w-12 items-center justify-center rounded-full backdrop-blur-md transition-all md:hidden",
-              fondPilule,
-            )}
-          >
-            <IconeBurger ouvert={menuOuvert} />
-          </button>
+              </button>
+              <button className="btn btn--accent btn--sm" onClick={() => router.push("/inscription")}>
+                Commencer
+              </button>
+            </>
+          )}
         </div>
-      </header>
-
-      <MenuMobile
-        ouvert={menuOuvert}
-        liens={liens}
-        chemin={chemin}
-        session={session}
-        onFermer={() => setMenuOuvert(false)}
-      />
-    </>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Logo
-// ─────────────────────────────────────────────────────────────
-
-function LogoJub({ fondPilule }: { fondPilule: string }) {
-  return (
-    <Link
-      href="/"
-      className={cn(
-        "flex shrink-0 items-center gap-2.5 rounded-full px-3 py-1.5 backdrop-blur-md transition-all sm:px-4 sm:py-2 lg:px-5 lg:py-2.5",
-        fondPilule,
-      )}
-    >
-      <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-jub-orange-500 shadow-md shadow-jub-orange-500/30 sm:h-9 sm:w-9 lg:h-10 lg:w-10">
-        <span className="block h-2.5 w-2.5 rounded-full bg-jub-sage-500 sm:h-3 sm:w-3 lg:h-3.5 lg:w-3.5" />
-      </span>
-      <span className="text-xl font-extrabold tracking-tight text-jub-orange-500 sm:text-2xl lg:text-3xl">
-        JUB
-      </span>
-    </Link>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Burger animé
-// ─────────────────────────────────────────────────────────────
-
-function IconeBurger({ ouvert }: { ouvert: boolean }) {
-  return (
-    <span className="relative flex h-5 w-6 flex-col justify-between" aria-hidden>
-      <span
-        className={cn(
-          "h-0.5 w-full origin-center rounded-full bg-jub-sage-100 transition-all duration-300",
-          ouvert && "translate-y-[9px] rotate-45 bg-jub-orange-500",
-        )}
-      />
-      <span
-        className={cn(
-          "h-0.5 w-full rounded-full bg-jub-sage-100 transition-all duration-200",
-          ouvert ? "opacity-0" : "opacity-100",
-        )}
-      />
-      <span
-        className={cn(
-          "h-0.5 w-full origin-center rounded-full bg-jub-sage-100 transition-all duration-300",
-          ouvert && "-translate-y-[9px] -rotate-45 bg-jub-orange-500",
-        )}
-      />
-    </span>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Menu mobile plein écran
-// ─────────────────────────────────────────────────────────────
-
-function MenuMobile({
-  ouvert, liens, chemin, session, onFermer,
-}: {
-  ouvert: boolean;
-  liens: { href: string; l: string }[];
-  chemin: string;
-  session: InfosSession | null;
-  onFermer: () => void;
-}) {
-  return (
-    <div
-      className={cn(
-        "fixed inset-0 z-40 md:hidden transition-all duration-300",
-        ouvert ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
-      )}
-      aria-hidden={!ouvert}
-    >
-      <div className="absolute inset-0 bg-jub-sage-900/95 backdrop-blur-xl" onClick={onFermer} />
-
-      <nav className="relative flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-        {liens.map((item, i) => {
-          const actif = chemin === item.href || chemin.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "block w-full max-w-xs rounded-2xl px-6 py-4 text-2xl font-bold transition-all",
-                actif ? "bg-jub-sage-700 text-white" : "text-jub-sage-100 hover:bg-jub-sage-700/60 hover:text-white",
-                ouvert ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
-              )}
-              style={{ transitionDelay: ouvert ? `${i * 60}ms` : "0ms" }}
-            >
-              {item.l}
-            </Link>
-          );
-        })}
-
-        <div className="my-4 h-px w-32 bg-jub-sage-700" />
-
-        {session ? (
-          <>
-            <Link
-              href="/app"
-              className="block w-full max-w-xs rounded-2xl bg-jub-orange-500 px-6 py-4 text-2xl font-bold text-jub-sage-950 shadow-lg shadow-jub-orange-500/30 transition-all hover:bg-jub-orange-400"
-            >
-              Mon espace
-            </Link>
-            <button
-              onClick={() => {
-                onFermer();
-                // Déconnexion via lien dédié (rechargement complet pour réinit cookies)
-                window.location.href = "/api/auth/signout";
-              }}
-              className="mt-2 block w-full max-w-xs rounded-2xl border border-jub-sage-100/30 px-6 py-4 text-lg font-semibold text-jub-sage-100 transition-all hover:bg-jub-sage-100/10"
-            >
-              Se déconnecter
-            </button>
-          </>
-        ) : (
-          <>
-            <Link
-              href="/connexion"
-              className="block w-full max-w-xs rounded-2xl bg-jub-orange-500 px-6 py-4 text-2xl font-bold text-jub-sage-950 shadow-lg shadow-jub-orange-500/30 transition-all hover:bg-jub-orange-400"
-            >
-              Connexion
-            </Link>
-            <Link
-              href="/inscription/etudiant"
-              className="mt-2 block w-full max-w-xs rounded-2xl border border-jub-sage-100/30 px-6 py-4 text-lg font-semibold text-jub-sage-100 transition-all hover:bg-jub-sage-100/10"
-            >
-              Créer un compte
-            </Link>
-          </>
-        )}
-      </nav>
-    </div>
+      </div>
+    </header>
   );
 }

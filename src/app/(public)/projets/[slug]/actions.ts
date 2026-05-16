@@ -6,6 +6,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { creerNotification } from "@/domaine/notifications";
+import { limiterDebit } from "@/lib/rate-limit";
 
 const schemaCandidature = z.object({
   projetId: z.string().cuid(),
@@ -21,6 +22,12 @@ export async function soumettreCandidature(formData: FormData): Promise<Resultat
   const session = await auth();
   if (!session?.user?.id) {
     return { succes: false, message: "Connecte-toi pour postuler." };
+  }
+
+  // Anti-spam : 15 candidatures / heure par utilisateur.
+  const limite = limiterDebit(`candidature:${session.user.id}`, 15, 3_600_000);
+  if (!limite.autorise) {
+    return { succes: false, message: "Trop de candidatures envoyées. Réessaie plus tard." };
   }
 
   const parsed = schemaCandidature.safeParse(Object.fromEntries(formData));

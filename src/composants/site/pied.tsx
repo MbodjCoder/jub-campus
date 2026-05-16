@@ -1,59 +1,108 @@
-import Link from "next/link";
+"use client";
 
-// Pied de page : logo identique à la pilule de l'en-tête (cercle orange
-// + centre sage), liens organisés par persona, mentions légales.
+// Pied de page public — port 1:1 de la maquette (screens-public.jsx · FooterPublic).
+
+import Link from "next/link";
+import { Logo } from "@/composants/maquette/primitifs";
+import { Icon } from "@/composants/maquette/icones";
+
+const LIENS = [
+  { l: "À propos", href: "/a-propos" },
+  { l: "Comment ça marche", href: "/comment-ca-marche" },
+  { l: "Entreprises", href: "/entreprises" },
+  { l: "Vérifier un certificat", href: "/verifier" },
+  { l: "Contact", href: "/contact" },
+];
+
+const SOCIALS = [
+  { l: "WhatsApp", icon: <Icon.Whatsapp size={15} />, href: "https://wa.me/221XXXXXXXXX" },
+  { l: "Facebook", icon: <Icon.Facebook size={15} />, href: "https://facebook.com/jubcampus" },
+  { l: "Instagram", icon: <Icon.Instagram size={15} />, href: "https://instagram.com/jubcampus" },
+  { l: "TikTok", icon: <Icon.Tiktok size={15} />, href: "https://tiktok.com/@jubcampus" },
+  { l: "LinkedIn", icon: <Icon.Linkedin size={15} />, href: "https://linkedin.com/company/jubcampus" },
+  { l: "Email", icon: <Icon.Mail size={15} />, href: "mailto:contact@jubcampus.sn" },
+];
+
 export function PiedSite() {
   return (
-    <footer className="border-t border-bordure bg-fond-eleve">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-4">
-        <div className="space-y-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-jub-orange-500 shadow-md shadow-jub-orange-500/30">
-              <span className="block h-3 w-3 rounded-full bg-jub-sage-500" />
-            </span>
-            <span className="text-xl font-extrabold tracking-tight text-jub-orange-500">JUB</span>
-            <span className="text-sm font-semibold text-jub-sage-700">Campus</span>
-          </Link>
-          <p className="max-w-xs text-sm leading-relaxed text-texte-discret">
-            La plateforme sénégalaise de stages par projets, certification vérifiable
-            et insertion professionnelle.
-          </p>
+    <footer style={{ padding: "40px 20px 28px", marginTop: 64, borderTop: "1px solid var(--bordure)" }}>
+      <div
+        style={{
+          maxWidth: 1180,
+          margin: "0 auto",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 20,
+          flexWrap: "wrap",
+        }}
+      >
+        {/* Bloc identité */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Logo mot />
+          <span className="t-xs t-discret">·</span>
+          <span className="t-xs t-discret">Sénégal</span>
         </div>
 
-        <div>
-          <h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-jub-sage-700">Étudiants</h4>
-          <ul className="space-y-2.5 text-sm text-texte-discret">
-            <li><Link href="/projets" className="transition-colors hover:text-jub-orange-600">Trouver un projet</Link></li>
-            <li><Link href="/inscription/etudiant" className="transition-colors hover:text-jub-orange-600">Créer un compte</Link></li>
-            <li><Link href="/classements" className="transition-colors hover:text-jub-orange-600">Classements</Link></li>
-          </ul>
+        {/* Liens texte */}
+        <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+          {LIENS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="t-xs"
+              style={{ cursor: "pointer", color: "var(--sage-700)", fontWeight: 500 }}
+            >
+              {item.l}
+            </Link>
+          ))}
         </div>
 
-        <div>
-          <h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-jub-sage-700">Entreprises &amp; mentors</h4>
-          <ul className="space-y-2.5 text-sm text-texte-discret">
-            <li><Link href="/entreprises" className="transition-colors hover:text-jub-orange-600">Publier un projet</Link></li>
-            <li><Link href="/programmes" className="transition-colors hover:text-jub-orange-600">Programmes sponsorisés</Link></li>
-            <li><Link href="/inscription/mentor" className="transition-colors hover:text-jub-orange-600">Devenir mentor</Link></li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="mb-4 text-sm font-bold uppercase tracking-wider text-jub-sage-700">JUB Campus</h4>
-          <ul className="space-y-2.5 text-sm text-texte-discret">
-            <li><Link href="/a-propos" className="transition-colors hover:text-jub-orange-600">À propos</Link></li>
-            <li><Link href="/contact" className="transition-colors hover:text-jub-orange-600">Contact</Link></li>
-            <li><Link href="/cgu" className="transition-colors hover:text-jub-orange-600">CGU</Link></li>
-            <li><Link href="/confidentialite" className="transition-colors hover:text-jub-orange-600">Confidentialité</Link></li>
-          </ul>
+        {/* Icônes sociales */}
+        <div style={{ display: "flex", gap: 4 }}>
+          {SOCIALS.map((s) => (
+            <a
+              key={s.l}
+              href={s.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={s.l}
+              title={s.l}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 30,
+                height: 30,
+                borderRadius: 999,
+                color: "var(--sage-600)",
+                transition: "all 120ms",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--sage-700)";
+                e.currentTarget.style.color = "var(--orange-400)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "var(--sage-600)";
+              }}
+            >
+              {s.icon}
+            </a>
+          ))}
         </div>
       </div>
 
-      <div className="border-t border-bordure">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-texte-discret sm:flex-row sm:px-6">
-          <span>© {new Date().getFullYear()} JUB Campus · Saint-Louis du Sénégal</span>
-          <span className="italic">Construit pour les étudiants. Validé par les pros.</span>
-        </div>
+      <div
+        style={{
+          maxWidth: 1180,
+          margin: "24px auto 0",
+          paddingTop: 16,
+          borderTop: "1px solid var(--bordure)",
+          textAlign: "center",
+        }}
+      >
+        <span className="t-xs t-discret">© 2026 JUB</span>
       </div>
     </footer>
   );

@@ -169,6 +169,23 @@ export function emailFeedbackRecu(p: {
   };
 }
 
+// Email générique adossé à une notification in-app.
+export function emailNotification(p: {
+  destinataire: string;
+  prenom: string;
+  titre: string;
+  contenu: string;
+  url?: string;
+}): OptionsEnvoi {
+  const html = gabarit({
+    titre: p.titre,
+    contenu: `<p>Bonjour ${p.prenom},</p><p>${p.contenu}</p>`,
+    ctaLibelle: p.url ? "Ouvrir JUB Campus" : undefined,
+    ctaHref: p.url,
+  });
+  return { destinataire: p.destinataire, sujet: `JUB Campus — ${p.titre}`, html };
+}
+
 export function emailEvaluationRecue(p: {
   destinataire: string;
   prenomDestinataire: string;
