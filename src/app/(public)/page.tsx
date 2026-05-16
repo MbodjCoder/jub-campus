@@ -1,11 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { GraduationCap, Award, Wallet, HeartHandshake, type LucideIcon } from "lucide-react";
+import { auth } from "@/auth";
 import { Bouton } from "@/composants/ui/bouton";
 import { Carte, CorpsCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
 import { Insigne } from "@/composants/ui/insigne";
 import { BandeauLogos } from "@/composants/site/bandeau-logos";
 import { cn } from "@/lib/utils";
+import { urlsParRole } from "@/lib/role";
 
 // Photos Unsplash retenues (URLs stables, libres de droits).
 const PHOTOS = {
@@ -16,14 +18,16 @@ const PHOTOS = {
   ctaFinal: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=2400&q=85",
 } as const;
 
-export default function PageAccueil() {
+export default async function PageAccueil() {
+  const session = await auth();
+  const urlEspace = session?.user?.id ? urlsParRole(session.user.role).espace : null;
   return (
     <>
-      <Hero />
+      <Hero urlEspace={urlEspace} />
       <SectionTroisPublics />
       <SectionFonctionnement />
       <SectionTypesProjets />
-      <SectionAppelAction />
+      <SectionAppelAction urlEspace={urlEspace} />
     </>
   );
 }
@@ -32,7 +36,7 @@ export default function PageAccueil() {
 // Hero — image plein écran + texte sage + stats + logos défilants
 // ─────────────────────────────────────────────────────────────
 
-function Hero() {
+function Hero({ urlEspace }: { urlEspace: string | null }) {
   return (
     <section className="relative -mt-16 flex min-h-screen flex-col overflow-hidden">
       <Image
@@ -58,20 +62,41 @@ function Hero() {
           </h1>
 
           <div className="mt-10 flex flex-wrap gap-3">
-            <Link href="/inscription/etudiant">
-              <Bouton apparence="accent" taille="lg" className="shadow-2xl shadow-jub-orange-500/40">
-                Commencer gratuitement →
-              </Bouton>
-            </Link>
-            <Link href="/comment-ca-marche">
-              <Bouton
-                apparence="contour"
-                taille="lg"
-                className="border-jub-sage-100/30 bg-jub-sage-100/10 text-jub-sage-100 backdrop-blur-md hover:bg-jub-sage-100/20"
-              >
-                Comment ça marche
-              </Bouton>
-            </Link>
+            {urlEspace ? (
+              <>
+                <Link href={urlEspace}>
+                  <Bouton apparence="accent" taille="lg" className="shadow-2xl shadow-jub-orange-500/40">
+                    Mon espace JUB →
+                  </Bouton>
+                </Link>
+                <Link href="/projets">
+                  <Bouton
+                    apparence="contour"
+                    taille="lg"
+                    className="border-jub-sage-100/30 bg-jub-sage-100/10 text-jub-sage-100 backdrop-blur-md hover:bg-jub-sage-100/20"
+                  >
+                    Voir les projets
+                  </Bouton>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/inscription/etudiant">
+                  <Bouton apparence="accent" taille="lg" className="shadow-2xl shadow-jub-orange-500/40">
+                    Commencer gratuitement →
+                  </Bouton>
+                </Link>
+                <Link href="/comment-ca-marche">
+                  <Bouton
+                    apparence="contour"
+                    taille="lg"
+                    className="border-jub-sage-100/30 bg-jub-sage-100/10 text-jub-sage-100 backdrop-blur-md hover:bg-jub-sage-100/20"
+                  >
+                    Comment ça marche
+                  </Bouton>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
@@ -367,7 +392,7 @@ function SectionTypesProjets() {
 // Appel à action final
 // ─────────────────────────────────────────────────────────────
 
-function SectionAppelAction() {
+function SectionAppelAction({ urlEspace }: { urlEspace: string | null }) {
   return (
     <section className="relative overflow-hidden bg-jub-sage-900 text-white">
       <Image
@@ -388,11 +413,19 @@ function SectionAppelAction() {
           Crée ton compte gratuit, ajoute tes compétences, postule au premier projet qui te parle.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/inscription/etudiant">
-            <Bouton apparence="accent" taille="lg" className="shadow-xl shadow-jub-orange-500/40">
-              Je crée mon compte
-            </Bouton>
-          </Link>
+          {urlEspace ? (
+            <Link href={urlEspace}>
+              <Bouton apparence="accent" taille="lg" className="shadow-xl shadow-jub-orange-500/40">
+                Rejoindre mon espace
+              </Bouton>
+            </Link>
+          ) : (
+            <Link href="/inscription/etudiant">
+              <Bouton apparence="accent" taille="lg" className="shadow-xl shadow-jub-orange-500/40">
+                Je crée mon compte
+              </Bouton>
+            </Link>
+          )}
           <Link href="/projets">
             <Bouton
               apparence="contour"

@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Building2, FolderKanban, Award, AlertTriangle, Users, FileText,
 } from "lucide-react";
 import { auth } from "@/auth";
+import { MenuUtilisateur } from "@/composants/site/menu-utilisateur";
 
 const liens = [
   { libelle: "Vue d'ensemble", href: "/admin",                icone: LayoutDashboard },
@@ -17,8 +18,16 @@ const liens = [
 
 export default async function MiseAdmin({ children }: { children: React.ReactNode }) {
   const session = await auth();
-  if (!session?.user?.id) redirect("/connexion");
+  if (!session?.user?.id) redirect("/connexion?suivant=/admin");
   if (session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") redirect("/");
+
+  const infos = {
+    id: session.user.id,
+    nom: session.user.name ?? null,
+    email: session.user.email ?? null,
+    image: session.user.image ?? null,
+    role: session.user.role,
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -31,9 +40,7 @@ export default async function MiseAdmin({ children }: { children: React.ReactNod
             <span className="text-lg font-extrabold tracking-tight text-jub-orange-500">JUB</span>
             <span className="text-sm font-semibold text-jub-sage-100">Campus · Administration</span>
           </Link>
-          <Link href="/" className="text-xs text-jub-sage-100 hover:text-jub-orange-500">
-            Quitter l&apos;admin →
-          </Link>
+          <MenuUtilisateur session={infos} surFondSombre />
         </div>
       </header>
 

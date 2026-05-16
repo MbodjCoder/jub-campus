@@ -1,14 +1,21 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { Carte, EnteteCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
 import { FormulaireInscriptionEtudiant } from "@/composants/auth/formulaire-inscription-etudiant";
+import { urlsParRole } from "@/lib/role";
 
 export const metadata = { title: "Inscription étudiant" };
 
-export default function PageInscriptionEtudiant() {
+export default async function PageInscriptionEtudiant() {
+  const session = await auth();
+  if (session?.user?.id) {
+    redirect(urlsParRole(session.user.role).espace);
+  }
   return (
     <section className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
       <div className="mb-6">
-        <Link href="/inscription" className="text-sm text-jub-vert-700 hover:underline">← Changer de profil</Link>
+        <Link href="/inscription" className="text-sm text-jub-orange-600 hover:underline">← Changer de profil</Link>
       </div>
       <Carte>
         <EnteteCarte>
@@ -20,7 +27,7 @@ export default function PageInscriptionEtudiant() {
         <FormulaireInscriptionEtudiant />
       </Carte>
       <p className="mt-6 text-center text-sm text-texte-discret">
-        Déjà inscrit ? <Link href="/connexion" className="text-jub-vert-700 hover:underline">Connecte-toi</Link>
+        Déjà inscrit ? <Link href="/connexion" className="text-jub-orange-600 hover:underline">Connecte-toi</Link>
       </p>
     </section>
   );

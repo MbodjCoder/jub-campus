@@ -4,10 +4,30 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { MenuUtilisateur } from "@/composants/site/menu-utilisateur";
+import type { Role } from "@/generated/prisma/client";
 
-// En-tête JUB Campus : pilule logo + pilule nav (desktop) / menu burger (mobile).
-// Toujours fixe en haut. Reste visible au défilement.
-export function EnTeteSite() {
+interface InfosSession {
+  id: string;
+  nom: string | null;
+  email: string | null;
+  image: string | null;
+  role: Role;
+}
+
+interface Proprietes {
+  /** Session sérialisée. null = non connecté. */
+  session: InfosSession | null;
+}
+
+// En-tête JUB Campus :
+//  - Pilule logo à gauche
+//  - Pilule de navigation au centre/droite
+//  - À droite : MenuUtilisateur si connecté, sinon « Connexion + Commencer »
+//  - Toujours fixée en haut (visible au défilement)
+//  - Sur l'accueil : transparente sur l'image jusqu'au scroll
+//  - Mobile (< md) : burger plein écran
+export function EnTeteSite({ session }: Proprietes) {
   const chemin = usePathname();
   const surAccueil = chemin === "/";
   const [defile, setDefile] = useState(false);
@@ -20,12 +40,8 @@ export function EnTeteSite() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Fermer le menu mobile à chaque navigation.
-  useEffect(() => {
-    setMenuOuvert(false);
-  }, [chemin]);
+  useEffect(() => { setMenuOuvert(false); }, [chemin]);
 
-  // Bloquer le scroll du body quand le menu mobile est ouvert.
   useEffect(() => {
     if (menuOuvert) {
       document.body.style.overflow = "hidden";
@@ -33,14 +49,13 @@ export function EnTeteSite() {
     }
   }, [menuOuvert]);
 
-  const fondPilule = surAccueil && !defile
-    ? "bg-jub-sage-700/70"
-    : "bg-jub-sage-700/90";
+  const surFondSombre = surAccueil && !defile;
+  const fondPilule = surFondSombre ? "bg-jub-sage-700/70" : "bg-jub-sage-700/90";
 
   const liens = [
-    { href: "/projets", l: "Projets" },
+    { href: "/projets",     l: "Projets" },
     { href: "/entreprises", l: "Entreprises" },
-    { href: "/a-propos", l: "À propos" },
+    { href: "/a-propos",    l: "À propos" },
   ];
 
   return (
@@ -71,15 +86,25 @@ export function EnTeteSite() {
                 </Link>
               );
             })}
-            <Link
-              href="/connexion"
-              className="rounded-full px-4 py-1.5 text-sm font-bold text-jub-orange-500 transition-colors hover:text-jub-orange-400 lg:px-5"
-            >
-              Connexion
-            </Link>
+            {/* Sans session : Connexion en orange. Avec session : Menu Utilisateur */}
+            {!session ? (
+              <Link
+                href="/connexion"
+                className="rounded-full px-4 py-1.5 text-sm font-bold text-jub-orange-500 transition-colors hover:text-jub-orange-400 lg:px-5"
+              >
+                Connexion
+              </Link>
+            ) : null}
           </nav>
 
-          {/* Bouton burger (< md) */}
+          {/* Zone droite : menu user (si connecté) ou burger mobile */}
+          {session ? (
+            <div className="hidden md:block">
+              <MenuUtilisateur session={session} surFondSombre={surFondSombre} />
+            </div>
+          ) : null}
+
+          {/* Bouton burger (< md) — toujours visible */}
           <button
             type="button"
             aria-label={menuOuvert ? "Fermer le menu" : "Ouvrir le menu"}
@@ -95,14 +120,19 @@ export function EnTeteSite() {
         </div>
       </header>
 
-      {/* Menu mobile en plein écran */}
-      <MenuMobile ouvert={menuOuvert} liens={liens} chemin={chemin} onFermer={() => setMenuOuvert(false)} />
+      <MenuMobile
+        ouvert={menuOuvert}
+        liens={liens}
+        chemin={chemin}
+        session={session}
+        onFermer={() => setMenuOuvert(false)}
+      />
     </>
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-// Logo JUB : cercle orange avec point sage au centre + texte
+// Logo
 // ─────────────────────────────────────────────────────────────
 
 function LogoJub({ fondPilule }: { fondPilule: string }) {
@@ -125,7 +155,7 @@ function LogoJub({ fondPilule }: { fondPilule: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Burger animé (ouvert / fermé)
+// Burger animé
 // ─────────────────────────────────────────────────────────────
 
 function IconeBurger({ ouvert }: { ouvert: boolean }) {
@@ -134,7 +164,7 @@ function IconeBurger({ ouvert }: { ouvert: boolean }) {
       <span
         className={cn(
           "h-0.5 w-full origin-center rounded-full bg-jub-sage-100 transition-all duration-300",
-          ouvert ? "translate-y-[9px] rotate-45 bg-jub-orange-500" : "",
+          ouvert && "translate-y-[9px] rotate-45 bg-jub-orange-500",
         )}
       />
       <span
@@ -146,7 +176,7 @@ function IconeBurger({ ouvert }: { ouvert: boolean }) {
       <span
         className={cn(
           "h-0.5 w-full origin-center rounded-full bg-jub-sage-100 transition-all duration-300",
-          ouvert ? "-translate-y-[9px] -rotate-45 bg-jub-orange-500" : "",
+          ouvert && "-translate-y-[9px] -rotate-45 bg-jub-orange-500",
         )}
       />
     </span>
@@ -158,11 +188,12 @@ function IconeBurger({ ouvert }: { ouvert: boolean }) {
 // ─────────────────────────────────────────────────────────────
 
 function MenuMobile({
-  ouvert, liens, chemin, onFermer,
+  ouvert, liens, chemin, session, onFermer,
 }: {
   ouvert: boolean;
   liens: { href: string; l: string }[];
   chemin: string;
+  session: InfosSession | null;
   onFermer: () => void;
 }) {
   return (
@@ -185,7 +216,6 @@ function MenuMobile({
               className={cn(
                 "block w-full max-w-xs rounded-2xl px-6 py-4 text-2xl font-bold transition-all",
                 actif ? "bg-jub-sage-700 text-white" : "text-jub-sage-100 hover:bg-jub-sage-700/60 hover:text-white",
-                "transition-transform",
                 ouvert ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
               )}
               style={{ transitionDelay: ouvert ? `${i * 60}ms` : "0ms" }}
@@ -197,27 +227,41 @@ function MenuMobile({
 
         <div className="my-4 h-px w-32 bg-jub-sage-700" />
 
-        <Link
-          href="/connexion"
-          className={cn(
-            "block w-full max-w-xs rounded-2xl bg-jub-orange-500 px-6 py-4 text-2xl font-bold text-jub-sage-950 shadow-lg shadow-jub-orange-500/30 transition-all hover:bg-jub-orange-400",
-            ouvert ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
-          )}
-          style={{ transitionDelay: ouvert ? `${liens.length * 60 + 30}ms` : "0ms" }}
-        >
-          Connexion
-        </Link>
-
-        <Link
-          href="/inscription/etudiant"
-          className={cn(
-            "mt-2 block w-full max-w-xs rounded-2xl border border-jub-sage-100/30 px-6 py-4 text-lg font-semibold text-jub-sage-100 transition-all hover:bg-jub-sage-100/10",
-            ouvert ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
-          )}
-          style={{ transitionDelay: ouvert ? `${liens.length * 60 + 90}ms` : "0ms" }}
-        >
-          Créer un compte
-        </Link>
+        {session ? (
+          <>
+            <Link
+              href="/app"
+              className="block w-full max-w-xs rounded-2xl bg-jub-orange-500 px-6 py-4 text-2xl font-bold text-jub-sage-950 shadow-lg shadow-jub-orange-500/30 transition-all hover:bg-jub-orange-400"
+            >
+              Mon espace
+            </Link>
+            <button
+              onClick={() => {
+                onFermer();
+                // Déconnexion via lien dédié (rechargement complet pour réinit cookies)
+                window.location.href = "/api/auth/signout";
+              }}
+              className="mt-2 block w-full max-w-xs rounded-2xl border border-jub-sage-100/30 px-6 py-4 text-lg font-semibold text-jub-sage-100 transition-all hover:bg-jub-sage-100/10"
+            >
+              Se déconnecter
+            </button>
+          </>
+        ) : (
+          <>
+            <Link
+              href="/connexion"
+              className="block w-full max-w-xs rounded-2xl bg-jub-orange-500 px-6 py-4 text-2xl font-bold text-jub-sage-950 shadow-lg shadow-jub-orange-500/30 transition-all hover:bg-jub-orange-400"
+            >
+              Connexion
+            </Link>
+            <Link
+              href="/inscription/etudiant"
+              className="mt-2 block w-full max-w-xs rounded-2xl border border-jub-sage-100/30 px-6 py-4 text-lg font-semibold text-jub-sage-100 transition-all hover:bg-jub-sage-100/10"
+            >
+              Créer un compte
+            </Link>
+          </>
+        )}
       </nav>
     </div>
   );

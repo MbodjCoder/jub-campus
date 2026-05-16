@@ -1,14 +1,21 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { Carte, EnteteCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
 import { FormulaireInscriptionEntreprise } from "@/composants/auth/formulaire-inscription-entreprise";
+import { urlsParRole } from "@/lib/role";
 
 export const metadata = { title: "Inscription entreprise" };
 
-export default function PageInscriptionEntreprise() {
+export default async function PageInscriptionEntreprise() {
+  const session = await auth();
+  if (session?.user?.id) {
+    redirect(urlsParRole(session.user.role).espace);
+  }
   return (
     <section className="mx-auto max-w-2xl px-4 py-12 sm:px-6">
       <div className="mb-6">
-        <Link href="/inscription" className="text-sm text-jub-vert-700 hover:underline">← Changer de profil</Link>
+        <Link href="/inscription" className="text-sm text-jub-orange-600 hover:underline">← Changer de profil</Link>
       </div>
       <Carte>
         <EnteteCarte>
