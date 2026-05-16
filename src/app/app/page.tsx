@@ -181,15 +181,15 @@ export default async function PageTableauDeBord() {
           overflow: "hidden",
         }}
       >
-        <BlocKpi libelle="Score JUB" valeur={etudiant.scoreJub} icon={<Icon.TrendingUp size={14} />} href="/app/portfolio" />
+        <BlocKpi libelle="Score JUB" valeur={etudiant.scoreJub} icon={<Icon.TrendingUp size={17} />} href="/app/portfolio" />
         <BlocKpi
           libelle="Job actif"
           valeur={projetsActifs.length}
           detail={jobEnCours ? `J${jourActuel}/${jobEnCours.dureeJours}` : undefined}
-          icon={<Icon.Kanban size={14} />}
+          icon={<Icon.Kanban size={17} />}
           href="/app/mes-projets"
         />
-        <BlocKpi libelle="Certificats" valeur={etudiant.certificats.length} icon={<Icon.ShieldCheck size={14} />} href="/app/portfolio" />
+        <BlocKpi libelle="Certificats" valeur={etudiant.certificats.length} icon={<Icon.ShieldCheck size={17} />} href="/app/portfolio" />
       </div>
 
       <div style={{ display: "grid", gap: 20, gridTemplateColumns: "minmax(0, 1fr)" }} className="tdb-grid">
@@ -399,28 +399,38 @@ function BlocKpi({
     <Link
       href={href}
       style={{
-        padding: "18px 20px",
+        padding: "20px 10px",
         background: "var(--fond-eleve)",
         border: 0,
-        textAlign: "left",
         cursor: "pointer",
         display: "flex",
         flexDirection: "column",
-        gap: 6,
-        position: "relative",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        gap: 8,
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div className="t-eyebrow" style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <span style={{ color: "var(--sage-500)" }}>{icon}</span>
-          {libelle}
-        </div>
-        <Icon.ArrowUpRight size={13} style={{ color: "var(--sage-400)" }} />
-      </div>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-        <span style={{ fontSize: 26, fontWeight: 600, letterSpacing: "-0.02em" }}>{valeur}</span>
-      </div>
-      {detail ? <div className="t-xs t-discret">{detail}</div> : null}
+      <span
+        style={{
+          width: 38,
+          height: 38,
+          borderRadius: 10,
+          background: "var(--sage-700)",
+          color: "var(--orange-400)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </span>
+      <span style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1 }}>
+        {valeur}
+      </span>
+      <span className="t-eyebrow">{libelle}</span>
+      {detail ? <span className="t-xs t-discret">{detail}</span> : null}
     </Link>
   );
 }
