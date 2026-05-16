@@ -6,6 +6,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { emettreCertificat, urlPdfCertificat, urlVerification } from "@/domaine/certificats";
+import { scannerEtOctroyerBadges } from "@/domaine/badges";
 import {
   envoyerEmail,
   emailCertificatEmis,
@@ -466,6 +467,9 @@ export async function emettreCertificatDemo(projetId: string): Promise<ResultatE
     where: { id: projetId },
     data: { statut: "CERTIFIE", termineLe: new Date() },
   });
+
+  // Octroi automatique de badges (best-effort, ne bloque rien).
+  await scannerEtOctroyerBadges(etudiant.id).catch(() => undefined);
 
   // Email "certificat émis" à l'étudiant.
   const utilisateurEtudiant = await prisma.utilisateur.findUnique({
