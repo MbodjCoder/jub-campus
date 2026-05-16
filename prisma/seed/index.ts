@@ -3,8 +3,15 @@
 // Idempotent : utilise upsert sur les clés uniques.
 
 import { PrismaPg } from "@prisma/adapter-pg";
-import "dotenv/config";
+import { config as chargerDotenv } from "dotenv";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { PrismaClient } from "../../src/generated/prisma/client";
+
+for (const fichier of [".env.local", ".env"]) {
+  const chemin = resolve(process.cwd(), fichier);
+  if (existsSync(chemin)) chargerDotenv({ path: chemin, override: false });
+}
 
 const urlBdd = process.env.DATABASE_URL;
 if (!urlBdd) {
