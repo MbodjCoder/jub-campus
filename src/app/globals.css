@@ -1,29 +1,38 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────
-   Tokens design JUB Campus
-   Palette : vert teranga, jaune accent, bleu liens, neutres pierre.
+   Palette officielle JUB Campus
+   - Marque    : #ffaa00 (orange chaud)
+   - Sage      : #5f6c57 (vert kaki — texte hero, fonds sombres)
+   - Gris clair: #ced4d2 (labels nav, texte secondaire sur sage)
    ───────────────────────────────────────────────────────────── */
 
 :root {
-  /* Couleurs marque */
-  --jub-vert-50: #ecfdf5;
-  --jub-vert-100: #d1fae5;
-  --jub-vert-200: #a7f3d0;
-  --jub-vert-500: #10b981;
-  --jub-vert-700: #047857;
-  --jub-vert-900: #0f3d2e;
-  --jub-vert-950: #082a20;
+  /* Échelle orange (marque) */
+  --jub-orange-50:  #fff7e6;
+  --jub-orange-100: #ffecb3;
+  --jub-orange-200: #ffd980;
+  --jub-orange-300: #ffc04d;
+  --jub-orange-400: #ffb31a;
+  --jub-orange-500: #ffaa00;      /* couleur primaire de marque */
+  --jub-orange-600: #cc8800;
+  --jub-orange-700: #996600;
 
-  --jub-jaune-400: #fbbf24;
-  --jub-jaune-500: #f5a524;
-  --jub-jaune-600: #d97706;
+  /* Échelle sage (vert kaki) */
+  --jub-sage-50:  #eef0ed;
+  --jub-sage-100: #ced4d2;        /* gris clair (labels) */
+  --jub-sage-200: #b3bcb1;
+  --jub-sage-300: #97a092;
+  --jub-sage-400: #7d8a75;
+  --jub-sage-500: #5f6c57;        /* sage primaire (texte hero) */
+  --jub-sage-600: #4a5444;
+  --jub-sage-700: #3a443a;
+  --jub-sage-800: #2a3328;
+  --jub-sage-900: #1f2820;
+  --jub-sage-950: #141a13;
 
-  --jub-bleu-500: #1e40af;
-  --jub-bleu-600: #1e3a8a;
-
-  /* Neutres */
-  --jub-pierre-50: #fafaf9;
+  /* Neutres pierre */
+  --jub-pierre-50:  #fafaf9;
   --jub-pierre-100: #f5f5f4;
   --jub-pierre-200: #e7e5e4;
   --jub-pierre-300: #d6d3d1;
@@ -32,10 +41,23 @@
   --jub-pierre-900: #1c1917;
   --jub-pierre-950: #0c0a09;
 
+  /* Alias héritage (compat avec code existant) */
+  --jub-vert-50:  #eef0ed;
+  --jub-vert-100: #ced4d2;
+  --jub-vert-200: #b3bcb1;
+  --jub-vert-500: #7d8a75;
+  --jub-vert-700: #3a443a;
+  --jub-vert-900: #2a3328;
+  --jub-vert-950: #1f2820;
+
+  --jub-jaune-400: var(--jub-orange-400);
+  --jub-jaune-500: var(--jub-orange-500);
+  --jub-jaune-600: var(--jub-orange-600);
+
   /* Statuts */
   --jub-succes: #16a34a;
   --jub-alerte: #dc2626;
-  --jub-info: #0ea5e9;
+  --jub-info:   #0ea5e9;
 
   /* Sémantique */
   --fond: var(--jub-pierre-50);
@@ -43,20 +65,20 @@
   --texte: var(--jub-pierre-900);
   --texte-discret: var(--jub-pierre-500);
   --bordure: var(--jub-pierre-200);
-  --primaire: var(--jub-vert-900);
+  --primaire: var(--jub-sage-700);
   --primaire-texte: #ffffff;
-  --accent: var(--jub-jaune-500);
+  --accent: var(--jub-orange-500);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --fond: var(--jub-pierre-950);
-    --fond-eleve: var(--jub-pierre-900);
+    --fond: var(--jub-sage-950);
+    --fond-eleve: var(--jub-sage-900);
     --texte: var(--jub-pierre-50);
-    --texte-discret: var(--jub-pierre-300);
-    --bordure: var(--jub-pierre-700);
-    --primaire: var(--jub-vert-500);
-    --primaire-texte: var(--jub-pierre-950);
+    --texte-discret: var(--jub-sage-100);
+    --bordure: var(--jub-sage-700);
+    --primaire: var(--jub-orange-500);
+    --primaire-texte: var(--jub-sage-950);
   }
 }
 
@@ -73,7 +95,31 @@
   --color-alerte: var(--jub-alerte);
   --color-info: var(--jub-info);
 
-  --color-jub-vert-50: var(--jub-vert-50);
+  /* Tokens orange */
+  --color-jub-orange-50:  var(--jub-orange-50);
+  --color-jub-orange-100: var(--jub-orange-100);
+  --color-jub-orange-200: var(--jub-orange-200);
+  --color-jub-orange-300: var(--jub-orange-300);
+  --color-jub-orange-400: var(--jub-orange-400);
+  --color-jub-orange-500: var(--jub-orange-500);
+  --color-jub-orange-600: var(--jub-orange-600);
+  --color-jub-orange-700: var(--jub-orange-700);
+
+  /* Tokens sage */
+  --color-jub-sage-50:  var(--jub-sage-50);
+  --color-jub-sage-100: var(--jub-sage-100);
+  --color-jub-sage-200: var(--jub-sage-200);
+  --color-jub-sage-300: var(--jub-sage-300);
+  --color-jub-sage-400: var(--jub-sage-400);
+  --color-jub-sage-500: var(--jub-sage-500);
+  --color-jub-sage-600: var(--jub-sage-600);
+  --color-jub-sage-700: var(--jub-sage-700);
+  --color-jub-sage-800: var(--jub-sage-800);
+  --color-jub-sage-900: var(--jub-sage-900);
+  --color-jub-sage-950: var(--jub-sage-950);
+
+  /* Alias héritage */
+  --color-jub-vert-50:  var(--jub-vert-50);
   --color-jub-vert-100: var(--jub-vert-100);
   --color-jub-vert-200: var(--jub-vert-200);
   --color-jub-vert-500: var(--jub-vert-500);
@@ -81,9 +127,18 @@
   --color-jub-vert-900: var(--jub-vert-900);
   --color-jub-vert-950: var(--jub-vert-950);
 
-  --color-jub-jaune-400: var(--jub-jaune-400);
-  --color-jub-jaune-500: var(--jub-jaune-500);
-  --color-jub-jaune-600: var(--jub-jaune-600);
+  --color-jub-jaune-400: var(--jub-orange-400);
+  --color-jub-jaune-500: var(--jub-orange-500);
+  --color-jub-jaune-600: var(--jub-orange-600);
+
+  --color-jub-pierre-50:  var(--jub-pierre-50);
+  --color-jub-pierre-100: var(--jub-pierre-100);
+  --color-jub-pierre-200: var(--jub-pierre-200);
+  --color-jub-pierre-300: var(--jub-pierre-300);
+  --color-jub-pierre-500: var(--jub-pierre-500);
+  --color-jub-pierre-700: var(--jub-pierre-700);
+  --color-jub-pierre-900: var(--jub-pierre-900);
+  --color-jub-pierre-950: var(--jub-pierre-950);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -93,6 +148,7 @@
   --radius: 10px;
   --radius-lg: 14px;
   --radius-xl: 20px;
+  --radius-2xl: 28px;
 }
 
 body {
@@ -103,28 +159,35 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Focus visible accessible */
 *:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* Scrollbar fine */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--jub-pierre-300);
-  border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--jub-pierre-500);
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--jub-pierre-300); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--jub-pierre-500); }
+
+::selection {
+  background: var(--jub-orange-500);
+  color: var(--jub-sage-950);
 }
 
-/* Sélection */
-::selection {
-  background: var(--jub-jaune-500);
-  color: var(--jub-pierre-950);
+/* ─────────────────────────────────────────────────────────────
+   Animation marquee : défilement infini horizontal des logos
+   La duplication du contenu permet une boucle sans saut visible.
+   ───────────────────────────────────────────────────────────── */
+
+@keyframes jub-defiler-logos {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.jub-marquee {
+  animation: jub-defiler-logos 45s linear infinite;
+}
+
+.jub-marquee:hover {
+  animation-play-state: paused;
 }

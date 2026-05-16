@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Bouton } from "@/composants/ui/bouton";
 import { Carte, CorpsCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
 import { Insigne } from "@/composants/ui/insigne";
+import { BandeauLogos } from "@/composants/site/bandeau-logos";
 import { cn } from "@/lib/utils";
 
 // Photos Unsplash retenues (URLs stables, libres de droits).
@@ -18,23 +19,21 @@ export default function PageAccueil() {
   return (
     <>
       <Hero />
-      <BandeauChiffres />
       <SectionTroisPublics />
       <SectionFonctionnement />
       <SectionTypesProjets />
-      <SectionPartenaires />
       <SectionAppelAction />
     </>
   );
 }
 
 // ─────────────────────────────────────────────────────────────
-// Hero
+// Hero — image plein écran + texte sage + stats + logos défilants
 // ─────────────────────────────────────────────────────────────
 
 function Hero() {
   return (
-    <section className="relative -mt-16 flex min-h-[92vh] items-center overflow-hidden pt-16">
+    <section className="relative -mt-16 flex min-h-screen flex-col overflow-hidden">
       <Image
         src={PHOTOS.hero}
         alt="Étudiants travaillant en équipe"
@@ -43,32 +42,23 @@ function Hero() {
         sizes="100vw"
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-jub-vert-950/92 via-jub-vert-950/70 to-jub-vert-950/20" />
-      <div className="absolute inset-0 bg-gradient-to-t from-jub-vert-950/70 via-transparent to-jub-vert-950/20" />
+      {/* Overlay sage uniforme pour respecter la direction artistique */}
+      <div className="absolute inset-0 bg-jub-sage-900/85" />
+      <div className="absolute inset-0 bg-gradient-to-b from-jub-sage-900/40 via-transparent to-jub-sage-900/60" />
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 sm:py-28">
-        <div className="max-w-2xl space-y-7 text-white">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium backdrop-blur-md">
-            <span className="h-1.5 w-1.5 rounded-full bg-jub-jaune-400" />
-            Pilote UGB Saint-Louis · Phase 1
-          </span>
-
-          <h1 className="text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[1.04] tracking-tight">
-            L&apos;expérience pro<br />
-            <span className="bg-gradient-to-r from-jub-jaune-400 to-jub-jaune-500 bg-clip-text text-transparent">
-              qui change tout.
-            </span>
+      <div className="relative z-10 flex flex-1 flex-col pt-28 sm:pt-32">
+        <div className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6">
+          <h1
+            className="text-[clamp(3rem,9vw,7.5rem)] font-bold leading-[1.02] tracking-tight text-jub-sage-500"
+            style={{ textShadow: "0 4px 30px rgba(0,0,0,0.25)" }}
+          >
+            L&apos;experience<br />
+            Qui change tout&nbsp;!
           </h1>
 
-          <p className="max-w-xl text-lg text-white/85 sm:text-xl">
-            Même sans réseau et sans stage classique, travaille sur de vrais projets,
-            prouve tes compétences avec des certificats vérifiables et accède aux
-            entreprises qui te cherchent.
-          </p>
-
-          <div className="flex flex-wrap gap-3">
+          <div className="mt-10 flex flex-wrap gap-3">
             <Link href="/inscription/etudiant">
-              <Bouton apparence="accent" taille="lg" className="shadow-2xl shadow-jub-jaune-500/40">
+              <Bouton apparence="accent" taille="lg" className="shadow-2xl shadow-jub-orange-500/40">
                 Commencer gratuitement →
               </Bouton>
             </Link>
@@ -76,61 +66,37 @@ function Hero() {
               <Bouton
                 apparence="contour"
                 taille="lg"
-                className="border-white/30 bg-white/10 text-white backdrop-blur-md hover:bg-white/20"
+                className="border-jub-sage-100/30 bg-jub-sage-100/10 text-jub-sage-100 backdrop-blur-md hover:bg-jub-sage-100/20"
               >
-                Voir comment ça marche
+                Comment ça marche
               </Bouton>
             </Link>
           </div>
-
-          <ul className="grid max-w-xl grid-cols-2 gap-x-6 gap-y-2 pt-4 text-sm text-white/75">
-            {[
-              "100% gratuit étudiants",
-              "Certificats QR vérifiables",
-              "Portfolio public partageable",
-              "Mentorat intégré",
-            ].map((item) => (
-              <li key={item} className="flex items-center gap-2">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-jub-jaune-400" />
-                {item}
-              </li>
-            ))}
-          </ul>
         </div>
-      </div>
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 hidden sm:block">
-        <div className="flex flex-col items-center gap-1 text-white/60 animate-pulse">
-          <span className="text-[10px] uppercase tracking-widest">Découvrir</span>
-          <span className="text-xl">↓</span>
+        <div className="mx-auto mt-16 grid w-full max-w-7xl grid-cols-2 gap-6 px-4 pb-8 sm:px-6 sm:pb-12">
+          <Stat valeur="+20 000" libelle="Partenaires" />
+          <Stat valeur="+200" libelle="Emplois" />
+        </div>
+
+        <div className="border-t border-jub-sage-100/10 bg-jub-sage-900/60 backdrop-blur-sm">
+          <BandeauLogos surFondSombre />
         </div>
       </div>
     </section>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Bandeau chiffres flottant
-// ─────────────────────────────────────────────────────────────
-
-function BandeauChiffres() {
-  const chiffres = [
-    { valeur: "1", libelle: "université pilote (UGB)" },
-    { valeur: "7+", libelle: "universités prévues an 1" },
-    { valeur: "100%", libelle: "gratuit étudiants" },
-    { valeur: "QR", libelle: "vérification publique" },
-  ];
+function Stat({ valeur, libelle }: { valeur: string; libelle: string }) {
   return (
-    <section className="relative z-10 -mt-14 px-4 sm:px-6">
-      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-3 rounded-2xl border border-bordure bg-fond-eleve p-6 shadow-xl shadow-jub-vert-950/5 sm:grid-cols-4 sm:gap-6 sm:p-8">
-        {chiffres.map((c) => (
-          <div key={c.libelle} className="text-center sm:text-left">
-            <p className="text-3xl font-bold tracking-tight text-jub-vert-900 sm:text-4xl">{c.valeur}</p>
-            <p className="mt-1 text-xs text-texte-discret sm:text-sm">{c.libelle}</p>
-          </div>
-        ))}
-      </div>
-    </section>
+    <div className="flex items-baseline justify-center gap-3 sm:justify-start sm:gap-4">
+      <span className="text-[clamp(2rem,5vw,3.75rem)] font-bold tracking-tight text-jub-orange-500">
+        {valeur}
+      </span>
+      <span className="text-[clamp(1rem,2.5vw,1.75rem)] font-medium italic text-jub-sage-100">
+        {libelle}
+      </span>
+    </div>
   );
 }
 
@@ -147,8 +113,8 @@ function SectionTroisPublics() {
       href: "/inscription/etudiant",
       libelleLien: "Créer mon compte étudiant",
       image: PHOTOS.etudiant,
-      gradient: "bg-gradient-to-br from-jub-vert-950/85 via-jub-vert-900/75 to-jub-vert-700/50",
-      accent: "text-jub-jaune-400",
+      gradient: "bg-gradient-to-br from-jub-sage-900/85 via-jub-sage-700/75 to-jub-sage-500/50",
+      accent: "text-jub-orange-400",
     },
     {
       tag: "ENTREPRISES",
@@ -187,7 +153,7 @@ function SectionTroisPublics() {
       <div className="grid gap-5 md:grid-cols-3">
         {roles.map((r) => (
           <Link key={r.tag} href={r.href} className="group block">
-            <div className="relative h-full overflow-hidden rounded-2xl border border-bordure bg-jub-vert-950 transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-2xl group-hover:shadow-jub-vert-950/20">
+            <div className="relative h-full overflow-hidden rounded-2xl border border-bordure bg-jub-sage-900 transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-2xl group-hover:shadow-jub-sage-900/20">
               <Image
                 src={r.image}
                 alt=""
@@ -229,7 +195,7 @@ function SectionFonctionnement() {
 
   return (
     <section className="relative border-y border-bordure bg-jub-pierre-100 py-24">
-      <div className="absolute inset-0 -z-0 opacity-30 [background:radial-gradient(circle_at_top_left,_var(--jub-vert-200),_transparent_50%),radial-gradient(circle_at_bottom_right,_var(--jub-jaune-400)_-30%,_transparent_50%)]" />
+      <div className="absolute inset-0 -z-0 opacity-30 [background:radial-gradient(circle_at_top_left,_var(--jub-sage-200),_transparent_50%),radial-gradient(circle_at_bottom_right,_var(--jub-orange-300)_-30%,_transparent_50%)]" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         <div className="mb-16 max-w-2xl">
@@ -240,15 +206,15 @@ function SectionFonctionnement() {
         </div>
 
         <ol className="relative grid gap-8 lg:grid-cols-4 lg:gap-4">
-          <div className="absolute left-0 right-0 top-7 hidden h-px bg-gradient-to-r from-transparent via-jub-vert-300 to-transparent lg:block" />
+          <div className="absolute left-0 right-0 top-7 hidden h-px bg-gradient-to-r from-transparent via-jub-sage-300 to-transparent lg:block" />
           {etapes.map((e, i) => (
             <li key={e.num} className="relative">
               <div className="relative z-10 mb-5 flex items-center gap-3 lg:block">
-                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-jub-vert-900 text-lg font-bold text-white shadow-lg shadow-jub-vert-900/30 ring-4 ring-jub-pierre-100">
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-jub-sage-700 text-lg font-bold text-white shadow-lg shadow-jub-sage-700/30 ring-4 ring-jub-pierre-100">
                   {e.num}
                 </span>
                 {i < etapes.length - 1 ? (
-                  <span aria-hidden className="h-px flex-1 bg-jub-vert-300 lg:hidden" />
+                  <span aria-hidden className="h-px flex-1 bg-jub-sage-300 lg:hidden" />
                 ) : null}
               </div>
               <h3 className="text-lg font-semibold tracking-tight">{e.titre}</h3>
@@ -262,7 +228,7 @@ function SectionFonctionnement() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 4 modes de rémunération — cards gradient distinctes
+// 4 modes de rémunération
 // ─────────────────────────────────────────────────────────────
 
 function SectionTypesProjets() {
@@ -271,15 +237,15 @@ function SectionTypesProjets() {
       tag: "APPRENTISSAGE",
       titre: "Apprentissage certifiant",
       desc: "Court, encadré, certifié. L'option idéale pour démarrer.",
-      gradient: "from-emerald-500/10 via-emerald-500/5 to-transparent",
-      accent: "text-emerald-700 border-emerald-200 bg-emerald-50",
+      gradient: "from-jub-sage-200/30 via-jub-sage-100/20 to-transparent",
+      accent: "text-jub-sage-700 border-jub-sage-200 bg-jub-sage-50",
     },
     {
       tag: "PRIME",
       titre: "Avec prime",
       desc: "Récompense forfaitaire à la fin si le projet est livré.",
-      gradient: "from-amber-400/10 via-amber-400/5 to-transparent",
-      accent: "text-amber-700 border-amber-200 bg-amber-50",
+      gradient: "from-jub-orange-100/40 via-jub-orange-50/20 to-transparent",
+      accent: "text-jub-orange-700 border-jub-orange-200 bg-jub-orange-50",
     },
     {
       tag: "RÉMUNÉRÉ",
@@ -313,7 +279,7 @@ function SectionTypesProjets() {
         {types.map((t) => (
           <div
             key={t.tag}
-            className="relative overflow-hidden rounded-xl border border-bordure bg-fond-eleve p-6 transition-all hover:-translate-y-1 hover:border-jub-vert-500 hover:shadow-lg"
+            className="relative overflow-hidden rounded-xl border border-bordure bg-fond-eleve p-6 transition-all hover:-translate-y-1 hover:border-jub-orange-300 hover:shadow-lg"
           >
             <div className={cn("absolute inset-0 -z-0 bg-gradient-to-br", t.gradient)} />
             <div className="relative z-10 space-y-3">
@@ -331,48 +297,12 @@ function SectionTypesProjets() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Partenaires
-// ─────────────────────────────────────────────────────────────
-
-function SectionPartenaires() {
-  const partenaires = ["UGB", "Sonatel", "Wave", "Orange Digital", "Sococim", "Min. ESRI", "ODC", "UCAD"];
-  return (
-    <section className="border-t border-bordure bg-fond-eleve py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="mb-12 flex flex-wrap items-end justify-between gap-4">
-          <div className="max-w-xl">
-            <Insigne ton="vert">Premiers partenaires</Insigne>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              Construit avec les acteurs sérieux de l&apos;écosystème sénégalais.
-            </h2>
-          </div>
-          <Link href="/contact" className="text-sm font-medium text-jub-vert-700 hover:underline">
-            Devenir partenaire →
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-          {partenaires.map((p) => (
-            <div
-              key={p}
-              className="flex h-20 items-center justify-center rounded-xl border border-bordure bg-fond text-sm font-semibold tracking-tight text-jub-pierre-700 transition-all hover:border-jub-vert-300 hover:bg-jub-vert-50"
-            >
-              {p}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
 // Appel à action final
 // ─────────────────────────────────────────────────────────────
 
 function SectionAppelAction() {
   return (
-    <section className="relative overflow-hidden bg-jub-vert-950 text-white">
+    <section className="relative overflow-hidden bg-jub-sage-900 text-white">
       <Image
         src={PHOTOS.ctaFinal}
         alt=""
@@ -380,19 +310,19 @@ function SectionAppelAction() {
         sizes="100vw"
         className="object-cover opacity-25"
       />
-      <div className="absolute inset-0 bg-gradient-to-br from-jub-vert-950 via-jub-vert-950/95 to-jub-vert-900/70" />
-      <div className="absolute inset-0 opacity-40 [background:radial-gradient(circle_at_top_right,_var(--jub-jaune-500),_transparent_60%)]" />
+      <div className="absolute inset-0 bg-gradient-to-br from-jub-sage-900 via-jub-sage-900/95 to-jub-sage-700/70" />
+      <div className="absolute inset-0 opacity-40 [background:radial-gradient(circle_at_top_right,_var(--jub-orange-500),_transparent_60%)]" />
 
       <div className="relative z-10 mx-auto max-w-4xl px-4 py-24 text-center sm:px-6">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
           Ton prochain projet t&apos;attend.
         </h2>
-        <p className="mt-4 text-lg text-jub-vert-100">
+        <p className="mt-4 text-lg text-jub-sage-100">
           Crée ton compte gratuit, ajoute tes compétences, postule au premier projet qui te parle.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Link href="/inscription/etudiant">
-            <Bouton apparence="accent" taille="lg" className="shadow-xl shadow-jub-jaune-500/40">
+            <Bouton apparence="accent" taille="lg" className="shadow-xl shadow-jub-orange-500/40">
               Je crée mon compte
             </Bouton>
           </Link>
