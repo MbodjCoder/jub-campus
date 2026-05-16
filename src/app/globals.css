@@ -191,7 +191,27 @@
    Base
    ═══════════════════════════════════════════════════════════════ */
 
-* { box-sizing: border-box; }
+/* ═══════════════════════════════════════════════════════════════
+   ARCHITECTURE DE CONFINEMENT
+   ───────────────────────────────────────────────────────────────
+   Règle systémique : aucun composant ne peut déborder de son parent,
+   à n'importe quelle largeur d'écran. Repose sur 4 invariants :
+
+   1. box-sizing: border-box  → padding/bordure inclus dans la largeur.
+   2. min-width: 0 sur TOUT   → par défaut un enfant flex/grid a
+      min-width:auto et REFUSE de rétrécir sous la taille de son
+      contenu (cause n°1 des débordements). min-width:0 lève ce
+      blocage : les enfants se compressent au lieu de pousser.
+   3. overflow-wrap + max-width:100% sur médias → contenu long borné.
+   4. overflow-x: clip sur html/body → garde-fou ultime.
+
+   Conséquence : tout nouveau composant hérite du confinement, sans
+   correction au cas par cas.
+   ═══════════════════════════════════════════════════════════════ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  min-width: 0;
+}
 
 html, body {
   margin: 0;
@@ -341,6 +361,10 @@ img { display: block; max-width: 100%; }
   user-select: none;
   cursor: pointer;
   text-decoration: none;
+  /* min-width:0 global autorise les enfants flex à rétrécir ; un bouton,
+     lui, doit garder sa taille (sinon son libellé déborde). C'est le
+     contenu flexible voisin (texte, champ) qui absorbe la compression. */
+  flex-shrink: 0;
 }
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: 0.5; pointer-events: none; }
