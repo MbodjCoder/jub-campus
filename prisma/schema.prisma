@@ -1,0 +1,867 @@
+// Schéma JUB Campus
+// Plateforme stages-par-projets + certification vérifiable + portfolio étudiant.
+// Toutes les conventions en français.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────
+// Énumérations
+// ─────────────────────────────────────────────────────────────
+
+enum Role {
+  ETUDIANT
+  ENTREPRISE
+  MENTOR
+  SPONSOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum NiveauEtude {
+  L1
+  L2
+  L3
+  M1
+  M2
+  DOCTORAT
+}
+
+enum Disponibilite {
+  DISPONIBLE
+  PARTIEL
+  INDISPONIBLE
+}
+
+enum TailleEntreprise {
+  TRES_PETITE
+  PETITE
+  MOYENNE
+  GRANDE
+}
+
+enum TypeMentor {
+  PROFESSEUR
+  PROFESSIONNEL
+  ALUMNI
+  EXPERT_INVITE
+}
+
+enum StatutValidation {
+  EN_ATTENTE
+  VALIDEE
+  REJETEE
+}
+
+enum SourceProjet {
+  JUB_INTERNE
+  ENTREPRISE
+  ACADEMIQUE
+  ETUDIANT
+  SPONSORISE
+  MINI_MISSION
+  CHALLENGE
+}
+
+enum CategorieProjet {
+  INFORMATIQUE
+  DATA
+  IA
+  WEB
+  MOBILE
+  UI_UX
+  MARKETING
+  COMMUNICATION
+  GESTION
+  FINANCE
+  COMPTABILITE
+  DROIT
+  REDACTION
+  TRADUCTION
+  RECHERCHE
+  AGRICULTURE
+  SANTE
+  EDUCATION
+  ENVIRONNEMENT
+  SOCIOLOGIE
+  GEOGRAPHIE
+  ENTREPRENEURIAT
+  ADMINISTRATION
+  ANNOTATION_DONNEES
+  ENQUETE_TERRAIN
+}
+
+enum NiveauProjet {
+  DEBUTANT
+  INTERMEDIAIRE
+  AVANCE
+  EXPERT_ETUDIANT
+  PRO_JUNIOR
+}
+
+enum ModeRemuneration {
+  APPRENTISSAGE
+  PRIME
+  REMUNERE
+  SPONSORISE
+}
+
+enum StatutProjet {
+  BROUILLON
+  EN_VALIDATION
+  PUBLIE
+  CANDIDATURES_OUVERTES
+  EQUIPE_EN_CONSTITUTION
+  EN_COURS
+  EN_REVISION
+  TERMINE
+  CERTIFIE
+  ANNULE
+  ARCHIVE
+}
+
+enum Visibilite {
+  PUBLIQUE
+  UNIVERSITE
+  PRIVEE
+}
+
+enum StatutCandidature {
+  EN_ATTENTE
+  ACCEPTEE
+  REFUSEE
+  RETIREE
+}
+
+enum StatutTache {
+  A_FAIRE
+  EN_COURS
+  EN_REVUE
+  TERMINEE
+}
+
+enum Priorite {
+  BASSE
+  NORMALE
+  HAUTE
+  URGENTE
+}
+
+enum StatutLivrable {
+  EN_REVUE
+  VALIDE
+  A_CORRIGER
+  REJETE
+}
+
+enum SourceEvaluation {
+  MENTOR
+  ENTREPRISE
+  PAIR
+  AUTO
+  ADMIN
+}
+
+enum StatutCertificat {
+  VALIDE
+  REVOQUE
+  EXPIRE
+  EN_VERIFICATION
+}
+
+enum Rarete {
+  COMMUN
+  RARE
+  EPIQUE
+  LEGENDAIRE
+}
+
+enum TypeSponsor {
+  ENTREPRISE
+  ONG
+  INSTITUTION
+  FONDATION
+}
+
+enum MethodePaiement {
+  WAVE
+  ORANGE_MONEY
+  VIREMENT
+  STRIPE
+}
+
+enum StatutPaiement {
+  INITIE
+  EN_COURS
+  REUSSI
+  ECHEC
+  REMBOURSE
+}
+
+enum TypeNotification {
+  CANDIDATURE_RECUE
+  CANDIDATURE_ACCEPTEE
+  CANDIDATURE_REFUSEE
+  LIVRABLE_DEPOSE
+  LIVRABLE_FEEDBACK
+  PROJET_VALIDE
+  CERTIFICAT_DELIVRE
+  EVALUATION_REQUISE
+  MESSAGE_RECU
+  TACHE_ASSIGNEE
+  PROJET_PUBLIE
+  SYSTEME
+}
+
+enum StatutSignalement {
+  OUVERT
+  EN_COURS
+  RESOLU
+  REJETE
+}
+
+// ─────────────────────────────────────────────────────────────
+// Authentification (compatible Auth.js v5)
+// ─────────────────────────────────────────────────────────────
+
+model Utilisateur {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  motDePasseHash      String?
+  nomComplet          String?
+  imageUrl            String?
+  role                Role      @default(ETUDIANT)
+  emailVerifieLe      DateTime?
+  derniereConnexionLe DateTime?
+  creeLe              DateTime  @default(now())
+  misAJourLe          DateTime  @updatedAt
+
+  comptes  Compte[]
+  sessions Session[]
+
+  etudiant     Etudiant?
+  entreprise   Entreprise?
+  mentor       Mentor?
+  sponsor      Sponsor?
+
+  notifications       Notification[]
+  messagesEnvoyes     Message[]      @relation("MessagesEnvoyes")
+  messagesRecus       Message[]      @relation("MessagesRecus")
+  signalementsRediges Signalement[]  @relation("Rapporteur")
+  evaluationsRedigees Evaluation[]   @relation("Evaluateur")
+  feedbacksRediges    Feedback[]
+  livrablesDeposes    Livrable[]     @relation("DeposeurLivrable")
+  journalActions      JournalAudit[]
+
+  @@index([role])
+}
+
+model Compte {
+  id                  String  @id @default(cuid())
+  utilisateurId       String
+  type                String
+  fournisseur         String
+  fournisseurCompteId String
+  refreshToken        String?
+  accessToken         String?
+  expiresAt           Int?
+  tokenType           String?
+  scope               String?
+  idToken             String?
+  sessionState        String?
+
+  utilisateur Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  @@unique([fournisseur, fournisseurCompteId])
+  @@index([utilisateurId])
+}
+
+model Session {
+  id            String   @id @default(cuid())
+  jetonSession  String   @unique
+  utilisateurId String
+  expireLe      DateTime
+
+  utilisateur Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  @@index([utilisateurId])
+}
+
+model JetonVerification {
+  identifiant String
+  jeton       String   @unique
+  expireLe    DateTime
+
+  @@unique([identifiant, jeton])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Profils métier
+// ─────────────────────────────────────────────────────────────
+
+model Etudiant {
+  id            String        @id @default(cuid())
+  utilisateurId String        @unique
+  prenom        String
+  nom           String
+  slug          String        @unique
+  avatarUrl     String?
+  telephone     String?
+  universiteId  String
+  departementId String?
+  niveau        NiveauEtude
+  filiere       String?
+  biographie    String?       @db.Text
+  disponibilite Disponibilite @default(DISPONIBLE)
+  langues       String[]      @default(["francais"])
+  liens         Json?
+  scoreJub      Int           @default(0)
+  estPublic     Boolean       @default(true)
+  creeLe        DateTime      @default(now())
+  misAJourLe    DateTime      @updatedAt
+
+  utilisateur Utilisateur  @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  universite  Universite   @relation(fields: [universiteId], references: [id])
+  departement Departement? @relation(fields: [departementId], references: [id])
+
+  competences       CompetenceEtudiant[]
+  candidatures      Candidature[]
+  membreEquipes     MembreEquipe[]
+  certificats       Certificat[]
+  evaluationsRecues Evaluation[]         @relation("EtudiantEvalue")
+  badgesObtenus     BadgeEtudiant[]
+  recommandations   Recommandation[]
+  portfolio         Portfolio?
+  tachesAssignees   Tache[]
+
+  @@index([universiteId])
+  @@index([scoreJub])
+  @@index([estPublic])
+}
+
+model Entreprise {
+  id               String           @id @default(cuid())
+  utilisateurId    String           @unique
+  raisonSociale    String
+  slug             String           @unique
+  logoUrl          String?
+  ninea            String?
+  rccm             String?
+  secteur          String
+  taille           TailleEntreprise
+  siteWeb          String?
+  ville            String?
+  description      String?          @db.Text
+  statutValidation StatutValidation @default(EN_ATTENTE)
+  motifRejet       String?
+  valideeLe        DateTime?
+  creeLe           DateTime         @default(now())
+  misAJourLe       DateTime         @updatedAt
+
+  utilisateur    Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  projetsPublies Projet[]
+
+  @@index([statutValidation])
+}
+
+model Mentor {
+  id            String     @id @default(cuid())
+  utilisateurId String     @unique
+  prenom        String
+  nom           String
+  type          TypeMentor
+  universiteId  String?
+  titreOuPoste  String?
+  specialites   String[]
+  biographie    String?    @db.Text
+  liens         Json?
+  estVerifie    Boolean    @default(false)
+  creeLe        DateTime   @default(now())
+  misAJourLe    DateTime   @updatedAt
+
+  utilisateur     Utilisateur      @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  universite      Universite?      @relation(fields: [universiteId], references: [id])
+  projetsEncadres Projet[]         @relation("ProjetMentorPrincipal")
+  recommandations Recommandation[]
+
+  @@index([estVerifie])
+}
+
+model Sponsor {
+  id            String      @id @default(cuid())
+  utilisateurId String      @unique
+  nom           String
+  slug          String      @unique
+  type          TypeSponsor
+  logoUrl       String?
+  siteWeb       String?
+  description   String?     @db.Text
+  creeLe        DateTime    @default(now())
+
+  utilisateur     Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  programmes      Programme[]
+  projetsFinances Projet[]    @relation("ProjetSponsor")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Référentiels
+// ─────────────────────────────────────────────────────────────
+
+model Universite {
+  id           String   @id @default(cuid())
+  nom          String   @unique
+  acronyme     String   @unique
+  ville        String
+  estPublique  Boolean
+  domaineEmail String?
+  logoUrl      String?
+  siteWeb      String?
+  creeLe       DateTime @default(now())
+
+  departements Departement[]
+  etudiants    Etudiant[]
+  mentors      Mentor[]
+}
+
+model Departement {
+  id           String   @id @default(cuid())
+  nom          String
+  acronyme     String?
+  universiteId String
+
+  universite Universite @relation(fields: [universiteId], references: [id], onDelete: Cascade)
+  etudiants  Etudiant[]
+
+  @@unique([universiteId, nom])
+}
+
+model Competence {
+  id        String  @id @default(cuid())
+  nom       String  @unique
+  slug      String  @unique
+  categorie String
+  iconeUrl  String?
+
+  etudiants     CompetenceEtudiant[]
+  projetsRequis CompetenceProjet[]
+
+  @@index([categorie])
+}
+
+model CompetenceEtudiant {
+  etudiantId   String
+  competenceId String
+  niveau       Int
+  niveauValide Int?
+  ajouteLe     DateTime @default(now())
+
+  etudiant   Etudiant   @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  competence Competence @relation(fields: [competenceId], references: [id], onDelete: Cascade)
+
+  @@id([etudiantId, competenceId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Projets
+// ─────────────────────────────────────────────────────────────
+
+model Projet {
+  id                 String           @id @default(cuid())
+  slug               String           @unique
+  titre              String
+  resume             String           @db.Text
+  description        String           @db.Text
+  imageCouvertureUrl String?
+  source             SourceProjet
+  categorie          CategorieProjet
+  niveau             NiveauProjet
+  modeRemuneration   ModeRemuneration
+  montantFcfa        Int?
+  dureeJours         Int
+  placesMax          Int              @default(1)
+  dateDebut          DateTime?
+  dateFin            DateTime?
+  statut             StatutProjet     @default(BROUILLON)
+  visibilite         Visibilite       @default(PUBLIQUE)
+  publieParId        String
+  entrepriseId       String?
+  mentorPrincipalId  String?
+  sponsorId          String?
+  programmeId        String?
+  motifRejet         String?
+  creeLe             DateTime         @default(now())
+  publieLe           DateTime?
+  termineLe          DateTime?
+  misAJourLe         DateTime         @updatedAt
+
+  entreprise      Entreprise? @relation(fields: [entrepriseId], references: [id])
+  mentorPrincipal Mentor?     @relation("ProjetMentorPrincipal", fields: [mentorPrincipalId], references: [id])
+  sponsor         Sponsor?    @relation("ProjetSponsor", fields: [sponsorId], references: [id])
+  programme       Programme?  @relation(fields: [programmeId], references: [id])
+
+  competencesRequises CompetenceProjet[]
+  candidatures        Candidature[]
+  equipe              Equipe?
+  taches              Tache[]
+  livrables           Livrable[]
+  evaluations         Evaluation[]
+  certificats         Certificat[]
+
+  @@index([statut])
+  @@index([categorie, niveau])
+  @@index([source])
+  @@index([entrepriseId])
+}
+
+model CompetenceProjet {
+  projetId     String
+  competenceId String
+  niveauRequis Int    @default(1)
+
+  projet     Projet     @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  competence Competence @relation(fields: [competenceId], references: [id], onDelete: Cascade)
+
+  @@id([projetId, competenceId])
+}
+
+model Candidature {
+  id            String            @id @default(cuid())
+  projetId      String
+  etudiantId    String
+  lettre        String            @db.Text
+  cvUrl         String?
+  scoreMatching Int?
+  statut        StatutCandidature @default(EN_ATTENTE)
+  motifReponse  String?
+  reponduLe     DateTime?
+  creeLe        DateTime          @default(now())
+  misAJourLe    DateTime          @updatedAt
+
+  projet   Projet   @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  etudiant Etudiant @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+
+  @@unique([projetId, etudiantId])
+  @@index([statut])
+  @@index([etudiantId])
+}
+
+model Equipe {
+  id       String   @id @default(cuid())
+  projetId String   @unique
+  nom      String?
+  creeLe   DateTime @default(now())
+
+  projet  Projet         @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  membres MembreEquipe[]
+}
+
+model MembreEquipe {
+  equipeId             String
+  etudiantId           String
+  roleEquipe           String
+  contributionPourcent Int?
+  rejointLe            DateTime @default(now())
+
+  equipe   Equipe   @relation(fields: [equipeId], references: [id], onDelete: Cascade)
+  etudiant Etudiant @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+
+  @@id([equipeId, etudiantId])
+}
+
+model Tache {
+  id          String      @id @default(cuid())
+  projetId    String
+  titre       String
+  description String?     @db.Text
+  assigneeId  String?
+  statut      StatutTache @default(A_FAIRE)
+  priorite    Priorite    @default(NORMALE)
+  echeance    DateTime?
+  creeLe      DateTime    @default(now())
+  termineeLe  DateTime?
+  misAJourLe  DateTime    @updatedAt
+
+  projet    Projet     @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  assignee  Etudiant?  @relation(fields: [assigneeId], references: [id])
+  livrables Livrable[]
+
+  @@index([projetId, statut])
+}
+
+model Livrable {
+  id           String         @id @default(cuid())
+  projetId     String
+  tacheId      String?
+  titre        String
+  description  String?        @db.Text
+  fichierUrl   String
+  typeMime     String
+  tailleOctets Int?
+  deposeParId  String
+  statut       StatutLivrable @default(EN_REVUE)
+  deposeLe     DateTime       @default(now())
+
+  projet    Projet      @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  tache     Tache?      @relation(fields: [tacheId], references: [id])
+  deposePar Utilisateur @relation("DeposeurLivrable", fields: [deposeParId], references: [id])
+  feedbacks Feedback[]
+
+  @@index([projetId, statut])
+}
+
+model Feedback {
+  id         String   @id @default(cuid())
+  livrableId String
+  auteurId   String
+  contenu    String   @db.Text
+  note       Int?
+  creeLe     DateTime @default(now())
+
+  livrable Livrable    @relation(fields: [livrableId], references: [id], onDelete: Cascade)
+  auteur   Utilisateur @relation(fields: [auteurId], references: [id])
+
+  @@index([livrableId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Évaluation & certification
+// ─────────────────────────────────────────────────────────────
+
+model Evaluation {
+  id                 String           @id @default(cuid())
+  projetId           String
+  etudiantId         String
+  source             SourceEvaluation
+  evaluateurId       String
+  qualiteLivrable    Int
+  respectDelais      Int
+  communication      Int
+  autonomie          Int
+  collaboration      Int
+  creativite         Int
+  rigueur            Int
+  resolutionProb     Int
+  professionnalisme  Int
+  contributionReelle Int
+  appreciation       String?          @db.Text
+  scoreGlobal        Float
+  creeLe             DateTime         @default(now())
+
+  projet     Projet      @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  etudiant   Etudiant    @relation("EtudiantEvalue", fields: [etudiantId], references: [id], onDelete: Cascade)
+  evaluateur Utilisateur @relation("Evaluateur", fields: [evaluateurId], references: [id])
+
+  @@unique([projetId, etudiantId, source, evaluateurId])
+  @@index([etudiantId])
+}
+
+model Certificat {
+  id                  String           @id @default(cuid())
+  numeroPublic        String           @unique
+  etudiantId          String
+  projetId            String
+  roleJoue            String
+  periodeDebut        DateTime
+  periodeFin          DateTime
+  dureeJours          Int
+  competencesValidees String[]
+  livrablesIds        String[]
+  scoreFinal          Float
+  appreciation        String           @db.Text
+  mentorNom           String
+  organisationNom     String?
+  pdfUrl              String?
+  qrCodeUrl           String?
+  hashIntegrite       String
+  statut              StatutCertificat @default(VALIDE)
+  motifRevocation     String?
+  emisLe              DateTime         @default(now())
+
+  etudiant      Etudiant                 @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  projet        Projet                   @relation(fields: [projetId], references: [id])
+  verifications VerificationCertificat[]
+
+  @@index([etudiantId])
+  @@index([statut])
+}
+
+model VerificationCertificat {
+  id           String   @id @default(cuid())
+  certificatId String
+  ipHash       String
+  userAgent    String?
+  origine      String?
+  verifieLe    DateTime @default(now())
+
+  certificat Certificat @relation(fields: [certificatId], references: [id], onDelete: Cascade)
+
+  @@index([certificatId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Gamification
+// ─────────────────────────────────────────────────────────────
+
+model Badge {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  nom         String
+  description String  @db.Text
+  iconeUrl    String?
+  rarete      Rarete
+  critere     String  @db.Text
+
+  etudiants BadgeEtudiant[]
+}
+
+model BadgeEtudiant {
+  etudiantId String
+  badgeId    String
+  obtenuLe   DateTime @default(now())
+
+  etudiant Etudiant @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@id([etudiantId, badgeId])
+}
+
+model Portfolio {
+  id            String   @id @default(cuid())
+  etudiantId    String   @unique
+  estPublic     Boolean  @default(true)
+  theme         String   @default("defaut")
+  vuesPubliques Int      @default(0)
+  miseAJourLe   DateTime @default(now())
+
+  etudiant Etudiant @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+}
+
+model Recommandation {
+  id          String   @id @default(cuid())
+  etudiantId  String
+  mentorId    String?
+  auteurNom   String
+  auteurTitre String?
+  contenu     String   @db.Text
+  estPublique Boolean  @default(true)
+  creeLe      DateTime @default(now())
+
+  etudiant Etudiant @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  mentor   Mentor?  @relation(fields: [mentorId], references: [id])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Sponsors & programmes
+// ─────────────────────────────────────────────────────────────
+
+model Programme {
+  id          String   @id @default(cuid())
+  sponsorId   String
+  nom         String
+  slug        String   @unique
+  budgetFcfa  Int
+  thematique  String
+  description String?  @db.Text
+  dateDebut   DateTime
+  dateFin     DateTime
+  creeLe      DateTime @default(now())
+
+  sponsor Sponsor  @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  projets Projet[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// Paiements
+// ─────────────────────────────────────────────────────────────
+
+model Paiement {
+  id               String          @id @default(cuid())
+  beneficiaireId   String
+  payeurId         String?
+  projetId         String?
+  montantFcfa      Int
+  methode          MethodePaiement
+  statut           StatutPaiement  @default(INITIE)
+  referenceExterne String?
+  creeLe           DateTime        @default(now())
+  finaliseLe       DateTime?
+
+  @@index([beneficiaireId])
+  @@index([statut])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Système
+// ─────────────────────────────────────────────────────────────
+
+model Notification {
+  id             String           @id @default(cuid())
+  destinataireId String
+  type           TypeNotification
+  titre          String
+  contenu        String           @db.Text
+  lien           String?
+  lue            Boolean          @default(false)
+  creeLe         DateTime         @default(now())
+
+  destinataire Utilisateur @relation(fields: [destinataireId], references: [id], onDelete: Cascade)
+
+  @@index([destinataireId, lue])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  expediteurId   String
+  destinataireId String
+  projetId       String?
+  contenu        String   @db.Text
+  lu             Boolean  @default(false)
+  creeLe         DateTime @default(now())
+
+  expediteur   Utilisateur @relation("MessagesEnvoyes", fields: [expediteurId], references: [id])
+  destinataire Utilisateur @relation("MessagesRecus", fields: [destinataireId], references: [id])
+
+  @@index([destinataireId, lu])
+  @@index([expediteurId])
+}
+
+model Signalement {
+  id             String            @id @default(cuid())
+  ressourceType  String
+  ressourceId    String
+  rapporteurId   String
+  motif          String
+  description    String?           @db.Text
+  statut         StatutSignalement @default(OUVERT)
+  resoluLe       DateTime?
+  resolutionNote String?
+  creeLe         DateTime          @default(now())
+
+  rapporteur Utilisateur @relation("Rapporteur", fields: [rapporteurId], references: [id])
+
+  @@index([statut])
+  @@index([ressourceType, ressourceId])
+}
+
+model JournalAudit {
+  id            String   @id @default(cuid())
+  acteurId      String?
+  action        String
+  ressourceType String
+  ressourceId   String
+  metadonnees   Json?
+  ip            String?
+  creeLe        DateTime @default(now())
+
+  acteur Utilisateur? @relation(fields: [acteurId], references: [id])
+
+  @@index([action])
+  @@index([ressourceType, ressourceId])
+  @@index([creeLe])
+}
