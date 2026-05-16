@@ -153,6 +153,10 @@ function SectionTroisPublics() {
                 sizes="(min-width: 768px) 33vw, 100vw"
                 className="object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
               />
+              {/* Voile sage uniforme (#5f6c57) : tint léger commun aux 3 cartes,
+                  rappel de l'overlay du hero. Pour AJUSTER l'intensité :
+                  /20 = très subtil · /30 = léger (actuel) · /40 = marqué · /50 = fort */}
+              <div className="absolute inset-0 bg-jub-sage-500/30 mix-blend-multiply" />
               {/* Overlay : sombre en bas pour lisibilité, transparent en haut pour voir l'image */}
               <div className={cn("absolute inset-0", r.overlay)} />
 
@@ -162,7 +166,7 @@ function SectionTroisPublics() {
                     text-jub-orange-500 ci-dessous (voir tableau dans la conversation
                     ou globals.css pour la liste complète des tokens). */}
                 <span
-                  className="inline-flex items-center gap-2 rounded-full bg-jub-sage-500 px-4 py-1.5 text-base font-extrabold uppercase tracking-wider text-jub-orange-500 shadow-xl backdrop-blur-md sm:text-lg"
+                  className="inline-flex items-center gap-2 rounded-full bg-jub-sage-100 px-4 py-1.5 text-base font-extrabold uppercase tracking-wider text-jub-sage-600	 shadow-xl backdrop-blur-md sm:text-lg"
                 >
                   <span className="relative flex h-4 w-4 items-center justify-center rounded-full bg-jub-orange-500 sm:h-5 sm:w-5">
                     <span className="block h-1.5 w-1.5 rounded-full bg-jub-sage-500 sm:h-2 sm:w-2" />
