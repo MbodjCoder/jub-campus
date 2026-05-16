@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { GraduationCap, Award, Banknote, Sparkles, type LucideIcon } from "lucide-react";
 import { Bouton } from "@/composants/ui/bouton";
 import { Carte, CorpsCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
 import { Insigne } from "@/composants/ui/insigne";
@@ -248,34 +249,65 @@ function SectionFonctionnement() {
 // ─────────────────────────────────────────────────────────────
 
 function SectionTypesProjets() {
-  const types = [
+  // Chaque mode reçoit une icône lucide pro + une palette JUB cohérente.
+  // Icônes sémantiques :
+  //  - GraduationCap → apprentissage (formation/certification)
+  //  - Award         → prime (récompense forfaitaire)
+  //  - Banknote      → rémunéré (paiement)
+  //  - Sparkles      → sponsorisé (financement institutionnel)
+  const types: Array<{
+    tag: string;
+    titre: string;
+    desc: string;
+    icone: LucideIcon;
+    /** Classe Tailwind du fond de la pastille icône */
+    fondIcone: string;
+    /** Classe Tailwind du contenu de la pastille icône */
+    couleurIcone: string;
+    /** Classe Tailwind du gradient diffus en arrière-plan de la carte */
+    gradient: string;
+    /** Classe Tailwind du tag (texte + fond + bordure) */
+    tag_class: string;
+  }> = [
     {
       tag: "APPRENTISSAGE",
       titre: "Apprentissage certifiant",
       desc: "Court, encadré, certifié. L'option idéale pour démarrer.",
-      gradient: "from-jub-sage-200/30 via-jub-sage-100/20 to-transparent",
-      accent: "text-jub-sage-700 border-jub-sage-200 bg-jub-sage-50",
+      icone: GraduationCap,
+      fondIcone: "bg-jub-sage-500",
+      couleurIcone: "text-jub-orange-500",
+      gradient: "from-jub-sage-100/40 via-transparent to-transparent",
+      tag_class: "bg-jub-sage-500 text-jub-orange-500",
     },
     {
       tag: "PRIME",
       titre: "Avec prime",
       desc: "Récompense forfaitaire à la fin si le projet est livré.",
-      gradient: "from-jub-orange-100/40 via-jub-orange-50/20 to-transparent",
-      accent: "text-jub-orange-700 border-jub-orange-200 bg-jub-orange-50",
+      icone: Award,
+      fondIcone: "bg-jub-orange-500",
+      couleurIcone: "text-jub-sage-500",
+      gradient: "from-jub-orange-100/60 via-jub-orange-50/30 to-transparent",
+      tag_class: "bg-jub-orange-500 text-jub-sage-500",
     },
     {
       tag: "RÉMUNÉRÉ",
       titre: "Rémunéré",
       desc: "Payé par une entreprise. Pour projets à forte valeur ajoutée.",
-      gradient: "from-violet-500/10 via-violet-500/5 to-transparent",
-      accent: "text-violet-700 border-violet-200 bg-violet-50",
+      icone: Banknote,
+      fondIcone: "bg-jub-sage-700",
+      couleurIcone: "text-jub-orange-400",
+      gradient: "from-jub-sage-200/40 via-transparent to-transparent",
+      tag_class: "bg-jub-sage-700 text-jub-orange-400",
     },
     {
       tag: "SPONSORISÉ",
       titre: "Sponsorisé",
       desc: "Financé par une ONG, institution ou fondation thématique.",
-      gradient: "from-sky-500/10 via-sky-500/5 to-transparent",
-      accent: "text-sky-700 border-sky-200 bg-sky-50",
+      icone: Sparkles,
+      fondIcone: "bg-jub-orange-400",
+      couleurIcone: "text-jub-sage-700",
+      gradient: "from-jub-orange-50/60 via-jub-sage-50/30 to-transparent",
+      tag_class: "bg-jub-orange-400 text-jub-sage-700",
     },
   ];
 
@@ -292,21 +324,44 @@ function SectionTypesProjets() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {types.map((t) => (
-          <div
-            key={t.tag}
-            className="relative overflow-hidden rounded-xl border border-bordure bg-fond-eleve p-6 transition-all hover:-translate-y-1 hover:border-jub-orange-300 hover:shadow-lg"
-          >
-            <div className={cn("absolute inset-0 -z-0 bg-gradient-to-br", t.gradient)} />
-            <div className="relative z-10 space-y-3">
-              <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider", t.accent)}>
-                {t.tag}
-              </span>
-              <h3 className="text-lg font-semibold tracking-tight">{t.titre}</h3>
-              <p className="text-sm text-texte-discret">{t.desc}</p>
+        {types.map((t) => {
+          const Icone = t.icone;
+          return (
+            <div
+              key={t.tag}
+              className="group relative overflow-hidden rounded-2xl border border-bordure bg-fond-eleve p-6 transition-all duration-300 hover:-translate-y-1.5 hover:border-jub-orange-400 hover:shadow-xl"
+            >
+              <div className={cn("absolute inset-0 -z-0 bg-gradient-to-br", t.gradient)} />
+
+              <div className="relative z-10 flex flex-col items-center text-center">
+                {/* Icône pastille — taille généreuse, fond brand, ring sage subtil */}
+                <span
+                  className={cn(
+                    "flex h-16 w-16 items-center justify-center rounded-2xl shadow-lg ring-4 ring-jub-sage-50 transition-transform group-hover:scale-110 group-hover:rotate-3",
+                    t.fondIcone,
+                  )}
+                >
+                  <Icone className={cn("h-8 w-8", t.couleurIcone)} strokeWidth={2.25} />
+                </span>
+
+                {/* Tag : taille XL, fond brand contrasté */}
+                <span
+                  className={cn(
+                    "mt-5 inline-flex items-center rounded-full px-4 py-1 text-sm font-extrabold uppercase tracking-widest shadow-md",
+                    t.tag_class,
+                  )}
+                >
+                  {t.tag}
+                </span>
+
+                <h3 className="mt-3 text-base font-semibold italic leading-snug text-jub-sage-900">
+                  {t.titre}
+                </h3>
+                <p className="mt-2 text-sm text-texte-discret">{t.desc}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
