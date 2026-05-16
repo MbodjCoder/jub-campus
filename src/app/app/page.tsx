@@ -166,7 +166,7 @@ export default async function PageTableauDeBord() {
         style={{
           display: "grid",
           gap: 1,
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
           marginBottom: 32,
           background: "var(--bordure)",
           border: "1px solid var(--bordure)",
@@ -185,7 +185,7 @@ export default async function PageTableauDeBord() {
         <BlocKpi libelle="Certificats" valeur={etudiant.certificats.length} icon={<Icon.ShieldCheck size={14} />} href="/app/portfolio" />
       </div>
 
-      <div style={{ display: "grid", gap: 20, gridTemplateColumns: "1fr" }} className="tdb-grid">
+      <div style={{ display: "grid", gap: 20, gridTemplateColumns: "minmax(0, 1fr)" }} className="tdb-grid">
         {/* Job en cours */}
         <div>
           <h2 className="t-eyebrow" style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
@@ -372,7 +372,7 @@ export default async function PageTableauDeBord() {
 
       <style>{`
         @media (min-width: 900px) {
-          .tdb-grid { grid-template-columns: 1.4fr 1fr !important; gap: 24px !important; }
+          .tdb-grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) !important; gap: 24px !important; }
         }
       `}</style>
     </main>

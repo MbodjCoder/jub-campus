@@ -135,7 +135,7 @@ export function DetailJob({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
             gap: 1,
             marginTop: 24,
             background: "var(--bordure)",

@@ -209,7 +209,7 @@ function Parcours() {
         <Icon.Sparkles size={18} style={{ color: "var(--sage-500)" }} />
         En 3 temps
       </h2>
-      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr" }} className="parcours-grid">
+      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "minmax(0, 1fr)" }} className="parcours-grid">
         {etapes.map((e) => (
           <Link
             key={e.n}
@@ -267,7 +267,7 @@ function Parcours() {
           </Link>
         ))}
       </div>
-      <style>{`@media (min-width: 720px) { .parcours-grid { grid-template-columns: repeat(3, 1fr) !important; } }`}</style>
+      <style>{`@media (min-width: 720px) { .parcours-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }`}</style>
     </section>
   );
 }

@@ -218,7 +218,7 @@ function VueKanban({ projet: p }: { projet: ProjetEnCours }) {
     { id: "TERMINEE", titre: "Terminé" },
   ];
   return (
-    <div style={{ display: "grid", gap: 12, gridTemplateColumns: "1fr" }} className="kanban-grid">
+    <div style={{ display: "grid", gap: 12, gridTemplateColumns: "minmax(0, 1fr)" }} className="kanban-grid">
       {colonnes.map((col) => {
         const taches = p.taches.filter((t) => t.statut === col.id);
         return (
@@ -273,8 +273,8 @@ function VueKanban({ projet: p }: { projet: ProjetEnCours }) {
         );
       })}
       <style>{`
-        @media (min-width: 700px) { .kanban-grid { grid-template-columns: repeat(2, 1fr) !important; } }
-        @media (min-width: 1100px) { .kanban-grid { grid-template-columns: repeat(4, 1fr) !important; } }
+        @media (min-width: 700px) { .kanban-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
+        @media (min-width: 1100px) { .kanban-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; } }
       `}</style>
     </div>
   );

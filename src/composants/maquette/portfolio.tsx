@@ -112,7 +112,7 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
         style={{
           display: "grid",
           gap: 1,
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
           marginTop: 20,
           background: "var(--bordure)",
           border: "1px solid var(--bordure)",
@@ -314,7 +314,7 @@ function ModalPartager({ slug, onClose }: { slug: string; onClose: () => void })
         <div className="t-eyebrow" style={{ marginTop: 18, marginBottom: 10 }}>
           Partager sur
         </div>
-        <div style={{ display: "grid", gap: 6, gridTemplateColumns: "repeat(2, 1fr)" }}>
+        <div style={{ display: "grid", gap: 6, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
           {partages.map((s) => (
             <a
               key={s.l}
