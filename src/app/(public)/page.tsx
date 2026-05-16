@@ -157,9 +157,9 @@ function SectionTroisPublics() {
               <div className={cn("absolute inset-0", r.overlay)} />
 
               <div className="relative z-10 flex h-full min-h-[420px] flex-col p-6 sm:p-7">
-                {/* Tag : fond gris (jub-sage-100/85), grand, point orange + centre sage style logo JUB */}
+                {/* Tag : fond sage #5f6c57, texte orange #ffaa00, point logo JUB (orange + centre sage) */}
                 <span
-                  className="inline-flex w-fit items-center gap-2 rounded-full bg-jub-sage-100/90 px-4 py-1.5 text-base font-extrabold uppercase tracking-wider text-jub-sage-900 shadow-xl backdrop-blur-md sm:text-lg"
+                  className="inline-flex w-fit items-center gap-2 rounded-full bg-jub-sage-500 px-4 py-1.5 text-base font-extrabold uppercase tracking-wider text-jub-orange-500 shadow-xl backdrop-blur-md sm:text-lg"
                 >
                   <span className="relative flex h-4 w-4 items-center justify-center rounded-full bg-jub-orange-500 sm:h-5 sm:w-5">
                     <span className="block h-1.5 w-1.5 rounded-full bg-jub-sage-500 sm:h-2 sm:w-2" />
@@ -169,7 +169,7 @@ function SectionTroisPublics() {
 
                 <div className="mt-auto space-y-4">
                   <h3
-                    className="text-2xl font-bold leading-tight text-white sm:text-[28px]"
+                    className="text-lg font-semibold italic leading-snug text-white sm:text-xl"
                     style={{ textShadow: "0 2px 14px rgba(0,0,0,0.55)" }}
                   >
                     {r.titre}
