@@ -86,7 +86,7 @@ export function EnTeteSite({ session }: { session: InfosSession | null }) {
             background: sombre ? "rgba(255,255,255,0.10)" : "white",
             border: "1px solid " + (sombre ? "rgba(255,255,255,0.16)" : "var(--bordure)"),
             borderRadius: 999,
-            padding: "6px 14px",
+            padding: "2px 14px",
             transition: "background 220ms, border-color 220ms",
           }}
         >
@@ -103,7 +103,7 @@ export function EnTeteSite({ session }: { session: InfosSession | null }) {
               font: "inherit",
               fontSize: 13.5,
               color: sombre ? "white" : "var(--texte)",
-              padding: "6px 0",
+              padding: "3px 0",
               minWidth: 0,
             }}
           />

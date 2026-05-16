@@ -155,7 +155,14 @@ export default async function PageTableauDeBord() {
                 : "Prêt à trouver ton prochain job ?"}
             </p>
           </div>
-          <Bouton as={Link} href="/projets" variant="accent" taille="md" iconRight={<Icon.Arrow size={14} />}>
+          <Bouton
+            as={Link}
+            href="/projets"
+            variant="accent"
+            taille="md"
+            iconRight={<Icon.Arrow size={14} />}
+            style={{ marginLeft: "auto" }}
+          >
             Voir les jobs
           </Bouton>
         </div>

@@ -90,7 +90,7 @@ function Hero({ urlEspace }: { urlEspace: string | null }) {
           </span>
         </h1>
 
-        <div style={{ marginTop: 32, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ marginTop: 32, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end" }}>
           <Bouton
             as={Link}
             href={urlEspace ?? "/inscription"}

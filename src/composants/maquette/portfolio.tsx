@@ -76,7 +76,7 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap", justifyContent: "flex-end" }}>
             <Bouton variant="accent" taille="sm" onClick={() => setShowShare(true)} icon={<Icon.Share size={13} />}>
               Partager
             </Bouton>
