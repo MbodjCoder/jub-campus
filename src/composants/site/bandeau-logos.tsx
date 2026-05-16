@@ -79,10 +79,28 @@ function CarteLogo({ partenaire }: { partenaire: Partenaire }) {
 
   const cheminLogo = `/logos/${partenaire.slug}.${extensions[indexExt]}`;
 
+  // ─────────────────────────────────────────────────────────────
+  // RÉGLAGES VISUELS (ajuste ici pour TOUS les logos d'un coup)
+  // ─────────────────────────────────────────────────────────────
+  //  TAILLE DE LA CARTE :
+  //    `h-16 w-16`     = 64 px (mobile)
+  //    `sm:h-20 w-20`  = 80 px (≥ 640 px)
+  //  Pour grossir → augmente (ex. h-20 w-20 sm:h-24 w-24).
+  //  Pour rapetisser → diminue (ex. h-14 w-14 sm:h-16 w-16).
+  //
+  //  ESPACE BLANC AUTOUR DU LOGO (padding interne) :
+  //    `p-1`     = 4 px  (mobile)
+  //    `sm:p-1.5`= 6 px  (≥ 640 px)
+  //  Pour MOINS de blanc autour → diminue (ex. p-0.5 ou p-0).
+  //  Pour PLUS de blanc autour → augmente (ex. p-2, p-3).
+  //
+  //  COIN ARRONDI : `rounded-xl` (12 px). rounded-2xl = plus rond,
+  //    rounded-lg = moins, rounded-full = cercle parfait.
+  // ─────────────────────────────────────────────────────────────
   return (
     <div
       title={partenaire.nomComplet}
-      className="group flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-white p-3 shadow-md transition-all hover:scale-105 hover:shadow-xl sm:h-28 sm:w-28 sm:p-4"
+      className="group flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-md transition-all hover:scale-105 hover:shadow-xl sm:h-20 sm:w-20 sm:p-1.5"
     >
       {!echec ? (
         // eslint-disable-next-line @next/next/no-img-element
