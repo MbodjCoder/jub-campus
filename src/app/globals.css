@@ -59,9 +59,12 @@
   --color-jub-pierre-900: #1c1917;
   --color-jub-pierre-950: #0c0a09;
 
-  /* Sémantique projet */
-  --color-fond: #fafaf9;
-  --color-fond-eleve: #ffffff;
+  /* Sémantique projet
+     --color-fond : couleur de fond globale (pages, sections claires).
+     Choisie volontairement légèrement plus chaude/grise que le blanc
+     pur pour adoucir l'effet agressif du blanc. */
+  --color-fond: #ececea;
+  --color-fond-eleve: #f5f4f1;
   --color-texte: #1c1917;
   --color-texte-discret: #78716c;
   --color-bordure: #e7e5e4;

@@ -109,7 +109,6 @@ function SectionTroisPublics() {
     {
       tag: "ÉTUDIANTS",
       titre: "Prouve ce que tu sais faire.",
-      desc: "Travaille sur des projets concrets, sois encadré par des pros, obtiens des certificats vérifiables et un portfolio public partageable sur LinkedIn.",
       href: "/inscription/etudiant",
       libelleCta: "Créer mon compte",
       image: PHOTOS.etudiant,
@@ -119,7 +118,6 @@ function SectionTroisPublics() {
     {
       tag: "ENTREPRISES",
       titre: "Sourcer mieux, recruter sûr.",
-      desc: "Publie un projet, vois les étudiants travailler en conditions réelles, choisis tes futurs talents sur preuves — pas sur CV.",
       href: "/entreprises",
       libelleCta: "Découvrir",
       image: PHOTOS.entreprise,
@@ -128,7 +126,6 @@ function SectionTroisPublics() {
     {
       tag: "MENTORS",
       titre: "Forme par la pratique.",
-      desc: "Propose un projet, encadre une équipe, valide les compétences. Tes recommandations comptent dans le score JUB de l'étudiant.",
       href: "/inscription/mentor",
       libelleCta: "Devenir mentor",
       image: PHOTOS.mentor,
@@ -143,9 +140,6 @@ function SectionTroisPublics() {
         <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
           Trois publics. Une même promesse.
         </h2>
-        <p className="mt-3 text-texte-discret">
-          Chaque acteur tient un rôle précis dans le cycle. Personne ne tire l&apos;autre vers le bas.
-        </p>
       </div>
 
       <div className="grid gap-5 md:grid-cols-3">
@@ -163,26 +157,23 @@ function SectionTroisPublics() {
               <div className={cn("absolute inset-0", r.overlay)} />
 
               <div className="relative z-10 flex h-full min-h-[420px] flex-col p-6 sm:p-7">
+                {/* Tag : fond gris (jub-sage-100/85), grand, point orange + centre sage style logo JUB */}
                 <span
-                  className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/40 bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-white backdrop-blur-md shadow-lg"
+                  className="inline-flex w-fit items-center gap-2 rounded-full bg-jub-sage-100/90 px-4 py-1.5 text-base font-extrabold uppercase tracking-wider text-jub-sage-900 shadow-xl backdrop-blur-md sm:text-lg"
                 >
-                  <span className="h-1.5 w-1.5 rounded-full bg-jub-orange-500" />
+                  <span className="relative flex h-4 w-4 items-center justify-center rounded-full bg-jub-orange-500 sm:h-5 sm:w-5">
+                    <span className="block h-1.5 w-1.5 rounded-full bg-jub-sage-500 sm:h-2 sm:w-2" />
+                  </span>
                   {r.tag}
                 </span>
 
                 <div className="mt-auto space-y-4">
                   <h3
-                    className="text-2xl font-bold leading-tight text-white sm:text-[26px]"
+                    className="text-2xl font-bold leading-tight text-white sm:text-[28px]"
                     style={{ textShadow: "0 2px 14px rgba(0,0,0,0.55)" }}
                   >
                     {r.titre}
                   </h3>
-                  <p
-                    className="text-sm leading-relaxed text-white/95"
-                    style={{ textShadow: "0 1px 6px rgba(0,0,0,0.6)" }}
-                  >
-                    {r.desc}
-                  </p>
 
                   <span
                     className="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-jub-orange-500 px-5 py-2.5 text-sm font-bold text-jub-sage-950 shadow-lg shadow-jub-orange-500/40 transition-all group-hover:bg-jub-orange-400 group-hover:shadow-xl group-hover:shadow-jub-orange-500/50"
