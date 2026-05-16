@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Paperclip, MessageSquare, Plus, Star } from "lucide-react";
+import { useState, useTransition, useRef } from "react";
+import { Paperclip, MessageSquare, Plus, Star, Upload, Link2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Bouton } from "@/composants/ui/bouton";
 import { Champ, ChampEtiquete, Selecteur, ZoneTexte } from "@/composants/ui/champ";
@@ -81,9 +81,52 @@ export function Livrables({ projetId, livrables }: { projetId: string; livrables
 function FormulaireDeposer({ projetId, onFerme }: { projetId: string; onFerme: () => void }) {
   const [enCours, demarrer] = useTransition();
   const [erreur, setErreur] = useState<string | null>(null);
+  // Mode "fichier" (téléversement) vs "lien externe".
+  const [mode, setMode] = useState<"fichier" | "lien">("fichier");
+  // URL finale (depuis upload OU saisie utilisateur).
+  const [urlFichier, setUrlFichier] = useState<string>("");
+  const [nomFichier, setNomFichier] = useState<string>("");
+  const [tailleFichier, setTailleFichier] = useState<number>(0);
+  const [enTeleversement, setEnTeleversement] = useState(false);
+  const refInput = useRef<HTMLInputElement>(null);
+
+  async function televerser(fichier: File) {
+    setErreur(null);
+    setEnTeleversement(true);
+    try {
+      const fd = new FormData();
+      fd.append("fichier", fichier);
+      const reponse = await fetch("/api/livrables/upload", { method: "POST", body: fd });
+      const donnees = await reponse.json();
+      if (!reponse.ok || !donnees.url) {
+        throw new Error(donnees.erreur ?? "Échec du téléversement.");
+      }
+      setUrlFichier(donnees.url);
+      setNomFichier(fichier.name);
+      setTailleFichier(donnees.tailleOctets);
+    } catch (e) {
+      setErreur((e as Error).message);
+    } finally {
+      setEnTeleversement(false);
+    }
+  }
+
+  function reinitialiser() {
+    setUrlFichier("");
+    setNomFichier("");
+    setTailleFichier(0);
+    if (refInput.current) refInput.current.value = "";
+  }
 
   async function handleSubmit(formData: FormData) {
     setErreur(null);
+    if (mode === "fichier" && !urlFichier) {
+      setErreur("Sélectionne un fichier à téléverser.");
+      return;
+    }
+    if (mode === "fichier") {
+      formData.set("fichierUrl", urlFichier);
+    }
     demarrer(async () => {
       const r = await deposerLivrable(formData);
       if (!r?.succes) {
@@ -110,13 +153,62 @@ function FormulaireDeposer({ projetId, onFerme }: { projetId: string; onFerme: (
             <Champ id="titre-livrable" name="titre" required maxLength={160} placeholder="Ex. Maquette Figma v2" />
           </ChampEtiquete>
 
-          <ChampEtiquete
-            libelle="URL du fichier"
-            pour="url-livrable"
-            aide="Lien Drive / Notion / Figma / GitHub… Le stockage direct arrive en V1.3 (Supabase Storage)."
-          >
-            <Champ id="url-livrable" name="fichierUrl" type="url" required placeholder="https://" />
-          </ChampEtiquete>
+          {/* Sélecteur du mode de dépôt */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-texte">Source du livrable</p>
+            <div className="grid grid-cols-2 gap-2 rounded-lg bg-jub-pierre-100 p-1">
+              <button
+                type="button"
+                onClick={() => setMode("fichier")}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors",
+                  mode === "fichier"
+                    ? "bg-fond-eleve text-jub-orange-600 shadow-sm"
+                    : "text-texte-discret hover:text-texte",
+                )}
+              >
+                <Upload className="h-4 w-4" /> Téléverser
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("lien")}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-semibold transition-colors",
+                  mode === "lien"
+                    ? "bg-fond-eleve text-jub-orange-600 shadow-sm"
+                    : "text-texte-discret hover:text-texte",
+                )}
+              >
+                <Link2 className="h-4 w-4" /> Lien externe
+              </button>
+            </div>
+          </div>
+
+          {mode === "fichier" ? (
+            <ZoneTeleversement
+              urlFichier={urlFichier}
+              nomFichier={nomFichier}
+              tailleFichier={tailleFichier}
+              enTeleversement={enTeleversement}
+              refInput={refInput}
+              onChange={(f) => televerser(f)}
+              onReinit={reinitialiser}
+            />
+          ) : (
+            <ChampEtiquete
+              libelle="URL du fichier"
+              pour="url-livrable"
+              aide="Lien Drive / Notion / Figma / GitHub…"
+            >
+              <Champ
+                id="url-livrable"
+                name="fichierUrl"
+                type="url"
+                required={mode === "lien"}
+                placeholder="https://"
+              />
+            </ChampEtiquete>
+          )}
 
           <ChampEtiquete libelle="Description" pour="desc-livrable" optionnel>
             <ZoneTexte id="desc-livrable" name="description" rows={3} placeholder="Ce qui a été fait, ce qui reste, points d'attention…" />
@@ -124,11 +216,112 @@ function FormulaireDeposer({ projetId, onFerme }: { projetId: string; onFerme: (
         </CorpsCarte>
         <div className="flex justify-end gap-2 border-t border-bordure bg-jub-pierre-50 p-4">
           <Bouton apparence="fantome" type="button" onClick={onFerme}>Annuler</Bouton>
-          <Bouton apparence="primaire" type="submit" chargement={enCours}>Déposer</Bouton>
+          <Bouton apparence="primaire" type="submit" chargement={enCours || enTeleversement}>
+            Déposer
+          </Bouton>
         </div>
       </form>
     </Carte>
   );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Zone de téléversement (drag-drop + sélection fichier)
+// ─────────────────────────────────────────────────────────────
+
+function ZoneTeleversement({
+  urlFichier, nomFichier, tailleFichier, enTeleversement, refInput, onChange, onReinit,
+}: {
+  urlFichier: string;
+  nomFichier: string;
+  tailleFichier: number;
+  enTeleversement: boolean;
+  refInput: React.RefObject<HTMLInputElement | null>;
+  onChange: (fichier: File) => void;
+  onReinit: () => void;
+}) {
+  const [survol, setSurvol] = useState(false);
+
+  function gererDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setSurvol(false);
+    const f = e.dataTransfer.files[0];
+    if (f) onChange(f);
+  }
+
+  if (urlFichier) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-lg border border-jub-sage-300 bg-jub-sage-50 p-4">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-jub-orange-500 text-jub-sage-950">
+            <Paperclip className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="font-medium">{nomFichier}</p>
+            <p className="text-xs text-texte-discret">{formaterTaille(tailleFichier)}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onReinit}
+          className="rounded-full p-1.5 text-texte-discret hover:bg-jub-pierre-200 hover:text-red-600"
+          aria-label="Retirer le fichier"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onDragOver={(e) => { e.preventDefault(); setSurvol(true); }}
+      onDragLeave={() => setSurvol(false)}
+      onDrop={gererDrop}
+      onClick={() => refInput.current?.click()}
+      role="button"
+      tabIndex={0}
+      className={cn(
+        "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 transition-colors",
+        survol
+          ? "border-jub-orange-500 bg-jub-orange-50"
+          : "border-jub-sage-200 bg-jub-pierre-100 hover:border-jub-orange-300 hover:bg-jub-orange-50/30",
+      )}
+    >
+      <input
+        ref={refInput}
+        type="file"
+        className="hidden"
+        accept=".pdf,.zip,.png,.jpg,.jpeg,.webp,.gif,.svg,.mp4,.mov,.webm,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt,.md"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onChange(f);
+        }}
+      />
+      {enTeleversement ? (
+        <>
+          <span className="h-6 w-6 animate-spin rounded-full border-2 border-jub-orange-500 border-t-transparent" />
+          <p className="text-sm text-texte-discret">Téléversement en cours…</p>
+        </>
+      ) : (
+        <>
+          <Upload className="h-7 w-7 text-jub-sage-500" />
+          <p className="text-sm font-medium">
+            Clique ou dépose un fichier ici
+          </p>
+          <p className="text-xs text-texte-discret">
+            PDF, ZIP, images, vidéo, Office… 25 Mo max
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+function formaterTaille(octets: number): string {
+  if (octets < 1024) return `${octets} o`;
+  if (octets < 1024 * 1024) return `${(octets / 1024).toFixed(1)} Ko`;
+  return `${(octets / (1024 * 1024)).toFixed(1)} Mo`;
 }
 
 // ─────────────────────────────────────────────────────────────

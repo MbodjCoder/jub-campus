@@ -119,7 +119,15 @@ const schemaDeposerLivrable = z.object({
   projetId: z.string().cuid(),
   titre: z.string().min(2).max(160),
   description: z.string().max(2000).optional(),
-  fichierUrl: z.string().url("URL invalide."),
+  // Soit un fichier hébergé localement (/uploads/...) via l'API d'upload,
+  // soit une URL absolue externe (Drive, Figma, GitHub, etc.).
+  fichierUrl: z
+    .string()
+    .min(1, "Fichier requis.")
+    .refine(
+      (s) => s.startsWith("/uploads/") || /^https?:\/\//.test(s),
+      { message: "URL ou chemin de fichier invalide." },
+    ),
   tacheId: z.string().cuid().optional().or(z.literal("")),
 });
 

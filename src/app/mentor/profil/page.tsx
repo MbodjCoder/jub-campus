@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { mettreAJourProfilMentor } from "@/app/mentor/actions";
 import { Carte, CorpsCarte, EnteteCarte, TitreCarte } from "@/composants/ui/carte";
 import { Champ, ChampEtiquete, Selecteur, ZoneTexte } from "@/composants/ui/champ";
 import { Bouton } from "@/composants/ui/bouton";
@@ -36,7 +37,7 @@ export default async function PageMentorProfil() {
         <EnteteCarte>
           <TitreCarte>Informations</TitreCarte>
         </EnteteCarte>
-        <form action="/api/mentor/profil" method="post">
+        <form action={mettreAJourProfilMentor}>
           <CorpsCarte className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <ChampEtiquete libelle="Prénom" pour="prenom">

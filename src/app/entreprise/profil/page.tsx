@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { mettreAJourProfilEntreprise } from "@/app/entreprise/actions";
 import { Carte, CorpsCarte, EnteteCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
 import { Champ, ChampEtiquete, Selecteur, ZoneTexte } from "@/composants/ui/champ";
 import { Bouton } from "@/composants/ui/bouton";
@@ -41,7 +42,7 @@ export default async function PageProfilEntreprise() {
             {entreprise.statutValidation}
           </Insigne>
         </EnteteCarte>
-        <form action="/api/entreprise/profil" method="post">
+        <form action={mettreAJourProfilEntreprise}>
           <CorpsCarte className="space-y-5">
             <ChampEtiquete libelle="Raison sociale" pour="rs">
               <Champ id="rs" name="raisonSociale" required defaultValue={entreprise.raisonSociale} />

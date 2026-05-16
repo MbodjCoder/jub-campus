@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { mettreAJourProfilEtudiant } from "@/app/app/actions";
 import { Carte, CorpsCarte, EnteteCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
 import { Champ, ChampEtiquete, Selecteur, ZoneTexte } from "@/composants/ui/champ";
 import { Bouton } from "@/composants/ui/bouton";
@@ -39,7 +40,7 @@ export default async function PageProfil() {
           <TitreCarte>Informations personnelles</TitreCarte>
           <DescriptionCarte>Visible sur ton portfolio public si tu actives la visibilité.</DescriptionCarte>
         </EnteteCarte>
-        <form action="/api/profil/etudiant" method="post">
+        <form action={mettreAJourProfilEtudiant}>
           <CorpsCarte className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <ChampEtiquete libelle="Prénom" pour="prenom">
