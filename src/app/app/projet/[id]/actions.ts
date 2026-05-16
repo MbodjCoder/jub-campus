@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { emettreCertificat } from "@/domaine/certificats";
 
 // ─────────────────────────────────────────────────────────────
 // Garde-fou : récupère l'utilisateur connecté.
@@ -194,6 +195,86 @@ export async function ajouterFeedback(formData: FormData) {
 
   revalidatePath(`/app/projet/${livrable.projetId}`);
   return { succes: true };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Émission certificat (démo : sur projets internes JUB)
+// ─────────────────────────────────────────────────────────────
+
+interface ResultatEmission {
+  succes: boolean;
+  message?: string;
+  numeroPublic?: string;
+}
+
+export async function emettreCertificatDemo(projetId: string): Promise<ResultatEmission> {
+  const session = await exigerSession();
+  const projet = await verifierAccesProjet(projetId, session.user.id);
+  if (!projet) return { succes: false, message: "Accès refusé." };
+  if (projet.source !== "JUB_INTERNE") {
+    return { succes: false, message: "L'émission auto est réservée aux projets internes JUB." };
+  }
+
+  const etudiant = await prisma.etudiant.findUnique({
+    where: { utilisateurId: session.user.id },
+  });
+  if (!etudiant) return { succes: false, message: "Profil étudiant introuvable." };
+
+  // Si un certificat existe déjà pour ce couple étudiant / projet, on renvoie son numéro.
+  const existant = await prisma.certificat.findFirst({
+    where: { etudiantId: etudiant.id, projetId },
+  });
+  if (existant) {
+    return { succes: true, numeroPublic: existant.numeroPublic };
+  }
+
+  // Membre d'équipe : récupérer le rôle pour le certificat.
+  const membre = await prisma.membreEquipe.findFirst({
+    where: { etudiantId: etudiant.id, equipe: { projetId } },
+  });
+
+  // Livrables validés (pour les annexer au certificat).
+  const livrablesValides = await prisma.livrable.findMany({
+    where: { projetId, statut: "VALIDE" },
+    select: { id: true },
+  });
+
+  // Score : moyenne des notes de feedback (sur 10), fallback 8.5.
+  const feedbacks = await prisma.feedback.findMany({
+    where: { livrable: { projetId }, note: { not: null } },
+    select: { note: true },
+  });
+  const scoreFinal = feedbacks.length > 0
+    ? Math.min(10, (feedbacks.reduce((s, f) => s + (f.note ?? 0), 0) / feedbacks.length) * 2)
+    : 8.5;
+
+  const cert = await emettreCertificat({
+    etudiantId: etudiant.id,
+    projetId,
+    roleJoue: membre?.roleEquipe ?? "Contributeur",
+    periodeDebut: projet.publieLe ?? projet.creeLe,
+    periodeFin: new Date(),
+    scoreFinal,
+    competencesValidees: ["Next.js", "TypeScript", "Travail en équipe", "Autonomie"],
+    livrablesIds: livrablesValides.map((l) => l.id),
+    appreciation:
+      "Excellent travail sur le projet de démonstration JUB Campus. " +
+      "Engagement, rigueur et qualité des livrables au rendez-vous.",
+    mentorNom: "JUB Campus",
+    organisationNom: "JUB Campus",
+  });
+
+  // Marquer le projet comme CERTIFIE (état terminal positif).
+  await prisma.projet.update({
+    where: { id: projetId },
+    data: { statut: "CERTIFIE", termineLe: new Date() },
+  });
+
+  revalidatePath(`/app/projet/${projetId}`);
+  revalidatePath(`/app/certificats`);
+  revalidatePath(`/v/${cert.numeroPublic}`);
+
+  return { succes: true, numeroPublic: cert.numeroPublic };
 }
 
 // Changer le statut d'un livrable (mentor / entreprise uniquement

@@ -8,6 +8,7 @@ import { Insigne } from "@/composants/ui/insigne";
 import { Kanban } from "@/composants/projet/kanban";
 import { FormulaireTache } from "@/composants/projet/formulaire-tache";
 import { Livrables } from "@/composants/projet/livrables";
+import { BoutonEmettreCertificat } from "@/composants/projet/bouton-emettre-certificat";
 import {
   LIBELLES_CATEGORIE,
   LIBELLES_NIVEAU_PROJET,
@@ -50,6 +51,19 @@ export default async function PageEspaceProjet({ params }: ProprietesPage) {
 
   const membres = projet.equipe?.membres.map((m) => m.etudiant) ?? [];
 
+  // Récupère un certificat existant pour l'étudiant connecté sur ce projet,
+  // pour afficher directement les liens vers la vérification + PDF.
+  const etudiantConnecte = await prisma.etudiant.findUnique({
+    where: { utilisateurId: session.user.id },
+    select: { id: true },
+  });
+  const certificatExistant = etudiantConnecte
+    ? await prisma.certificat.findFirst({
+        where: { etudiantId: etudiantConnecte.id, projetId: projet.id },
+        select: { numeroPublic: true },
+      })
+    : null;
+
   return (
     <>
       <Link
@@ -88,6 +102,15 @@ export default async function PageEspaceProjet({ params }: ProprietesPage) {
       <section>
         <Livrables projetId={projet.id} livrables={projet.livrables} />
       </section>
+
+      {projet.source === "JUB_INTERNE" ? (
+        <section className="mt-12">
+          <BoutonEmettreCertificat
+            projetId={projet.id}
+            certificatExistantNumero={certificatExistant?.numeroPublic ?? null}
+          />
+        </section>
+      ) : null}
 
       <section className="mt-12">
         <Carte>

@@ -1,49 +1,68 @@
 import Link from "next/link";
+import { headers } from "next/headers";
+import { createHash } from "node:crypto";
+import { Download, ShieldCheck, ShieldAlert } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { Bouton } from "@/composants/ui/bouton";
 import { Carte, CorpsCarte, EnteteCarte, TitreCarte } from "@/composants/ui/carte";
 import { Insigne } from "@/composants/ui/insigne";
+import { LIBELLES_NIVEAU_ETUDE } from "@/lib/constantes";
 import { formaterDate, formaterDureeJours } from "@/lib/utils";
+import { calculerHashIntegrite, urlPdfCertificat } from "@/domaine/certificats";
 
-export const metadata = {
-  title: "Vérifier un certificat",
-  description: "Vérification publique des certificats JUB Campus.",
-};
+export const dynamic = "force-dynamic";
 
-// Démonstration : remplacer par requête Prisma quand DB connectée.
-const certificatsDemo = {
-  "JUB-2026-UGB-7K4M9P": {
-    etudiantNom: "Aïssatou Diop",
-    etudiantSlug: "aissatou-diop",
-    universite: "UGB Saint-Louis",
-    niveau: "M1 Informatique",
-    projetTitre: "Refonte de la billetterie en ligne",
-    organisation: "Sonatel",
-    mentor: "Pr. Mamadou Niang",
-    roleJoue: "Développeuse front-end",
-    periodeDebut: new Date("2026-03-02"),
-    periodeFin: new Date("2026-04-13"),
-    dureeJours: 42,
-    scoreFinal: 8.7,
-    competencesValidees: ["Next.js", "TypeScript", "UX recherche", "Travail en équipe"],
-    appreciation: "Travail rigoureux, livrables au-delà des attentes, communication exemplaire avec l'équipe Sonatel.",
-    statut: "VALIDE" as const,
-  },
-} as const;
+export async function generateMetadata({ params }: { params: Promise<{ numero: string }> }) {
+  const { numero } = await params;
+  return {
+    title: `Vérifier le certificat ${numero}`,
+    description: "Vérification publique d'authenticité du certificat JUB Campus.",
+    robots: { index: false },
+  };
+}
 
 type ParametresPage = { params: Promise<{ numero: string }> };
 
 export default async function PageVerificationCertificat({ params }: ParametresPage) {
   const { numero } = await params;
-  const cert = certificatsDemo[numero as keyof typeof certificatsDemo];
+
+  const cert = await prisma.certificat.findUnique({
+    where: { numeroPublic: numero },
+    include: {
+      etudiant: { include: { universite: true } },
+      projet: { include: { entreprise: true } },
+    },
+  });
+
+  // Journalisation de toute consultation (succès ou échec).
+  if (cert) {
+    const entetes = await headers();
+    const ip = entetes.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonyme";
+    const ipHash = createHash("sha256").update(ip + (process.env.AUTH_SECRET ?? "")).digest("hex");
+    await prisma.verificationCertificat.create({
+      data: {
+        certificatId: cert.id,
+        ipHash,
+        userAgent: entetes.get("user-agent") ?? null,
+        origine: entetes.get("referer") ?? null,
+      },
+    }).catch(() => { /* journalisation best-effort */ });
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-jub-pierre-100">
       <header className="border-b border-bordure bg-fond-eleve">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-jub-vert-900 text-white text-sm font-bold">J</span>
-            <span className="text-sm font-semibold">JUB Campus · Vérification publique</span>
+            <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-jub-orange-500 shadow-sm">
+              <span className="block h-2.5 w-2.5 rounded-full bg-jub-sage-500" />
+            </span>
+            <span className="text-sm font-extrabold text-jub-orange-500">JUB</span>
+            <span className="text-xs font-semibold text-jub-sage-700">Campus · Vérification publique</span>
           </Link>
-          <Link href="/" className="text-xs text-jub-vert-700 hover:underline">jubcampus.sn</Link>
+          <Link href="/" className="text-xs text-jub-sage-700 hover:text-jub-orange-600 hover:underline">
+            jubcampus.sn
+          </Link>
         </div>
       </header>
 
@@ -53,16 +72,16 @@ export default async function PageVerificationCertificat({ params }: ParametresP
           <p className="font-mono text-2xl font-semibold tracking-tight">{numero}</p>
         </div>
 
-        {cert ? <BlocCertificatValide cert={cert} /> : <BlocCertificatInconnu numero={numero} />}
+        {cert ? <BlocCertificatExistant cert={cert} /> : <BlocCertificatInconnu numero={numero} />}
 
         <Carte className="mt-6">
           <CorpsCarte className="text-sm text-texte-discret">
-            <p className="font-medium text-texte mb-1">Comment vérifier ?</p>
+            <p className="mb-1 font-medium text-texte">Comment vérifier ?</p>
             Chaque certificat JUB Campus est signé par un hash d&apos;intégrité SHA-256
             et possède une page publique unique. Si le statut affiché est{" "}
-            <strong className="text-jub-vert-700">VALIDE</strong>, le certificat est
-            authentique et émis par JUB Campus. Toute vérification est journalisée
-            (date, IP anonymisée) pour des raisons de traçabilité.
+            <strong className="text-jub-sage-700">VALIDE</strong>, le certificat est
+            authentique et émis par JUB Campus. Toute consultation est journalisée
+            (date, IP anonymisée par SHA-256, user-agent) pour la traçabilité.
           </CorpsCarte>
         </Carte>
       </main>
@@ -70,44 +89,104 @@ export default async function PageVerificationCertificat({ params }: ParametresP
   );
 }
 
-function BlocCertificatValide({ cert }: { cert: typeof certificatsDemo[keyof typeof certificatsDemo] }) {
+// ─────────────────────────────────────────────────────────────
+// Bloc certificat trouvé en base
+// ─────────────────────────────────────────────────────────────
+
+function BlocCertificatExistant({
+  cert,
+}: {
+  cert: NonNullable<Awaited<ReturnType<typeof recupererCertPourTypage>>>;
+}) {
+  // Vérification croisée : on recalcule le hash à partir des champs persistés.
+  const hashRecalcule = calculerHashIntegrite({
+    numeroPublic: cert.numeroPublic,
+    etudiantId: cert.etudiantId,
+    projetId: cert.projetId,
+    scoreFinal: cert.scoreFinal,
+    competencesValidees: cert.competencesValidees,
+    periodeDebut: cert.periodeDebut,
+    periodeFin: cert.periodeFin,
+  });
+  const integriteOk = hashRecalcule === cert.hashIntegrite;
+  const valide = cert.statut === "VALIDE" && integriteOk;
+
+  const meta = valide
+    ? { ton: "vert" as const, libelle: "VALIDE", icone: ShieldCheck, couleur: "text-jub-sage-700" }
+    : cert.statut === "REVOQUE"
+      ? { ton: "rouge" as const, libelle: "RÉVOQUÉ", icone: ShieldAlert, couleur: "text-red-700" }
+      : !integriteOk
+        ? { ton: "rouge" as const, libelle: "INTÉGRITÉ COMPROMISE", icone: ShieldAlert, couleur: "text-red-700" }
+        : { ton: "neutre" as const, libelle: cert.statut, icone: ShieldAlert, couleur: "text-texte-discret" };
+
   return (
     <Carte className="overflow-hidden shadow-lg">
-      <EnteteCarte className="bg-jub-vert-950 text-white border-b-0">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold tracking-wide">Statut</span>
-          <Insigne ton="jaune">{cert.statut}</Insigne>
+      <EnteteCarte className="bg-jub-sage-900 text-white">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <meta.icone className="h-5 w-5" />
+            <span className="font-semibold tracking-wide">Statut</span>
+          </div>
+          <Insigne ton={meta.ton}>{meta.libelle}</Insigne>
         </div>
       </EnteteCarte>
       <CorpsCarte className="space-y-5">
         <div>
           <p className="text-xs uppercase tracking-wider text-texte-discret">Décerné à</p>
-          <Link href={`/u/${cert.etudiantSlug}`} className="text-2xl font-semibold hover:text-jub-vert-700 hover:underline">
-            {cert.etudiantNom}
+          <Link
+            href={`/u/${cert.etudiant.slug}`}
+            className="text-2xl font-bold hover:text-jub-orange-600 hover:underline"
+          >
+            {cert.etudiant.prenom} {cert.etudiant.nom}
           </Link>
-          <p className="text-sm text-texte-discret">{cert.niveau} · {cert.universite}</p>
+          <p className="text-sm text-texte-discret">
+            {LIBELLES_NIVEAU_ETUDE[cert.etudiant.niveau]} · {cert.etudiant.universite.nom}
+          </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Bloc libelle="Projet" valeur={cert.projetTitre} />
-          <Bloc libelle="Organisation" valeur={cert.organisation} />
-          <Bloc libelle="Rôle joué" valeur={cert.roleJoue} />
-          <Bloc libelle="Mentor" valeur={cert.mentor} />
-          <Bloc libelle="Période" valeur={`${formaterDate(cert.periodeDebut)} → ${formaterDate(cert.periodeFin)}`} />
-          <Bloc libelle="Durée" valeur={formaterDureeJours(cert.dureeJours)} />
-          <Bloc libelle="Score final" valeur={`${cert.scoreFinal.toFixed(1)} / 10`} />
+          <Champ libelle="Projet" valeur={cert.projet.titre} />
+          <Champ libelle="Organisation" valeur={cert.organisationNom ?? cert.projet.entreprise?.raisonSociale ?? "JUB Campus"} />
+          <Champ libelle="Rôle joué" valeur={cert.roleJoue} />
+          <Champ libelle="Mentor" valeur={cert.mentorNom} />
+          <Champ libelle="Période" valeur={`${formaterDate(cert.periodeDebut)} → ${formaterDate(cert.periodeFin)}`} />
+          <Champ libelle="Durée" valeur={formaterDureeJours(cert.dureeJours)} />
+          <Champ libelle="Score final" valeur={`${cert.scoreFinal.toFixed(1)} / 10`} mettreEnAvant />
+          <Champ libelle="Émis le" valeur={formaterDate(cert.emisLe)} />
         </div>
 
-        <div>
-          <p className="text-xs uppercase tracking-wider text-texte-discret mb-2">Compétences validées</p>
-          <div className="flex flex-wrap gap-1.5">
-            {cert.competencesValidees.map((c) => <Insigne key={c} ton="vert">{c}</Insigne>)}
+        {cert.competencesValidees.length > 0 ? (
+          <div>
+            <p className="mb-2 text-xs uppercase tracking-wider text-texte-discret">Compétences validées</p>
+            <div className="flex flex-wrap gap-1.5">
+              {cert.competencesValidees.map((c) => (
+                <span
+                  key={c}
+                  className="inline-flex items-center rounded-full bg-jub-sage-500 px-2.5 py-0.5 text-xs font-bold text-jub-orange-500"
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : null}
 
-        <div>
-          <p className="text-xs uppercase tracking-wider text-texte-discret mb-1">Appréciation du mentor</p>
-          <p className="text-sm leading-relaxed italic text-texte">« {cert.appreciation} »</p>
+        {cert.appreciation ? (
+          <div>
+            <p className="mb-1 text-xs uppercase tracking-wider text-texte-discret">Appréciation du mentor</p>
+            <p className="text-sm italic leading-relaxed text-texte">« {cert.appreciation} »</p>
+          </div>
+        ) : null}
+
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-bordure pt-4">
+          <p className="font-mono text-[10px] text-texte-discret">
+            SHA-256 : {cert.hashIntegrite.slice(0, 16)}…{cert.hashIntegrite.slice(-16)}
+          </p>
+          <a href={urlPdfCertificat(cert.numeroPublic)} target="_blank" rel="noopener noreferrer">
+            <Bouton apparence="accent" taille="sm">
+              <Download className="h-4 w-4" /> Télécharger le PDF
+            </Bouton>
+          </a>
         </div>
       </CorpsCarte>
     </Carte>
@@ -117,32 +196,48 @@ function BlocCertificatValide({ cert }: { cert: typeof certificatsDemo[keyof typ
 function BlocCertificatInconnu({ numero }: { numero: string }) {
   return (
     <Carte>
-      <EnteteCarte className="bg-red-50 border-red-200">
-        <div className="flex items-center justify-between">
-          <TitreCarte className="text-red-900">Certificat introuvable</TitreCarte>
+      <EnteteCarte className="border-red-200 bg-red-50">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="h-5 w-5 text-red-700" />
+            <TitreCarte className="text-red-900">Certificat introuvable</TitreCarte>
+          </div>
           <Insigne ton="rouge">INVALIDE</Insigne>
         </div>
       </EnteteCarte>
       <CorpsCarte className="space-y-3 text-sm text-texte-discret">
         <p>
           Aucun certificat JUB Campus ne correspond au numéro{" "}
-          <code className="font-mono bg-jub-pierre-100 px-1.5 py-0.5 rounded">{numero}</code>.
+          <code className="rounded bg-jub-pierre-100 px-1.5 py-0.5 font-mono">{numero}</code>.
         </p>
         <p>
           Vérifie l&apos;orthographe (les caractères 0, O, 1, I et L ne sont jamais utilisés).
           Si tu vois ce message en scannant un QR code, le certificat est probablement
-          falsifié — n&apos;hésite pas à nous le signaler via la page contact.
+          falsifié — signale-le via la page <Link href="/contact" className="text-jub-orange-600 underline">contact</Link>.
         </p>
       </CorpsCarte>
     </Carte>
   );
 }
 
-function Bloc({ libelle, valeur }: { libelle: string; valeur: string }) {
+function Champ({ libelle, valeur, mettreEnAvant }: { libelle: string; valeur: string; mettreEnAvant?: boolean }) {
   return (
     <div>
       <p className="text-xs uppercase tracking-wider text-texte-discret">{libelle}</p>
-      <p className="text-sm font-medium">{valeur}</p>
+      <p className={mettreEnAvant ? "text-base font-bold text-jub-orange-600" : "text-sm font-medium"}>
+        {valeur}
+      </p>
     </div>
   );
+}
+
+// Helper de typage : signature identique à l'include utilisé plus haut.
+async function recupererCertPourTypage() {
+  return prisma.certificat.findUnique({
+    where: { numeroPublic: "" },
+    include: {
+      etudiant: { include: { universite: true } },
+      projet: { include: { entreprise: true } },
+    },
+  });
 }

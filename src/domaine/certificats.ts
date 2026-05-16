@@ -1,9 +1,12 @@
-// Domaine métier des certificats : hash d'intégrité, numéro public, vérification.
+// Domaine métier des certificats : hash d'intégrité, numéro public,
+// URL de vérification, et émission persistée en base.
 
 import { createHash } from "node:crypto";
 import { customAlphabet } from "nanoid";
+import { prisma } from "@/lib/prisma";
 
-const ALPHABET_CERTIFICAT = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // sans 0/O/1/I/L pour lisibilité
+// Alphabet sans 0/O/1/I/L pour éviter toute confusion à la lecture humaine.
+const ALPHABET_CERTIFICAT = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const genererJeton = customAlphabet(ALPHABET_CERTIFICAT, 8);
 
 interface DonneesCertificat {
@@ -44,4 +47,93 @@ export function calculerHashIntegrite(donnees: DonneesCertificat & { numeroPubli
 export function urlVerification(numeroPublic: string, base?: string): string {
   const racine = base ?? process.env.URL_PUBLIQUE ?? "http://localhost:3000";
   return `${racine.replace(/\/$/, "")}/v/${numeroPublic}`;
+}
+
+// URL de téléchargement / aperçu du PDF.
+export function urlPdfCertificat(numeroPublic: string, base?: string): string {
+  const racine = base ?? process.env.URL_PUBLIQUE ?? "http://localhost:3000";
+  return `${racine.replace(/\/$/, "")}/api/certificats/${numeroPublic}/pdf`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Émission persistée
+// ─────────────────────────────────────────────────────────────
+
+export interface ParametresEmission {
+  etudiantId: string;
+  projetId: string;
+  roleJoue: string;
+  periodeDebut: Date;
+  periodeFin: Date;
+  scoreFinal: number;
+  competencesValidees: string[];
+  livrablesIds?: string[];
+  appreciation: string;
+  mentorNom: string;
+  organisationNom?: string | null;
+}
+
+// Crée un certificat en base avec numéro public + hash d'intégrité.
+// Renvoie le certificat persisté.
+export async function emettreCertificat(params: ParametresEmission) {
+  const etudiant = await prisma.etudiant.findUnique({
+    where: { id: params.etudiantId },
+    include: { universite: true },
+  });
+  if (!etudiant) throw new Error("Étudiant introuvable");
+
+  const numeroPublic = genererNumeroPublic({
+    acronymeUniversite: etudiant.universite.acronyme,
+  });
+
+  const dureeJours = Math.max(
+    1,
+    Math.round((params.periodeFin.getTime() - params.periodeDebut.getTime()) / 86_400_000),
+  );
+
+  const hashIntegrite = calculerHashIntegrite({
+    numeroPublic,
+    etudiantId: params.etudiantId,
+    projetId: params.projetId,
+    scoreFinal: params.scoreFinal,
+    competencesValidees: params.competencesValidees,
+    periodeDebut: params.periodeDebut,
+    periodeFin: params.periodeFin,
+  });
+
+  const certificat = await prisma.certificat.create({
+    data: {
+      numeroPublic,
+      etudiantId: params.etudiantId,
+      projetId: params.projetId,
+      roleJoue: params.roleJoue,
+      periodeDebut: params.periodeDebut,
+      periodeFin: params.periodeFin,
+      dureeJours,
+      competencesValidees: params.competencesValidees,
+      livrablesIds: params.livrablesIds ?? [],
+      scoreFinal: params.scoreFinal,
+      appreciation: params.appreciation,
+      mentorNom: params.mentorNom,
+      organisationNom: params.organisationNom ?? null,
+      hashIntegrite,
+      statut: "VALIDE",
+    },
+  });
+
+  await prisma.journalAudit.create({
+    data: {
+      action: "CERTIFICAT.EMIS",
+      ressourceType: "Certificat",
+      ressourceId: certificat.id,
+      metadonnees: {
+        numeroPublic: certificat.numeroPublic,
+        etudiantId: params.etudiantId,
+        projetId: params.projetId,
+        scoreFinal: params.scoreFinal,
+      },
+    },
+  });
+
+  return certificat;
 }
