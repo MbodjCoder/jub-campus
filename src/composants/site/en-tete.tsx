@@ -79,6 +79,7 @@ export function EnTeteSite({ session }: { session: InfosSession | null }) {
           }}
           style={{
             flex: "0 1 360px",
+            minWidth: 0,
             display: "flex",
             alignItems: "center",
             gap: 8,
