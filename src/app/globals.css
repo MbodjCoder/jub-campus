@@ -214,6 +214,22 @@ body { min-height: 100vh; }
 /* Aucun média ne déborde de son conteneur. */
 img, svg, video, canvas { max-width: 100%; }
 
+/* ───────────────────────────────────────────────────────────────
+   Anti-zoom iOS au focus d'un champ.
+   Safari iOS zoome automatiquement quand un champ a font-size < 16px,
+   ce qui réintroduit un défilement horizontal et déstabilise la page.
+   On force 16px sur tous les contrôles de formulaire en mobile.
+   `!important` : nécessaire pour battre les font-size en style inline.
+   ─────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select,
+  .champ {
+    font-size: 16px !important;
+  }
+}
+
 button { font: inherit; }
 
 img { display: block; max-width: 100%; }
