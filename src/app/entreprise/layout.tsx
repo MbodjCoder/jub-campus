@@ -5,6 +5,8 @@ import {
 } from "lucide-react";
 import { auth } from "@/auth";
 import { MenuUtilisateur } from "@/composants/site/menu-utilisateur";
+import { NotificationCloche } from "@/composants/site/notification-cloche";
+import { obtenirRecentes, compterNonLues } from "@/domaine/notifications";
 
 const liens = [
   { libelle: "Tableau de bord", href: "/entreprise",            icone: LayoutDashboard },
@@ -30,6 +32,11 @@ export default async function MiseEntreprise({ children }: { children: React.Rea
     role: session.user.role,
   };
 
+  const [recentes, nbNonLues] = await Promise.all([
+    obtenirRecentes(session.user.id, 8),
+    compterNonLues(session.user.id),
+  ]);
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-30 border-b border-bordure bg-fond-eleve/90 backdrop-blur">
@@ -42,7 +49,10 @@ export default async function MiseEntreprise({ children }: { children: React.Rea
             <span className="text-sm font-semibold text-jub-sage-700">Campus</span>
             <span className="ml-1 hidden text-xs text-texte-discret sm:inline">· Entreprise</span>
           </Link>
-          <MenuUtilisateur session={infos} />
+          <div className="flex items-center gap-2">
+            <NotificationCloche notifications={recentes} nbNonLues={nbNonLues} />
+            <MenuUtilisateur session={infos} />
+          </div>
         </div>
       </header>
       <div className="mx-auto flex w-full max-w-7xl flex-1 gap-6 px-4 py-6 sm:px-6">

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { creerNotification } from "@/domaine/notifications";
 
 // Garde-fou : seul un admin ou super-admin peut exécuter ces actions.
 async function exigerAdmin() {
@@ -31,13 +32,24 @@ export async function deciderEntreprise(formData: FormData): Promise<void> {
   const parsed = schemaDecisionEntreprise.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
 
-  await prisma.entreprise.update({
+  const entreprise = await prisma.entreprise.update({
     where: { id: parsed.data.entrepriseId },
     data: {
       statutValidation: parsed.data.decision,
       motifRejet: parsed.data.decision === "REJETEE" ? (parsed.data.motifRejet ?? null) : null,
       valideeLe: parsed.data.decision === "VALIDEE" ? new Date() : null,
     },
+    select: { utilisateurId: true, raisonSociale: true },
+  });
+
+  await creerNotification({
+    destinataireId: entreprise.utilisateurId,
+    type: "SYSTEME",
+    titre: parsed.data.decision === "VALIDEE" ? "Compte entreprise validé" : "Compte entreprise rejeté",
+    contenu: parsed.data.decision === "VALIDEE"
+      ? `Bienvenue ${entreprise.raisonSociale}. Tu peux maintenant publier ton premier projet.`
+      : `Motif : ${parsed.data.motifRejet ?? "Non précisé."}`,
+    lien: "/entreprise",
   });
 
   await prisma.journalAudit.create({
@@ -69,24 +81,23 @@ export async function deciderProjet(formData: FormData): Promise<void> {
   const parsed = schemaDecisionProjet.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return;
 
-  if (parsed.data.decision === "PUBLIE") {
-    await prisma.projet.update({
-      where: { id: parsed.data.projetId },
-      data: {
-        statut: "PUBLIE",
-        publieLe: new Date(),
-        motifRejet: null,
-      },
-    });
-  } else {
-    await prisma.projet.update({
-      where: { id: parsed.data.projetId },
-      data: {
-        statut: "BROUILLON",
-        motifRejet: parsed.data.motifRejet ?? "Non conforme aux critères JUB.",
-      },
-    });
-  }
+  const projet = await prisma.projet.update({
+    where: { id: parsed.data.projetId },
+    data: parsed.data.decision === "PUBLIE"
+      ? { statut: "PUBLIE", publieLe: new Date(), motifRejet: null }
+      : { statut: "BROUILLON", motifRejet: parsed.data.motifRejet ?? "Non conforme aux critères JUB." },
+    select: { publieParId: true, titre: true },
+  });
+
+  await creerNotification({
+    destinataireId: projet.publieParId,
+    type: parsed.data.decision === "PUBLIE" ? "PROJET_PUBLIE" : "SYSTEME",
+    titre: parsed.data.decision === "PUBLIE" ? "Projet publié" : "Projet rejeté",
+    contenu: parsed.data.decision === "PUBLIE"
+      ? `« ${projet.titre} » est maintenant visible publiquement.`
+      : `Motif : ${parsed.data.motifRejet ?? "Non précisé."}`,
+    lien: "/entreprise/projets",
+  });
 
   await prisma.journalAudit.create({
     data: {

@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckCircle2, Circle, CircleDot, Eye, GripVertical, Calendar } from "lucide-react";
+import {
+  DndContext, DragOverlay, useDraggable, useDroppable,
+  PointerSensor, useSensor, useSensors,
+  type DragEndEvent, type DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  CheckCircle2, Circle, CircleDot, Eye, GripVertical, Calendar,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deplacerTache } from "@/app/app/projet/[id]/actions";
 import { formaterDate } from "@/lib/utils";
@@ -33,67 +40,147 @@ const COULEURS_PRIORITE: Record<Tache["priorite"], string> = {
 };
 
 export function Kanban({ taches }: { taches: Tache[] }) {
-  return (
-    <div className="grid gap-4 lg:grid-cols-4">
-      {COLONNES.map((col) => {
-        const tachesColonne = taches.filter((t) => t.statut === col.statut);
-        const Icone = col.icone;
-        return (
-          <section
-            key={col.statut}
-            className="flex min-h-[200px] flex-col rounded-2xl border border-bordure bg-jub-pierre-100/40 p-3"
-          >
-            <header className="mb-3 flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <Icone className="h-4 w-4 text-jub-sage-700" />
-                <h3 className="text-sm font-bold uppercase tracking-wider text-jub-sage-700">
-                  {col.libelle}
-                </h3>
-              </div>
-              <span className="rounded-full bg-jub-sage-200 px-2 py-0.5 text-xs font-bold text-jub-sage-900">
-                {tachesColonne.length}
-              </span>
-            </header>
+  // Optimistic local state pour un drop fluide : on déplace immédiatement
+  // dans l'état local, puis on appelle la server action en arrière-plan.
+  const [tachesLocales, setTachesLocales] = useState<Tache[]>(taches);
+  const [tacheActive, setTacheActive] = useState<Tache | null>(null);
+  const [, demarrer] = useTransition();
 
-            <div className="flex flex-1 flex-col gap-2.5">
-              {tachesColonne.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-jub-sage-200 px-3 py-6 text-center text-xs text-texte-discret">
-                  Aucune tâche.
-                </p>
-              ) : (
-                tachesColonne.map((t) => <CarteTache key={t.id} tache={t} />)
-              )}
-            </div>
-          </section>
-        );
-      })}
-    </div>
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
-}
 
-function CarteTache({ tache }: { tache: Tache }) {
-  const [enCours, demarrer] = useTransition();
-  const [statutCourant, setStatutCourant] = useState(tache.statut);
+  function gererDebut(e: DragStartEvent) {
+    const t = tachesLocales.find((x) => x.id === e.active.id);
+    if (t) setTacheActive(t);
+  }
 
-  function handleChange(nouveau: StatutTache) {
-    setStatutCourant(nouveau);
+  function gererFin(e: DragEndEvent) {
+    setTacheActive(null);
+    if (!e.over) return;
+    const tacheId = String(e.active.id);
+    const nouveauStatut = String(e.over.id) as StatutTache;
+
+    const courante = tachesLocales.find((t) => t.id === tacheId);
+    if (!courante || courante.statut === nouveauStatut) return;
+
+    // Mise à jour optimiste
+    setTachesLocales((prev) =>
+      prev.map((t) => (t.id === tacheId ? { ...t, statut: nouveauStatut } : t)),
+    );
     demarrer(async () => {
-      await deplacerTache(tache.id, nouveau);
+      const r = await deplacerTache(tacheId, nouveauStatut);
+      if (!r.succes) {
+        // Rollback en cas d'échec
+        setTachesLocales((prev) =>
+          prev.map((t) => (t.id === tacheId ? { ...t, statut: courante.statut } : t)),
+        );
+      }
     });
   }
 
   return (
+    <DndContext sensors={sensors} onDragStart={gererDebut} onDragEnd={gererFin}>
+      <div className="grid gap-4 lg:grid-cols-4">
+        {COLONNES.map((col) => {
+          const tachesColonne = tachesLocales.filter((t) => t.statut === col.statut);
+          return (
+            <ColonneKanban
+              key={col.statut}
+              statut={col.statut}
+              libelle={col.libelle}
+              icone={col.icone}
+              taches={tachesColonne}
+            />
+          );
+        })}
+      </div>
+
+      <DragOverlay>
+        {tacheActive ? <CarteTache tache={tacheActive} survol /> : null}
+      </DragOverlay>
+    </DndContext>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Colonne droppable
+// ─────────────────────────────────────────────────────────────
+
+function ColonneKanban({
+  statut, libelle, icone: Icone, taches,
+}: {
+  statut: StatutTache;
+  libelle: string;
+  icone: React.ComponentType<{ className?: string }>;
+  taches: Tache[];
+}) {
+  const { isOver, setNodeRef } = useDroppable({ id: statut });
+
+  return (
+    <section
+      ref={setNodeRef}
+      className={cn(
+        "flex min-h-[200px] flex-col rounded-2xl border p-3 transition-colors",
+        isOver
+          ? "border-jub-orange-500 bg-jub-orange-50"
+          : "border-bordure bg-jub-pierre-100/40",
+      )}
+    >
+      <header className="mb-3 flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <Icone className="h-4 w-4 text-jub-sage-700" />
+          <h3 className="text-sm font-bold uppercase tracking-wider text-jub-sage-700">{libelle}</h3>
+        </div>
+        <span className="rounded-full bg-jub-sage-200 px-2 py-0.5 text-xs font-bold text-jub-sage-900">
+          {taches.length}
+        </span>
+      </header>
+
+      <div className="flex flex-1 flex-col gap-2.5">
+        {taches.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-jub-sage-200 px-3 py-6 text-center text-xs text-texte-discret">
+            {isOver ? "Dépose ici" : "Aucune tâche."}
+          </p>
+        ) : (
+          taches.map((t) => <CarteTacheDraggable key={t.id} tache={t} />)
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Carte draggable (wrapper) + carte de rendu pur
+// ─────────────────────────────────────────────────────────────
+
+function CarteTacheDraggable({ tache }: { tache: Tache }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: tache.id });
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        "cursor-grab touch-none active:cursor-grabbing",
+        isDragging && "opacity-30",
+      )}
+    >
+      <CarteTache tache={tache} />
+    </div>
+  );
+}
+
+function CarteTache({ tache, survol = false }: { tache: Tache; survol?: boolean }) {
+  return (
     <article
       className={cn(
-        "group relative rounded-xl border border-bordure bg-fond-eleve p-3 shadow-sm transition-all hover:border-jub-orange-300 hover:shadow-md",
-        enCours && "opacity-60",
+        "group relative rounded-xl border border-bordure bg-fond-eleve p-3 shadow-sm transition-all",
+        survol ? "rotate-2 shadow-2xl ring-2 ring-jub-orange-500" : "hover:border-jub-orange-300 hover:shadow-md",
       )}
     >
       <div className="flex items-start gap-2">
-        <GripVertical
-          aria-hidden
-          className="mt-0.5 h-4 w-4 shrink-0 text-jub-pierre-300 group-hover:text-jub-sage-500"
-        />
+        <GripVertical aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-jub-pierre-300 group-hover:text-jub-sage-500" />
         <div className="flex-1 space-y-2">
           <p className="text-sm font-medium leading-snug">{tache.titre}</p>
           {tache.description ? (
@@ -101,12 +188,7 @@ function CarteTache({ tache }: { tache: Tache }) {
           ) : null}
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase",
-                COULEURS_PRIORITE[tache.priorite],
-              )}
-            >
+            <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase", COULEURS_PRIORITE[tache.priorite])}>
               {tache.priorite}
             </span>
             {tache.echeance ? (
@@ -124,17 +206,6 @@ function CarteTache({ tache }: { tache: Tache }) {
               </span>
             ) : null}
           </div>
-
-          <select
-            value={statutCourant}
-            disabled={enCours}
-            onChange={(e) => handleChange(e.target.value as StatutTache)}
-            className="mt-1 w-full rounded-md border border-bordure bg-fond px-2 py-1 text-[11px] text-jub-sage-700 transition-colors hover:border-jub-orange-300 focus:outline-none focus:ring-2 focus:ring-jub-orange-300"
-          >
-            {COLONNES.map((c) => (
-              <option key={c.statut} value={c.statut}>Déplacer → {c.libelle}</option>
-            ))}
-          </select>
         </div>
       </div>
     </article>

@@ -5,6 +5,8 @@ import {
 } from "lucide-react";
 import { auth } from "@/auth";
 import { MenuUtilisateur } from "@/composants/site/menu-utilisateur";
+import { NotificationCloche } from "@/composants/site/notification-cloche";
+import { obtenirRecentes, compterNonLues } from "@/domaine/notifications";
 
 const liens = [
   { libelle: "Vue d'ensemble", href: "/admin",                icone: LayoutDashboard },
@@ -29,6 +31,11 @@ export default async function MiseAdmin({ children }: { children: React.ReactNod
     role: session.user.role,
   };
 
+  const [recentes, nbNonLues] = await Promise.all([
+    obtenirRecentes(session.user.id, 8),
+    compterNonLues(session.user.id),
+  ]);
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-30 border-b border-bordure bg-jub-sage-900 text-white">
@@ -40,7 +47,10 @@ export default async function MiseAdmin({ children }: { children: React.ReactNod
             <span className="text-lg font-extrabold tracking-tight text-jub-orange-500">JUB</span>
             <span className="text-sm font-semibold text-jub-sage-100">Campus · Administration</span>
           </Link>
-          <MenuUtilisateur session={infos} surFondSombre />
+          <div className="flex items-center gap-2">
+            <NotificationCloche notifications={recentes} nbNonLues={nbNonLues} surFondSombre />
+            <MenuUtilisateur session={infos} surFondSombre />
+          </div>
         </div>
       </header>
 
