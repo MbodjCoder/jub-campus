@@ -7,7 +7,7 @@ import {
   FolderKanban, FileCheck, Star, Building2, Award, AlertTriangle, FileText,
   type LucideIcon,
 } from "lucide-react";
-import { Logo } from "@/composants/ui/logo";
+import { Logo } from "@/composants/maquette/primitifs";
 import { MenuUtilisateur } from "@/composants/site/menu-utilisateur";
 import { NotificationCloche } from "@/composants/site/notification-cloche";
 import type { Role } from "@/generated/prisma/client";

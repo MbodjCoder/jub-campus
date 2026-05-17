@@ -18,10 +18,22 @@ export const Logo = ({
     : "logo-pastille";
   const fs = size === "lg" ? 22 : size === "xl" ? 30 : 16;
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+    // Cadre du logo — fond sage-500 (couleur du point central du logo),
+    // appliqué partout pour une identité cohérente sur toutes les pages.
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 9,
+        background: "var(--sage-500)",
+        border: "1px solid var(--sage-600)",
+        borderRadius: 999,
+        padding: "5px 13px",
+      }}
+    >
       <span className={cls + (blanc ? " logo-pastille--blanc" : "")} />
       {mot ? (
-        <span className="logo-mot" style={{ fontSize: fs, color: blanc ? "white" : "var(--orange-500)" }}>
+        <span className="logo-mot" style={{ fontSize: fs, color: "var(--orange-500)" }}>
           JUB
         </span>
       ) : null}
