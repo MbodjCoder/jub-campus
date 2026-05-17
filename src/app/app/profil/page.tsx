@@ -20,7 +20,7 @@ export default async function PageProfil() {
       universite: { select: { nom: true } },
       competences: {
         orderBy: { niveau: "desc" },
-        take: 6,
+        take: 40,
         select: { niveau: true, niveauValide: true, competence: { select: { nom: true } } },
       },
       certificats: {

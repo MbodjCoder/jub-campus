@@ -18,11 +18,7 @@ export default async function MiseEtudiant({ children }: { children: React.React
     redirect("/");
   }
 
-  const [etudiant, notifications, projets] = await Promise.all([
-    prisma.etudiant.findUnique({
-      where: { utilisateurId: session.user.id },
-      select: { universite: { select: { acronyme: true } } },
-    }),
+  const [notifications, projets] = await Promise.all([
     prisma.notification.findMany({
       where: { destinataireId: session.user.id },
       orderBy: { creeLe: "desc" },
@@ -39,9 +35,13 @@ export default async function MiseEtudiant({ children }: { children: React.React
 
   return (
     <CoquilleApp
-      nom={session.user.name ?? "Mon profil"}
-      acronymeUniversite={etudiant?.universite?.acronyme ?? null}
-      imageUrl={session.user.image ?? null}
+      session={{
+        id: session.user.id,
+        nom: session.user.name ?? null,
+        email: session.user.email ?? null,
+        image: session.user.image ?? null,
+        role: session.user.role,
+      }}
       notifications={notifications}
       projetsRecherche={projets.map(versApercu)}
     >

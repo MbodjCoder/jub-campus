@@ -9,10 +9,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Icon } from "./icones";
 import { fmt } from "./format";
-import { Logo, Avatar } from "./primitifs";
+import { Logo } from "./primitifs";
 import type { ProjetApercu } from "./lignes-job";
-import { seDeconnecter } from "@/app/(public)/inscription/actions";
+import { MenuUtilisateur } from "@/composants/site/menu-utilisateur";
 import { marquerToutesNotificationsLues } from "@/app/app/notifications/actions";
+import type { Role } from "@/generated/prisma/client";
 
 export interface NotifApercu {
   id: string;
@@ -23,10 +24,16 @@ export interface NotifApercu {
   lien: string | null;
 }
 
+export interface SessionApp {
+  id: string;
+  nom: string | null;
+  email: string | null;
+  image: string | null;
+  role: Role;
+}
+
 interface Proprietes {
-  nom: string;
-  acronymeUniversite: string | null;
-  imageUrl: string | null;
+  session: SessionApp;
   notifications: NotifApercu[];
   projetsRecherche: ProjetApercu[];
   children: ReactNode;
@@ -45,7 +52,7 @@ const TITRES: Record<string, string> = {
 };
 
 export function CoquilleApp({
-  nom, acronymeUniversite, imageUrl, notifications, projetsRecherche, children,
+  session, notifications, projetsRecherche, children,
 }: Proprietes) {
   const chemin = usePathname();
   const estActif = (id: string) => (id === "/app" ? chemin === "/app" : chemin.startsWith(id));
@@ -101,28 +108,10 @@ export function CoquilleApp({
           })}
         </nav>
 
-        <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 10, padding: "10px 6px" }}>
-          <Avatar nom={nom} src={imageUrl} size={32} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {nom}
-            </div>
-            {acronymeUniversite ? <div className="t-xs t-discret">{acronymeUniversite}</div> : null}
-          </div>
-          <form action={seDeconnecter}>
-            <button
-              type="submit"
-              style={{ background: "transparent", border: 0, color: "var(--sage-500)", cursor: "pointer" }}
-              title="Déconnexion"
-            >
-              <Icon.LogOut size={16} />
-            </button>
-          </form>
-        </div>
       </aside>
 
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-        <TopBarApp notifications={notifications} projetsRecherche={projetsRecherche} nom={nom} imageUrl={imageUrl} />
+        <TopBarApp notifications={notifications} projetsRecherche={projetsRecherche} session={session} />
         <div style={{ flex: 1, paddingBottom: 96 }}>{children}</div>
       </div>
 
@@ -178,12 +167,11 @@ export function CoquilleApp({
 
 // ── Top bar ─────────────────────────────────────────────────────
 function TopBarApp({
-  notifications, projetsRecherche, nom, imageUrl,
+  notifications, projetsRecherche, session,
 }: {
   notifications: NotifApercu[];
   projetsRecherche: ProjetApercu[];
-  nom: string;
-  imageUrl: string | null;
+  session: SessionApp;
 }) {
   const chemin = usePathname();
   const [notifOuvert, setNotifOuvert] = useState(false);
@@ -260,9 +248,10 @@ function TopBarApp({
           {nonLues > 0 ? <span style={{ fontSize: 12, fontWeight: 800 }}>{nonLues}</span> : null}
         </button>
 
-        <span className="mobile-avatar">
-          <Avatar nom={nom} src={imageUrl} size={32} />
-        </span>
+        {/* Menu profil — présent sur toutes les pages de l'espace.
+            Accès : Mon espace, Mon profil, Mes certificats, Paramètres,
+            Déconnexion. Point unique : pas de doublon dans la barre latérale. */}
+        <MenuUtilisateur session={session} />
       </div>
 
       {notifOuvert ? <DrawerNotifications notifications={notifications} onClose={() => setNotifOuvert(false)} /> : null}
@@ -272,7 +261,6 @@ function TopBarApp({
         @media (min-width: 900px) {
           .topbar-mobile-logo { display: none !important; }
           .topbar-title { display: block !important; flex: 1; }
-          .mobile-avatar { display: none !important; }
           .search-button { min-width: 200px; }
         }
       `}</style>
