@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import type { ReactNode } from "react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { PHOTOS, imageProjet } from "@/lib/medias";
@@ -25,9 +24,7 @@ export default async function PageTableauDeBord() {
     select: {
       id: true,
       prenom: true,
-      scoreJub: true,
       candidatures: { where: { statut: "EN_ATTENTE" }, select: { id: true } },
-      certificats: { select: { id: true } },
       membreEquipes: {
         select: {
           equipe: {
@@ -167,23 +164,6 @@ export default async function PageTableauDeBord() {
           </Bouton>
         </div>
       </section>
-
-      {/* KPIs */}
-      <div
-        style={{
-          display: "grid",
-          gap: 1,
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-          marginBottom: 32,
-          background: "var(--bordure)",
-          border: "1px solid var(--bordure)",
-          borderRadius: 14,
-          overflow: "hidden",
-        }}
-      >
-        <BlocKpi libelle="Score JUB" valeur={etudiant.scoreJub} icon={<Icon.TrendingUp size={17} />} href="/app/profil" />
-        <BlocKpi libelle="Certificats" valeur={etudiant.certificats.length} icon={<Icon.ShieldCheck size={17} />} href="/app/certificats" />
-      </div>
 
       <div style={{ display: "grid", gap: 20, gridTemplateColumns: "minmax(0, 1fr)" }} className="tdb-grid">
         {/* Job en cours */}
@@ -400,54 +380,5 @@ export default async function PageTableauDeBord() {
         }
       `}</style>
     </main>
-  );
-}
-
-function BlocKpi({
-  libelle, valeur, detail, icon, href,
-}: {
-  libelle: string;
-  valeur: ReactNode;
-  detail?: string;
-  icon: ReactNode;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      style={{
-        padding: "20px 10px",
-        background: "var(--fond-eleve)",
-        border: 0,
-        cursor: "pointer",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        gap: 8,
-      }}
-    >
-      <span
-        style={{
-          width: 38,
-          height: 38,
-          borderRadius: 10,
-          background: "var(--sage-700)",
-          color: "var(--orange-400)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
-        {icon}
-      </span>
-      <span style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1 }}>
-        {valeur}
-      </span>
-      <span className="t-eyebrow">{libelle}</span>
-      {detail ? <span className="t-xs t-discret">{detail}</span> : null}
-    </Link>
   );
 }

@@ -115,7 +115,7 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
           overflow: "hidden",
         }}
       >
-        <BlocKpi libelle="Jobs livrés" valeur={e.jobs.length} icon={<Icon.Briefcase size={17} />} href="/app/mes-projets" />
+        <BlocKpi libelle="Certificats" valeur={e.jobs.length} icon={<Icon.ShieldCheck size={17} />} href="/app/certificats" />
         <BlocKpi libelle="Note" valeur={e.note} icon={<Icon.Star size={17} />} href="/app/mes-projets" />
         <BlocKpi libelle="Score JUB" valeur={e.scoreJub} icon={<Icon.TrendingUp size={17} />} href="/app" />
       </div>

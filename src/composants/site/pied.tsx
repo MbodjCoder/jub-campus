@@ -15,12 +15,12 @@ const LIENS = [
 ];
 
 const SOCIALS = [
-  { l: "WhatsApp", icon: <Icon.Whatsapp size={15} />, href: "https://wa.me/221XXXXXXXXX" },
-  { l: "Facebook", icon: <Icon.Facebook size={15} />, href: "https://facebook.com/jubcampus" },
-  { l: "Instagram", icon: <Icon.Instagram size={15} />, href: "https://instagram.com/jubcampus" },
-  { l: "TikTok", icon: <Icon.Tiktok size={15} />, href: "https://tiktok.com/@jubcampus" },
-  { l: "LinkedIn", icon: <Icon.Linkedin size={15} />, href: "https://linkedin.com/company/jubcampus" },
-  { l: "Email", icon: <Icon.Mail size={15} />, href: "mailto:contact@jubcampus.sn" },
+  { l: "WhatsApp", icon: <Icon.Whatsapp size={15} />, href: "https://wa.me/221XXXXXXXXX", couleur: "#25D366" },
+  { l: "Facebook", icon: <Icon.Facebook size={15} />, href: "https://facebook.com/jubcampus", couleur: "#1877F2" },
+  { l: "Instagram", icon: <Icon.Instagram size={15} />, href: "https://instagram.com/jubcampus", couleur: "#E4405F" },
+  { l: "TikTok", icon: <Icon.Tiktok size={15} />, href: "https://tiktok.com/@jubcampus", couleur: "#010101" },
+  { l: "LinkedIn", icon: <Icon.Linkedin size={15} />, href: "https://linkedin.com/company/jubcampus", couleur: "#0A66C2" },
+  { l: "Email", icon: <Icon.Mail size={15} />, href: "mailto:contact@jubcampus.sn", couleur: "#5f6c57" },
 ];
 
 export function PiedSite() {
@@ -75,16 +75,14 @@ export function PiedSite() {
                 width: 30,
                 height: 30,
                 borderRadius: 999,
-                color: "var(--sage-600)",
-                transition: "all 120ms",
+                color: s.couleur,
+                transition: "background 120ms",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--sage-700)";
-                e.currentTarget.style.color = "var(--orange-400)";
+                e.currentTarget.style.background = "var(--fond-eleve)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.color = "var(--sage-600)";
               }}
             >
               {s.icon}
