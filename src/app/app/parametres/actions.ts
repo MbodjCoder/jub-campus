@@ -22,7 +22,7 @@ export async function definirVisibilitePortfolio(estPublic: boolean): Promise<Re
   if (r.count === 0) return { succes: false, message: "Profil étudiant introuvable." };
 
   revalidatePath("/app/parametres");
-  revalidatePath("/app/portfolio");
+  revalidatePath("/app/profil");
   return { succes: true };
 }
 

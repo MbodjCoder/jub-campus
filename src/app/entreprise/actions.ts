@@ -260,7 +260,7 @@ export async function deciderCandidature(formData: FormData): Promise<void> {
       : `Sur « ${candidature.projet.titre} ». ${d.motif ? `Motif : ${d.motif}` : "Aucun motif précisé."}`,
     lien: d.decision === "ACCEPTEE"
       ? `/app/projet/${candidature.projet.id}`
-      : `/app/candidatures`,
+      : `/app/mes-projets?onglet=candidatures`,
   });
 
   await prisma.journalAudit.create({
@@ -275,6 +275,5 @@ export async function deciderCandidature(formData: FormData): Promise<void> {
 
   revalidatePath("/entreprise/candidatures");
   revalidatePath(`/projets/${candidature.projet.slug}`);
-  revalidatePath("/app/candidatures");
   revalidatePath("/app/mes-projets");
 }

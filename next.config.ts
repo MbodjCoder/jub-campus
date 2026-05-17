@@ -46,6 +46,15 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:chemin*", headers: ENTETES_SECURITE }];
   },
+  // Arborescence étudiant consolidée : Accueil / Projets / Profil.
+  async redirects() {
+    return [
+      { source: "/app/portfolio", destination: "/app/profil", permanent: true },
+      { source: "/app/projets-recommandes", destination: "/app", permanent: true },
+      { source: "/app/candidatures", destination: "/app/mes-projets?onglet=candidatures", permanent: false },
+      { source: "/app/projet-demo", destination: "/app", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

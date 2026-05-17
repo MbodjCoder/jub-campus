@@ -1,98 +1,75 @@
-import { auth } from "@/auth";
+// Profil étudiant — hub : portfolio + accès gestion (modifier, compétences,
+// certificats, paramètres). Remplace l'ancien /app/portfolio.
+
 import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { mettreAJourProfilEtudiant } from "@/app/app/actions";
-import { Carte, CorpsCarte, EnteteCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
-import { Champ, ChampEtiquete, Selecteur, ZoneTexte } from "@/composants/ui/champ";
-import { Bouton } from "@/composants/ui/bouton";
-import { LIBELLES_NIVEAU_ETUDE, UNIVERSITES_SENEGAL } from "@/lib/constantes";
+import { MonPortfolio } from "@/composants/maquette/portfolio";
 
 export const metadata = { title: "Mon profil" };
+export const dynamic = "force-dynamic";
 
 export default async function PageProfil() {
   const session = await auth();
   if (!session?.user?.id) redirect("/connexion");
 
-  const utilisateur = await prisma.utilisateur.findUnique({
-    where: { id: session.user.id },
-    include: { etudiant: { include: { universite: true } } },
+  const etudiant = await prisma.etudiant.findUnique({
+    where: { utilisateurId: session.user.id },
+    select: {
+      prenom: true, nom: true, slug: true, scoreJub: true, avatarUrl: true,
+      universite: { select: { nom: true } },
+      competences: {
+        orderBy: { niveau: "desc" },
+        take: 6,
+        select: { niveau: true, niveauValide: true, competence: { select: { nom: true } } },
+      },
+      certificats: {
+        orderBy: { emisLe: "desc" },
+        select: {
+          numeroPublic: true, scoreFinal: true, organisationNom: true,
+          projet: { select: { titre: true } },
+        },
+      },
+    },
   });
 
-  if (!utilisateur?.etudiant) {
+  if (!etudiant) {
     return (
-      <Carte>
-        <CorpsCarte>Profil étudiant introuvable.</CorpsCarte>
-      </Carte>
+      <main style={{ maxWidth: 800, margin: "0 auto", padding: "32px 20px" }}>
+        <div className="carte" style={{ padding: 32, textAlign: "center" }}>Profil étudiant introuvable.</div>
+      </main>
     );
   }
 
-  const e = utilisateur.etudiant;
+  const note =
+    etudiant.certificats.length > 0
+      ? (etudiant.certificats.reduce((s, c) => s + c.scoreFinal, 0) / etudiant.certificats.length)
+          .toFixed(1)
+          .replace(".", ",")
+      : "—";
 
   return (
-    <>
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Mon profil</h1>
-        <p className="text-texte-discret">Garde tes informations à jour pour de meilleures recommandations.</p>
-      </header>
-
-      <Carte>
-        <EnteteCarte>
-          <TitreCarte>Informations personnelles</TitreCarte>
-          <DescriptionCarte>Visible sur ton portfolio public si tu actives la visibilité.</DescriptionCarte>
-        </EnteteCarte>
-        <form action={mettreAJourProfilEtudiant}>
-          <CorpsCarte className="space-y-5">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <ChampEtiquete libelle="Prénom" pour="prenom">
-                <Champ id="prenom" name="prenom" defaultValue={e.prenom} required />
-              </ChampEtiquete>
-              <ChampEtiquete libelle="Nom" pour="nom">
-                <Champ id="nom" name="nom" defaultValue={e.nom} required />
-              </ChampEtiquete>
-            </div>
-
-            <ChampEtiquete libelle="Email" pour="email" aide="Non modifiable. Contacte le support pour changer.">
-              <Champ id="email" name="email" defaultValue={utilisateur.email} disabled />
-            </ChampEtiquete>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <ChampEtiquete libelle="Université" pour="universite">
-                <Selecteur id="universite" name="universite" defaultValue={e.universite.acronyme}>
-                  {UNIVERSITES_SENEGAL.map((u) => (
-                    <option key={u.acronyme} value={u.acronyme}>{u.acronyme}</option>
-                  ))}
-                </Selecteur>
-              </ChampEtiquete>
-              <ChampEtiquete libelle="Niveau" pour="niveau">
-                <Selecteur id="niveau" name="niveau" defaultValue={e.niveau}>
-                  {Object.entries(LIBELLES_NIVEAU_ETUDE).map(([cle, libelle]) => (
-                    <option key={cle} value={cle}>{libelle}</option>
-                  ))}
-                </Selecteur>
-              </ChampEtiquete>
-            </div>
-
-            <ChampEtiquete libelle="Filière" pour="filiere" optionnel>
-              <Champ id="filiere" name="filiere" defaultValue={e.filiere ?? ""} />
-            </ChampEtiquete>
-
-            <ChampEtiquete libelle="Biographie" pour="biographie" optionnel aide="2-3 phrases qui te décrivent.">
-              <ZoneTexte id="biographie" name="biographie" defaultValue={e.biographie ?? ""} rows={4} />
-            </ChampEtiquete>
-
-            <ChampEtiquete libelle="Disponibilité" pour="disponibilite">
-              <Selecteur id="disponibilite" name="disponibilite" defaultValue={e.disponibilite}>
-                <option value="DISPONIBLE">Disponible</option>
-                <option value="PARTIEL">Temps partiel</option>
-                <option value="INDISPONIBLE">Indisponible</option>
-              </Selecteur>
-            </ChampEtiquete>
-          </CorpsCarte>
-          <div className="flex justify-end border-t border-bordure bg-jub-pierre-50 p-5">
-            <Bouton apparence="primaire" type="submit">Enregistrer</Bouton>
-          </div>
-        </form>
-      </Carte>
-    </>
+    <MonPortfolio
+      data={{
+        prenom: etudiant.prenom,
+        nom: etudiant.nom,
+        slug: etudiant.slug,
+        scoreJub: etudiant.scoreJub,
+        avatarUrl: etudiant.avatarUrl,
+        universite: etudiant.universite.nom,
+        note,
+        competences: etudiant.competences.map((c) => ({
+          nom: c.competence.nom,
+          niveau: c.niveau,
+          valide: c.niveauValide != null && c.niveauValide > 0,
+        })),
+        jobs: etudiant.certificats.map((c) => ({
+          numeroPublic: c.numeroPublic,
+          titre: c.projet.titre,
+          organisation: c.organisationNom ?? "JUB Campus",
+          score: c.scoreFinal,
+        })),
+      }}
+    />
   );
 }

@@ -94,7 +94,7 @@ export async function soumettreCandidature(formData: FormData): Promise<Resultat
   });
 
   revalidatePath(`/projets/${projet.slug}`);
-  revalidatePath("/app/candidatures");
+  revalidatePath("/app/mes-projets");
   revalidatePath("/entreprise/candidatures");
 
   return { succes: true };

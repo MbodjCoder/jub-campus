@@ -197,8 +197,62 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
         )}
       </section>
 
+      {/* Gérer mon compte */}
+      <section style={{ marginTop: 36 }}>
+        <SectionTitre icon={<Icon.Settings size={13} />}>Gérer mon compte</SectionTitre>
+        <div
+          style={{
+            marginTop: 12,
+            display: "grid",
+            gap: 10,
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          }}
+        >
+          <LienGestion href="/app/profil/modifier" icon={<Icon.FileText size={15} />} libelle="Modifier mes infos" />
+          <LienGestion href="/app/competences" icon={<Icon.Sparkles size={15} />} libelle="Mes compétences" />
+          <LienGestion href="/app/certificats" icon={<Icon.ShieldCheck size={15} />} libelle="Mes certificats" />
+          <LienGestion href="/app/parametres" icon={<Icon.Settings size={15} />} libelle="Paramètres" />
+        </div>
+      </section>
+
       {showShare ? <ModalPartager slug={e.slug} onClose={() => setShowShare(false)} /> : null}
     </main>
+  );
+}
+
+function LienGestion({ href, icon, libelle }: { href: string; icon: ReactNode; libelle: string }) {
+  return (
+    <Link
+      href={href}
+      className="lift"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "14px 16px",
+        background: "var(--fond-eleve)",
+        border: "1px solid var(--bordure)",
+        borderRadius: 12,
+      }}
+    >
+      <span
+        style={{
+          width: 34,
+          height: 34,
+          borderRadius: 9,
+          background: "var(--sage-700)",
+          color: "var(--orange-400)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </span>
+      <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{libelle}</span>
+      <Icon.ChevronRight size={14} style={{ color: "var(--sage-400)" }} />
+    </Link>
   );
 }
 

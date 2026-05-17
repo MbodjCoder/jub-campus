@@ -181,7 +181,7 @@ export default async function PageTableauDeBord() {
           overflow: "hidden",
         }}
       >
-        <BlocKpi libelle="Score JUB" valeur={etudiant.scoreJub} icon={<Icon.TrendingUp size={17} />} href="/app/portfolio" />
+        <BlocKpi libelle="Score JUB" valeur={etudiant.scoreJub} icon={<Icon.TrendingUp size={17} />} href="/app/profil" />
         <BlocKpi
           libelle="Job actif"
           valeur={projetsActifs.length}
@@ -189,7 +189,7 @@ export default async function PageTableauDeBord() {
           icon={<Icon.Kanban size={17} />}
           href="/app/mes-projets"
         />
-        <BlocKpi libelle="Certificats" valeur={etudiant.certificats.length} icon={<Icon.ShieldCheck size={17} />} href="/app/portfolio" />
+        <BlocKpi libelle="Certificats" valeur={etudiant.certificats.length} icon={<Icon.ShieldCheck size={17} />} href="/app/certificats" />
       </div>
 
       <div style={{ display: "grid", gap: 20, gridTemplateColumns: "minmax(0, 1fr)" }} className="tdb-grid">

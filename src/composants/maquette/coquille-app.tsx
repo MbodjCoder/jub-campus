@@ -33,15 +33,15 @@ interface Proprietes {
 }
 
 const LIENS = [
-  { id: "/app", l: "Tableau de bord", icon: <Icon.Home size={17} /> },
-  { id: "/app/mes-projets", l: "Mes jobs", icon: <Icon.Kanban size={17} /> },
-  { id: "/app/portfolio", l: "Mon portfolio", icon: <Icon.Globe size={17} /> },
+  { id: "/app", l: "Accueil", icon: <Icon.Home size={17} /> },
+  { id: "/app/mes-projets", l: "Projets", icon: <Icon.Kanban size={17} /> },
+  { id: "/app/profil", l: "Profil", icon: <Icon.Globe size={17} /> },
 ];
 
 const TITRES: Record<string, string> = {
   "/app": "Tableau de bord",
   "/app/mes-projets": "Mes jobs",
-  "/app/portfolio": "Mon portfolio",
+  "/app/profil": "Mon profil",
 };
 
 export function CoquilleApp({

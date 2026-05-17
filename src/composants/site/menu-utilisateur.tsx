@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useRef, useEffect, useTransition } from "react";
 import {
-  ChevronDown, LogOut, User, Settings, LayoutDashboard, ExternalLink, Award,
+  ChevronDown, LogOut, User, Settings, LayoutDashboard, Award,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { urlsParRole, LIBELLES_ROLE, obtenirInitiales } from "@/lib/role";
@@ -104,11 +104,8 @@ export function MenuUtilisateur({ session, surFondSombre = false }: Proprietes) 
             </ItemMenu>
             {session.role === "ETUDIANT" ? (
               <>
-                <ItemMenu href={urls.profil} icone={User} onNavigue={() => setOuvert(false)}>
+                <ItemMenu href="/app/profil" icone={User} onNavigue={() => setOuvert(false)}>
                   Mon profil
-                </ItemMenu>
-                <ItemMenu href="/app/portfolio" icone={ExternalLink} onNavigue={() => setOuvert(false)}>
-                  Mon portfolio
                 </ItemMenu>
                 <ItemMenu href="/app/certificats" icone={Award} onNavigue={() => setOuvert(false)}>
                   Mes certificats
