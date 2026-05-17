@@ -2,6 +2,7 @@
 // En dev, on stocke sur globalThis pour éviter la multiplication
 // des connexions à chaque hot-reload.
 
+import "server-only"; // empêche tout import accidentel côté client
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 

@@ -125,5 +125,15 @@ export async function scannerEtOctroyerBadges(etudiantId: string): Promise<Resul
     }
   }
 
+  // Les badges octroyés rapportent des points : on rafraîchit le Score JUB.
+  if (octroyes.length > 0) {
+    try {
+      const { recalculerScoreJub } = await import("@/domaine/score");
+      await recalculerScoreJub(etudiantId);
+    } catch {
+      // recalcul best-effort
+    }
+  }
+
   return { octroyes, totalEvalues: REGLES.length };
 }

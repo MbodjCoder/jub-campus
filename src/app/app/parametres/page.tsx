@@ -1,49 +1,27 @@
-import { Carte, CorpsCarte, EnteteCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
-import { Bouton } from "@/composants/ui/bouton";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { ControlesParametres } from "@/composants/parametres/controles-etudiant";
 
 export const metadata = { title: "Paramètres" };
+export const dynamic = "force-dynamic";
 
-export default function PageParametres() {
+export default async function PageParametres() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/connexion");
+
+  const etudiant = await prisma.etudiant.findUnique({
+    where: { utilisateurId: session.user.id },
+    select: { estPublic: true },
+  });
+
   return (
-    <>
+    <main className="mx-auto max-w-2xl px-5 py-2">
       <header className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">Paramètres</h1>
-        <p className="text-texte-discret">Sécurité, notifications, confidentialité.</p>
+        <p className="text-texte-discret">Sécurité, visibilité, compte.</p>
       </header>
-
-      <div className="space-y-4">
-        <Carte>
-          <EnteteCarte>
-            <TitreCarte>Sécurité</TitreCarte>
-            <DescriptionCarte>Mot de passe et sessions.</DescriptionCarte>
-          </EnteteCarte>
-          <CorpsCarte>
-            <Bouton apparence="contour">Changer le mot de passe</Bouton>
-          </CorpsCarte>
-        </Carte>
-
-        <Carte>
-          <EnteteCarte>
-            <TitreCarte>Visibilité du portfolio</TitreCarte>
-            <DescriptionCarte>Choisis qui peut voir ton portfolio public.</DescriptionCarte>
-          </EnteteCarte>
-          <CorpsCarte>
-            <label className="flex items-center gap-2">
-              <input type="checkbox" defaultChecked />
-              <span className="text-sm">Mon portfolio est visible par toute personne ayant le lien.</span>
-            </label>
-          </CorpsCarte>
-        </Carte>
-
-        <Carte className="border-red-200">
-          <EnteteCarte className="bg-red-50 border-red-200">
-            <TitreCarte className="text-red-900">Zone dangereuse</TitreCarte>
-          </EnteteCarte>
-          <CorpsCarte>
-            <Bouton apparence="danger">Supprimer mon compte</Bouton>
-          </CorpsCarte>
-        </Carte>
-      </div>
-    </>
+      <ControlesParametres estPublic={etudiant?.estPublic ?? true} />
+    </main>
   );
 }

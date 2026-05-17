@@ -1,9 +1,11 @@
 // Domaine métier des certificats : hash d'intégrité, numéro public,
 // URL de vérification, et émission persistée en base.
 
+import "server-only";
 import { createHash } from "node:crypto";
 import { customAlphabet } from "nanoid";
 import { prisma } from "@/lib/prisma";
+import { recalculerScoreJub, validerCompetences } from "@/domaine/score";
 
 // Alphabet sans 0/O/1/I/L pour éviter toute confusion à la lecture humaine.
 const ALPHABET_CERTIFICAT = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -134,6 +136,15 @@ export async function emettreCertificat(params: ParametresEmission) {
       },
     },
   });
+
+  // Le certificat est une preuve : il valide les compétences attestées
+  // et fait évoluer le Score JUB. Best-effort — n'annule pas l'émission.
+  try {
+    await validerCompetences(params.etudiantId, params.competencesValidees);
+    await recalculerScoreJub(params.etudiantId);
+  } catch {
+    // recalcul différable, ne bloque pas la délivrance du certificat
+  }
 
   return certificat;
 }
