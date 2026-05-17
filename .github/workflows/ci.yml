@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    env:
+      # Valeurs factices : suffisantes pour generate/typecheck/lint/test/build
+      # (les pages dynamiques ne se connectent pas à la base au build).
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      AUTH_SECRET: ci-secret-build-uniquement-0123456789
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Installer les dépendances
+        run: pnpm install --frozen-lockfile
+
+      - name: Générer le client Prisma
+        run: pnpm bdd:generer
+
+      - name: Vérification de types
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Tests unitaires
+        run: pnpm test
+
+      - name: Build de production
+        run: pnpm build

@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
+import { EnregistreurSW } from "@/composants/site/enregistreur-sw";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +42,15 @@ export const metadata: Metadata = {
     locale: "fr_SN",
     type: "website",
   },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "JUB", statusBarStyle: "default" },
+  icons: { icon: "/icone.svg", apple: "/icone.svg" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1f2820",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RacineMise({
@@ -55,6 +65,7 @@ export default function RacineMise({
     >
       <body className="min-h-full flex flex-col bg-fond text-texte">
         {children}
+        <EnregistreurSW />
       </body>
     </html>
   );

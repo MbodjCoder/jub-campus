@@ -1,0 +1,16 @@
+{
+  "name": "JUB Campus",
+  "short_name": "JUB",
+  "description": "Jobs par projets, certification vérifiable et portfolio pour les étudiants du Sénégal.",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ececea",
+  "theme_color": "#1f2820",
+  "icons": [
+    { "src": "/icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
