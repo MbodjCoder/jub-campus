@@ -2,6 +2,7 @@
   "name": "jub-campus",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.12.0",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
