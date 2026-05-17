@@ -122,7 +122,7 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
 
       {/* Compétences */}
       <section style={{ marginTop: 36 }}>
-        <SectionTitre icon={<Icon.Sparkles size={13} />}>Compétences</SectionTitre>
+        <SectionTitre icon={<Icon.Sparkles size={15} />}>Compétences</SectionTitre>
         {e.competences.length === 0 ? (
           <p className="t-small" style={{ marginTop: 12 }}>Aucune compétence ajoutée.</p>
         ) : (
@@ -162,7 +162,7 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
 
       {/* Jobs réalisés */}
       <section style={{ marginTop: 36 }}>
-        <SectionTitre icon={<Icon.Briefcase size={13} />}>Jobs réalisés</SectionTitre>
+        <SectionTitre icon={<Icon.Briefcase size={15} />}>Jobs réalisés</SectionTitre>
         {e.jobs.length === 0 ? (
           <p className="t-small" style={{ marginTop: 12 }}>Tes jobs certifiés apparaîtront ici.</p>
         ) : (
@@ -260,8 +260,35 @@ function BlocKpi({
 
 function SectionTitre({ children, icon }: { children: ReactNode; icon?: ReactNode }) {
   return (
-    <h2 className="t-eyebrow" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      {icon ? <span style={{ color: "var(--sage-500)" }}>{icon}</span> : null}
+    <h2
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        margin: 0,
+        fontSize: 17,
+        fontWeight: 600,
+        letterSpacing: "-0.015em",
+        color: "var(--sage-900)",
+      }}
+    >
+      {icon ? (
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 30,
+            height: 30,
+            borderRadius: 9,
+            background: "var(--sage-700)",
+            color: "var(--orange-400)",
+            flexShrink: 0,
+          }}
+        >
+          {icon}
+        </span>
+      ) : null}
       {children}
     </h2>
   );

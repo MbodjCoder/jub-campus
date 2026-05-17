@@ -63,10 +63,20 @@ export function EnTeteSite({ session }: { session: InfosSession | null }) {
           margin: "0 auto",
         }}
       >
-        {/* Logo — couleur FIXE (toujours orange) */}
+        {/* Logo — couleur FIXE (orange), encadré d'un fond gris */}
         <button
           onClick={() => router.push("/")}
-          style={{ display: "flex", alignItems: "center", gap: 9, background: "transparent", border: 0, padding: 0, flexShrink: 0, cursor: "pointer" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 9,
+            background: "var(--sage-100)",
+            border: "1px solid var(--sage-300)",
+            borderRadius: 999,
+            padding: "5px 13px",
+            flexShrink: 0,
+            cursor: "pointer",
+          }}
         >
           <Logo mot blanc={false} />
         </button>

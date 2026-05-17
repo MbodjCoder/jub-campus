@@ -45,7 +45,7 @@ function Hero({ urlEspace }: { urlEspace: string | null }) {
       style={{
         position: "relative",
         marginTop: -64,
-        minHeight: "92vh",
+        minHeight: "72vh",
         display: "flex",
         alignItems: "flex-end",
         color: "white",

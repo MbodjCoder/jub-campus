@@ -195,8 +195,34 @@ export default async function PageTableauDeBord() {
       <div style={{ display: "grid", gap: 20, gridTemplateColumns: "minmax(0, 1fr)" }} className="tdb-grid">
         {/* Job en cours */}
         <div>
-          <h2 className="t-eyebrow" style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
-            <Icon.Kanban size={13} style={{ color: "var(--sage-500)" }} />
+          <h2
+            style={{
+              marginTop: 0,
+              marginBottom: 12,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 17,
+              fontWeight: 600,
+              letterSpacing: "-0.015em",
+              color: "var(--sage-900)",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 30,
+                height: 30,
+                borderRadius: 9,
+                background: "var(--sage-700)",
+                color: "var(--orange-400)",
+                flexShrink: 0,
+              }}
+            >
+              <Icon.Kanban size={15} />
+            </span>
             Job en cours
           </h2>
           {jobEnCours ? (
@@ -315,9 +341,34 @@ export default async function PageTableauDeBord() {
 
         {/* Pour toi */}
         <div>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
-            <h2 className="t-eyebrow" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Icon.Sparkles size={13} style={{ color: "var(--sage-500)" }} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <h2
+              style={{
+                margin: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 17,
+                fontWeight: 600,
+                letterSpacing: "-0.015em",
+                color: "var(--sage-900)",
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: 30,
+                  height: 30,
+                  borderRadius: 9,
+                  background: "var(--sage-700)",
+                  color: "var(--orange-400)",
+                  flexShrink: 0,
+                }}
+              >
+                <Icon.Sparkles size={15} />
+              </span>
               Pour toi
             </h2>
             <Link
