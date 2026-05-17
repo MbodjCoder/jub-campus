@@ -198,44 +198,55 @@ export async function deciderCandidature(formData: FormData): Promise<void> {
     }
   }
 
-  await prisma.candidature.update({
-    where: { id: candidature.id },
-    data: {
-      statut: d.decision,
-      motifReponse: d.motif ?? null,
-      reponduLe: new Date(),
-    },
-  });
-
-  // Si acceptée : créer l'équipe (si absente) et ajouter le membre
-  if (d.decision === "ACCEPTEE") {
-    let equipeId = candidature.projet.equipe?.id;
-    if (!equipeId) {
-      const equipe = await prisma.equipe.create({
-        data: { projetId: candidature.projet.id },
-      });
-      equipeId = equipe.id;
-    }
-    // Place encore disponible ?
-    const nbMembres = candidature.projet.equipe?.membres.length ?? 0;
-    if (nbMembres < candidature.projet.placesMax) {
-      await prisma.membreEquipe.upsert({
-        where: {
-          equipeId_etudiantId: { equipeId, etudiantId: candidature.etudiant.id },
-        },
-        create: {
-          equipeId,
-          etudiantId: candidature.etudiant.id,
-          roleEquipe: "Contributeur",
-        },
-        update: {},
-      });
-    }
-    // Bascule projet en EN_COURS si pas déjà
-    await prisma.projet.update({
-      where: { id: candidature.projet.id },
-      data: { statut: "EN_COURS" },
+  // Refus : simple mise à jour.
+  if (d.decision === "REFUSEE") {
+    await prisma.candidature.update({
+      where: { id: candidature.id },
+      data: { statut: "REFUSEE", motifReponse: d.motif ?? null, reponduLe: new Date() },
     });
+  } else {
+    // Acceptation : tout-ou-rien dans une transaction sérialisable —
+    // empêche deux acceptations concurrentes de dépasser placesMax.
+    let placeRefusee = false;
+    try {
+      await prisma.$transaction(
+        async (tx) => {
+          const equipe = await tx.equipe.upsert({
+            where: { projetId: candidature.projet.id },
+            create: { projetId: candidature.projet.id },
+            update: {},
+            select: { id: true },
+          });
+          // Comptage frais à l'intérieur de la transaction.
+          const dejaMembre = await tx.membreEquipe.findUnique({
+            where: { equipeId_etudiantId: { equipeId: equipe.id, etudiantId: candidature.etudiant.id } },
+            select: { equipeId: true },
+          });
+          if (!dejaMembre) {
+            const nbMembres = await tx.membreEquipe.count({ where: { equipeId: equipe.id } });
+            if (nbMembres >= candidature.projet.placesMax) {
+              placeRefusee = true;
+              return; // équipe complète : on n'accepte pas
+            }
+            await tx.membreEquipe.create({
+              data: { equipeId: equipe.id, etudiantId: candidature.etudiant.id, roleEquipe: "Contributeur" },
+            });
+          }
+          await tx.candidature.update({
+            where: { id: candidature.id },
+            data: { statut: "ACCEPTEE", motifReponse: d.motif ?? null, reponduLe: new Date() },
+          });
+          await tx.projet.update({
+            where: { id: candidature.projet.id },
+            data: { statut: "EN_COURS" },
+          });
+        },
+        { isolationLevel: "Serializable" },
+      );
+    } catch {
+      return; // conflit de concurrence ou erreur : on n'altère rien
+    }
+    if (placeRefusee) return; // équipe pleine : aucune notification d'acceptation
   }
 
   await creerNotification({

@@ -37,7 +37,7 @@ async function verifierAccesProjet(projetId: string, utilisateurId: string) {
 
   const utilisateur = await prisma.utilisateur.findUnique({
     where: { id: utilisateurId },
-    include: { etudiant: true, mentor: true },
+    include: { etudiant: true, mentor: true, entreprise: true },
   });
   if (!utilisateur) return null;
 
@@ -47,8 +47,11 @@ async function verifierAccesProjet(projetId: string, utilisateurId: string) {
     (m) => m.etudiantId === utilisateur.etudiant?.id,
   );
   const estMentor = projet.mentorPrincipalId === utilisateur.mentor?.id;
+  // L'entreprise propriétaire du projet a aussi accès (suivi + évaluation).
+  const estEntreprise =
+    utilisateur.entreprise != null && projet.entrepriseId === utilisateur.entreprise.id;
 
-  if (!estMembre && !estMentor) return null;
+  if (!estMembre && !estMentor && !estEntreprise) return null;
   return projet;
 }
 
