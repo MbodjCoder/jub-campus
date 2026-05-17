@@ -63,6 +63,16 @@ export async function envoyerEmail(opts: OptionsEnvoi): Promise<ResultatEnvoi> {
 // Couche de templates (HTML inline, palette de marque JUB)
 // ─────────────────────────────────────────────────────────────
 
+// Échappe toute valeur dynamique injectée dans le HTML d'un email.
+export function esc(s: string | null | undefined): string {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 const COULEUR_ORANGE = "#ffaa00";
 const COULEUR_SAGE = "#5f6c57";
 const COULEUR_SAGE_900 = "#1f2820";
@@ -123,11 +133,11 @@ export function emailCertificatEmis(p: {
   const html = gabarit({
     titre: "Ton certificat est prêt 🎓",
     contenu: `
-      <p>Bonjour ${p.prenom},</p>
-      <p>Bravo, ton certificat pour le projet <strong>${p.projetTitre}</strong> vient d'être émis avec un score final de
+      <p>Bonjour ${esc(p.prenom)},</p>
+      <p>Bravo, ton certificat pour le projet <strong>${esc(p.projetTitre)}</strong> vient d'être émis avec un score final de
       <strong style="color:${COULEUR_ORANGE};">${p.scoreFinal.toFixed(1)}/10</strong>.</p>
       <p>Tu peux le partager publiquement, l'ajouter à ton LinkedIn, ou le télécharger en PDF avec QR code vérifiable.</p>
-      <p>Numéro public : <code style="background:#ececea;padding:2px 6px;border-radius:4px;">${p.numeroPublic}</code></p>
+      <p>Numéro public : <code style="background:#ececea;padding:2px 6px;border-radius:4px;">${esc(p.numeroPublic)}</code></p>
       <p style="margin-top:18px;">Page de vérification :<br/>
         <a href="${p.urlVerification}" style="color:${COULEUR_SAGE};">${p.urlVerification}</a></p>
       <p>PDF :<br/>
@@ -154,10 +164,10 @@ export function emailFeedbackRecu(p: {
   const html = gabarit({
     titre: "Tu as reçu un feedback",
     contenu: `
-      <p>Bonjour ${p.prenomDestinataire},</p>
-      <p><strong>${p.auteurNom}</strong> a laissé un feedback sur ton livrable
-      <strong>« ${p.livrableTitre} »</strong>.</p>
-      <p style="background:#ececea;padding:12px;border-radius:8px;font-style:italic;">« ${p.apercu} »</p>
+      <p>Bonjour ${esc(p.prenomDestinataire)},</p>
+      <p><strong>${esc(p.auteurNom)}</strong> a laissé un feedback sur ton livrable
+      <strong>« ${esc(p.livrableTitre)} »</strong>.</p>
+      <p style="background:#ececea;padding:12px;border-radius:8px;font-style:italic;">« ${esc(p.apercu)} »</p>
     `,
     ctaLibelle: "Voir le projet",
     ctaHref: p.urlProjet,
@@ -178,8 +188,8 @@ export function emailNotification(p: {
   url?: string;
 }): OptionsEnvoi {
   const html = gabarit({
-    titre: p.titre,
-    contenu: `<p>Bonjour ${p.prenom},</p><p>${p.contenu}</p>`,
+    titre: esc(p.titre),
+    contenu: `<p>Bonjour ${esc(p.prenom)},</p><p>${esc(p.contenu)}</p>`,
     ctaLibelle: p.url ? "Ouvrir JUB Campus" : undefined,
     ctaHref: p.url,
   });
@@ -197,9 +207,9 @@ export function emailEvaluationRecue(p: {
   const html = gabarit({
     titre: "Tu as été évalué(e)",
     contenu: `
-      <p>Bonjour ${p.prenomDestinataire},</p>
-      <p>Une nouvelle évaluation <strong>${p.source}</strong> a été soumise sur le projet
-      <strong>${p.projetTitre}</strong>.</p>
+      <p>Bonjour ${esc(p.prenomDestinataire)},</p>
+      <p>Une nouvelle évaluation <strong>${esc(p.source)}</strong> a été soumise sur le projet
+      <strong>${esc(p.projetTitre)}</strong>.</p>
       <p>Score global : <strong style="color:${COULEUR_ORANGE};">${p.scoreGlobal.toFixed(1)}/10</strong></p>
     `,
     ctaLibelle: "Voir le détail",
@@ -210,4 +220,42 @@ export function emailEvaluationRecue(p: {
     sujet: `Nouvelle évaluation sur ${p.projetTitre}`,
     html,
   };
+}
+
+export function emailVerification(p: {
+  destinataire: string;
+  prenom: string;
+  url: string;
+}): OptionsEnvoi {
+  const html = gabarit({
+    titre: "Confirme ton adresse email",
+    contenu: `
+      <p>Bonjour ${esc(p.prenom)},</p>
+      <p>Bienvenue sur JUB Campus. Confirme ton adresse email pour activer
+      pleinement ton compte.</p>
+      <p>Ce lien expire dans 24&nbsp;heures.</p>
+    `,
+    ctaLibelle: "Confirmer mon email",
+    ctaHref: p.url,
+  });
+  return { destinataire: p.destinataire, sujet: "Confirme ton email — JUB Campus", html };
+}
+
+export function emailReset(p: {
+  destinataire: string;
+  prenom: string;
+  url: string;
+}): OptionsEnvoi {
+  const html = gabarit({
+    titre: "Réinitialise ton mot de passe",
+    contenu: `
+      <p>Bonjour ${esc(p.prenom)},</p>
+      <p>Tu as demandé à réinitialiser ton mot de passe. Clique ci-dessous —
+      ce lien expire dans 1&nbsp;heure.</p>
+      <p>Si tu n'es pas à l'origine de cette demande, ignore cet email.</p>
+    `,
+    ctaLibelle: "Choisir un nouveau mot de passe",
+    ctaHref: p.url,
+  });
+  return { destinataire: p.destinataire, sujet: "Réinitialisation de mot de passe — JUB Campus", html };
 }

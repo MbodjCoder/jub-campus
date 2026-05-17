@@ -20,11 +20,18 @@ export default async function PageConnexion() {
           <DescriptionCarte>Ravi de te revoir.</DescriptionCarte>
         </EnteteCarte>
         <FormulaireConnexion />
-        <div className="border-t border-bordure bg-jub-pierre-50 p-5 text-center text-sm">
-          Pas encore de compte ?{" "}
-          <Link href="/inscription" className="font-medium text-jub-orange-600 hover:underline">
-            Crée-le en 3 minutes
-          </Link>
+        <div className="space-y-2 border-t border-bordure p-5 text-center text-sm">
+          <p>
+            <Link href="/mot-de-passe-oublie" className="font-medium text-orange-600 hover:underline">
+              Mot de passe oublié ?
+            </Link>
+          </p>
+          <p>
+            Pas encore de compte ?{" "}
+            <Link href="/inscription" className="font-medium text-orange-600 hover:underline">
+              Crée-le en 3 minutes
+            </Link>
+          </p>
         </div>
       </Carte>
     </section>

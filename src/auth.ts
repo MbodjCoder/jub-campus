@@ -57,7 +57,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
-      allowDangerousEmailAccountLinking: true,
+      // Pas de liaison automatique par email (risque de détournement de
+      // compte). Le rapprochement est géré explicitement via signIn.
     }),
   ],
   callbacks: {

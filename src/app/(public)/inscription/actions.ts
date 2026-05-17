@@ -11,6 +11,20 @@ import {
 } from "@/lib/zod/inscription";
 import { slugifier } from "@/lib/utils";
 import { nanoid } from "nanoid";
+import { creerJeton } from "@/domaine/jetons";
+import { envoyerEmail, emailVerification } from "@/lib/email";
+
+// Envoie l'email de confirmation d'adresse (best-effort, ne bloque pas).
+async function envoyerVerification(email: string, prenom: string): Promise<void> {
+  try {
+    const jeton = await creerJeton("email", email);
+    const base = process.env.URL_PUBLIQUE ?? "http://localhost:3000";
+    const url = `${base}/verifier-email?email=${encodeURIComponent(email)}&jeton=${jeton}`;
+    await envoyerEmail(emailVerification({ destinataire: email, prenom, url }));
+  } catch {
+    // best-effort
+  }
+}
 
 // Helper : extrait les champs d'un FormData en objet brut.
 function extraire(formData: FormData): Record<string, string> {
@@ -76,6 +90,7 @@ export async function inscrireEtudiant(_etat: ResultatAction | null, formData: F
     },
   });
 
+  await envoyerVerification(d.email, d.prenom);
   await signIn("credentials", {
     email: d.email,
     motDePasse: d.motDePasse,
@@ -129,6 +144,7 @@ export async function inscrireEntreprise(_etat: ResultatAction | null, formData:
     },
   });
 
+  await envoyerVerification(d.email, d.raisonSociale);
   await signIn("credentials", { email: d.email, motDePasse: d.motDePasse, redirect: false });
   redirect("/entreprise");
 }
@@ -181,6 +197,7 @@ export async function inscrireMentor(_etat: ResultatAction | null, formData: For
     },
   });
 
+  await envoyerVerification(d.email, d.prenom);
   await signIn("credentials", { email: d.email, motDePasse: d.motDePasse, redirect: false });
   redirect("/mentor");
 }
