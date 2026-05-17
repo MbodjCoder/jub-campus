@@ -74,6 +74,15 @@ export async function creerTache(formData: FormData) {
   const projet = await verifierAccesProjet(parsed.data.projetId, session.user.id);
   if (!projet) return { succes: false, message: "Accès refusé." };
 
+  // L'assigné doit être un membre de l'équipe du projet.
+  if (parsed.data.assigneeId) {
+    const membreOk =
+      projet.equipe?.membres.some((m) => m.etudiantId === parsed.data.assigneeId) ?? false;
+    if (!membreOk) {
+      return { succes: false, message: "L'étudiant assigné n'appartient pas à l'équipe." };
+    }
+  }
+
   await prisma.tache.create({
     data: {
       projetId: parsed.data.projetId,
@@ -281,6 +290,13 @@ export async function soumettreEvaluation(formData: FormData) {
   const projet = await verifierAccesProjet(parsed.data.projetId, session.user.id);
   if (!projet) return { succes: false, message: "Accès refusé." };
 
+  // L'étudiant évalué doit être un membre réel de l'équipe du projet.
+  const cibleEstMembre =
+    projet.equipe?.membres.some((m) => m.etudiantId === parsed.data.etudiantId) ?? false;
+  if (!cibleEstMembre) {
+    return { succes: false, message: "L'étudiant évalué n'appartient pas à l'équipe de ce projet." };
+  }
+
   // Vérifier la cohérence rôle ↔ source : seul un mentor peut évaluer comme MENTOR,
   // une entreprise comme ENTREPRISE, etc.
   const utilisateur = await prisma.utilisateur.findUnique({
@@ -415,6 +431,19 @@ interface ResultatEmission {
 
 export async function emettreCertificatDemo(projetId: string): Promise<ResultatEmission> {
   const session = await exigerSession();
+
+  // SÉCURITÉ : l'émission « démo » contournerait l'évaluation réelle.
+  // Réservée aux admins (ou activée explicitement hors production).
+  const role = session.user.role;
+  const estAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
+  const demoAutorisee = process.env.AUTORISER_CERTIFICAT_DEMO === "true";
+  if (!estAdmin && !demoAutorisee) {
+    return {
+      succes: false,
+      message: "L'émission d'un certificat passe par l'évaluation et la validation d'un mentor.",
+    };
+  }
+
   const projet = await verifierAccesProjet(projetId, session.user.id);
   if (!projet) return { succes: false, message: "Accès refusé." };
   if (projet.source !== "JUB_INTERNE") {
@@ -535,8 +564,33 @@ export async function posterMessageProjet(formData: FormData) {
   return { succes: true };
 }
 
-// Changer le statut d'un livrable (mentor / entreprise uniquement
-// idéalement — pour cette première version on autorise tout membre).
+// Vérifie que l'utilisateur est habilité à VALIDER un travail sur ce projet :
+// mentor du projet, entreprise propriétaire, ou admin. Jamais un étudiant.
+async function exigerValidateur(projetId: string, utilisateurId: string) {
+  const projet = await prisma.projet.findUnique({
+    where: { id: projetId },
+    select: { id: true, mentorPrincipalId: true, entrepriseId: true },
+  });
+  if (!projet) return null;
+
+  const u = await prisma.utilisateur.findUnique({
+    where: { id: utilisateurId },
+    select: {
+      role: true,
+      mentor: { select: { id: true } },
+      entreprise: { select: { id: true } },
+    },
+  });
+  if (!u) return null;
+
+  if (u.role === "ADMIN" || u.role === "SUPER_ADMIN") return projet;
+  if (u.mentor && projet.mentorPrincipalId === u.mentor.id) return projet;
+  if (u.entreprise && projet.entrepriseId === u.entreprise.id) return projet;
+  return null;
+}
+
+// Changer le statut d'un livrable — réservé mentor / entreprise / admin.
+// Un étudiant ne peut JAMAIS valider son propre travail.
 export async function changerStatutLivrable(livrableId: string, statut: string) {
   const session = await exigerSession();
   const livrable = await prisma.livrable.findUnique({
@@ -544,8 +598,8 @@ export async function changerStatutLivrable(livrableId: string, statut: string) 
     select: { projetId: true },
   });
   if (!livrable) return { succes: false };
-  const projet = await verifierAccesProjet(livrable.projetId, session.user.id);
-  if (!projet) return { succes: false };
+  const projet = await exigerValidateur(livrable.projetId, session.user.id);
+  if (!projet) return { succes: false, message: "Seul un mentor ou l'entreprise peut valider un livrable." };
 
   const statuts = ["EN_REVUE", "VALIDE", "A_CORRIGER", "REJETE"] as const;
   if (!statuts.includes(statut as (typeof statuts)[number])) return { succes: false };

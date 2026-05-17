@@ -125,7 +125,14 @@ async function semer() {
   }
   console.log(`  ${BADGES.length} badges OK`);
 
-  await semerComptesEtProjets();
+  // Comptes + projets de démonstration : JAMAIS en production
+  // (mots de passe partagés = faille). Activables hors prod, ou
+  // explicitement via SEED_DEMO=true.
+  if (process.env.NODE_ENV !== "production" || process.env.SEED_DEMO === "true") {
+    await semerComptesEtProjets();
+  } else {
+    console.log("  comptes démo ignorés (production)");
+  }
 
   console.log("✓ Seed terminé.");
 }

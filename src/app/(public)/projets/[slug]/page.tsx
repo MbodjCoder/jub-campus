@@ -15,8 +15,8 @@ export default async function PageDetailJob({ params }: { params: Promise<{ slug
   const projet = await prisma.projet.findUnique({
     where: { slug },
     include: {
-      entreprise: { select: { raisonSociale: true } },
-      mentorPrincipal: { select: { prenom: true, nom: true, titreOuPoste: true, estVerifie: true } },
+      entreprise: { select: { raisonSociale: true, utilisateurId: true } },
+      mentorPrincipal: { select: { prenom: true, nom: true, titreOuPoste: true, estVerifie: true, utilisateurId: true } },
       competencesRequises: { include: { competence: { select: { nom: true } } } },
       equipe: { include: { membres: { select: { etudiantId: true } } } },
     },
@@ -26,6 +26,7 @@ export default async function PageDetailJob({ params }: { params: Promise<{ slug
   const session = await auth();
   let candidatureStatut: string | null = null;
   let estEtudiant = false;
+  let etudiantId: string | null = null;
   if (session?.user?.id) {
     const etudiant = await prisma.etudiant.findUnique({
       where: { utilisateurId: session.user.id },
@@ -33,12 +34,29 @@ export default async function PageDetailJob({ params }: { params: Promise<{ slug
     });
     if (etudiant) {
       estEtudiant = true;
+      etudiantId = etudiant.id;
       const c = await prisma.candidature.findUnique({
         where: { projetId_etudiantId: { projetId: projet.id, etudiantId: etudiant.id } },
         select: { statut: true },
       });
       candidatureStatut = c?.statut ?? null;
     }
+  }
+
+  // Garde-fou de visibilité : un projet privé ou non publié n'est lisible
+  // que par son entreprise, son mentor, un membre de l'équipe ou un admin.
+  const STATUTS_CACHES = ["BROUILLON", "EN_VALIDATION", "ANNULE", "ARCHIVE"];
+  const estPublic =
+    projet.visibilite !== "PRIVEE" && !STATUTS_CACHES.includes(projet.statut);
+  if (!estPublic) {
+    const role = session?.user?.role;
+    const estAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
+    const estProprietaire =
+      (projet.entreprise?.utilisateurId != null && projet.entreprise.utilisateurId === session?.user?.id) ||
+      (projet.mentorPrincipal?.utilisateurId != null && projet.mentorPrincipal.utilisateurId === session?.user?.id);
+    const estMembre =
+      etudiantId != null && (projet.equipe?.membres.some((m) => m.etudiantId === etudiantId) ?? false);
+    if (!estAdmin && !estProprietaire && !estMembre) notFound();
   }
 
   const etudiantMatch = await chargerEtudiantMatching(session?.user?.id);
