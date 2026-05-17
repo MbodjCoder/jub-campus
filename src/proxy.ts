@@ -64,5 +64,8 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/((?!_next|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico)$).*)"],
+  // Le middleware ignore les fichiers statiques (assets, sw, manifest…).
+  matcher: [
+    "/((?!_next|favicon.ico|sw.js|manifest.webmanifest|icone.svg|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|js|css|woff2?|webmanifest|txt|xml)$).*)",
+  ],
 };
