@@ -39,7 +39,18 @@ export function PiedSite() {
       >
         {/* Bloc identité */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Logo mot />
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              background: "var(--pierre-100)",
+              border: "1px solid var(--bordure)",
+              borderRadius: 999,
+              padding: "5px 13px",
+            }}
+          >
+            <Logo mot />
+          </span>
           <span className="t-xs t-discret">·</span>
           <span className="t-xs t-discret">Sénégal</span>
         </div>
