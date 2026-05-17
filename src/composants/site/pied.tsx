@@ -43,8 +43,8 @@ export function PiedSite() {
             style={{
               display: "inline-flex",
               alignItems: "center",
-              background: "var(--pierre-100)",
-              border: "1px solid var(--bordure)",
+              background: "var(--pierre-300)",
+              border: "1px solid var(--bordure-forte)",
               borderRadius: 999,
               padding: "5px 13px",
             }}
