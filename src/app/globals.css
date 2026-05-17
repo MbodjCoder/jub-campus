@@ -41,14 +41,14 @@
   --pierre-100: #f5f5f4;
   --pierre-200: #e7e5e4;
   --pierre-300: #d6d3d1;
-  --pierre-500: #78716c;
+  --pierre-500: #eeedec;
   --pierre-700: #44403c;
   --pierre-900: #1c1917;
 
   /* ── Sémantique ──────────────────────────────────────────── */
-  --fond: #ececea;
+  --fond: #ccccc6;
   --fond-eleve: #f5f4f1;
-  --texte: #1c1917;
+  --texte: #5a5856;
   --texte-discret: #78716c;
   --bordure: #e3e0db;
   --bordure-forte: #cbc6bd;

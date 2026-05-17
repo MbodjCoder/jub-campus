@@ -173,7 +173,7 @@ export default async function PageTableauDeBord() {
         style={{
           display: "grid",
           gap: 1,
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
           marginBottom: 32,
           background: "var(--bordure)",
           border: "1px solid var(--bordure)",
@@ -182,13 +182,6 @@ export default async function PageTableauDeBord() {
         }}
       >
         <BlocKpi libelle="Score JUB" valeur={etudiant.scoreJub} icon={<Icon.TrendingUp size={17} />} href="/app/profil" />
-        <BlocKpi
-          libelle="Job actif"
-          valeur={projetsActifs.length}
-          detail={jobEnCours ? `J${jourActuel}/${jobEnCours.dureeJours}` : undefined}
-          icon={<Icon.Kanban size={17} />}
-          href="/app/mes-projets"
-        />
         <BlocKpi libelle="Certificats" valeur={etudiant.certificats.length} icon={<Icon.ShieldCheck size={17} />} href="/app/certificats" />
       </div>
 
@@ -208,22 +201,9 @@ export default async function PageTableauDeBord() {
               color: "var(--sage-900)",
             }}
           >
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 30,
-                height: 30,
-                borderRadius: 9,
-                background: "var(--sage-700)",
-                color: "var(--orange-400)",
-                flexShrink: 0,
-              }}
-            >
-              <Icon.Kanban size={15} />
-            </span>
+            <Icon.Kanban size={19} style={{ color: "var(--sage-700)", flexShrink: 0 }} />
             Job en cours
+            <span style={{ color: "var(--texte-discret)", fontWeight: 400 }}>· {projetsActifs.length}</span>
           </h2>
           {jobEnCours ? (
             <div
@@ -354,21 +334,7 @@ export default async function PageTableauDeBord() {
                 color: "var(--sage-900)",
               }}
             >
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 30,
-                  height: 30,
-                  borderRadius: 9,
-                  background: "var(--sage-700)",
-                  color: "var(--orange-400)",
-                  flexShrink: 0,
-                }}
-              >
-                <Icon.Sparkles size={15} />
-              </span>
+              <Icon.Sparkles size={19} style={{ color: "var(--sage-700)", flexShrink: 0 }} />
               Pour toi
             </h2>
             <Link
