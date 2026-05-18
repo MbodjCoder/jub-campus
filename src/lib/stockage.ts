@@ -9,7 +9,26 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
-import { SUPABASE_ACTIF, BUCKET_MEDIAS, supabase } from "./supabase";
+import { SUPABASE_ACTIF, BUCKET_PUBLIC, BUCKET_PRIVE, supabase } from "./supabase";
+
+// Dossiers dont les fichiers sont publics par nature (photo de profil
+// affichée sur le portfolio public). Tout le reste → bucket privé.
+const DOSSIERS_PUBLICS = new Set(["avatars"]);
+
+// Durée de validité d'une URL signée pour un fichier privé (secondes).
+const EXPIRATION_URL_SIGNEE = 60 * 60; // 1 h
+
+// Génère une URL signée temporaire pour un fichier du bucket privé.
+// `chemin` = "{dossier}/{nom}". Lève si Supabase est inactif.
+export async function urlSigneeFichier(chemin: string): Promise<string> {
+  const { data, error } = await supabase()
+    .storage.from(BUCKET_PRIVE)
+    .createSignedUrl(chemin, EXPIRATION_URL_SIGNEE);
+  if (error || !data) {
+    throw new Error(`URL signée indisponible : ${error?.message ?? "erreur"}`);
+  }
+  return data.signedUrl;
+}
 
 export interface ResultatStockage {
   url: string;
@@ -110,20 +129,26 @@ export async function stockerFichier(fichier: File, dossier = "livrables"): Prom
   }
 
   const nomSur = `${randomUUID()}.${extension}`;
+  const chemin = `${dossier}/${nomSur}`;
   // Type MIME fiable, dérivé de l'extension validée (jamais du client).
   const typeMime = MIME_PAR_EXT[extension] ?? "application/octet-stream";
+  const estPublic = DOSSIERS_PUBLICS.has(dossier);
 
   // Supabase Storage — persistant, recommandé en production.
   if (SUPABASE_ACTIF) {
-    const chemin = `${dossier}/${nomSur}`;
+    const bucket = estPublic ? BUCKET_PUBLIC : BUCKET_PRIVE;
     const { error } = await supabase()
-      .storage.from(BUCKET_MEDIAS)
+      .storage.from(bucket)
       .upload(chemin, buffer, { contentType: typeMime, upsert: false });
     if (error) {
       throw new Error(`Échec du stockage Supabase : ${error.message}`);
     }
-    const { data } = supabase().storage.from(BUCKET_MEDIAS).getPublicUrl(chemin);
-    return { url: data.publicUrl, typeMime, tailleOctets: fichier.size };
+    // Public → URL directe. Privé → route applicative qui exige
+    // une session et résout une URL signée temporaire à la volée.
+    const url = estPublic
+      ? supabase().storage.from(bucket).getPublicUrl(chemin).data.publicUrl
+      : `/api/fichiers/${chemin}`;
+    return { url, typeMime, tailleOctets: fichier.size };
   }
 
   // Repli — disque local (dev ou Supabase non configuré).

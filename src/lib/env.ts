@@ -20,7 +20,8 @@ const schema = z.object({
   // Stockage fichiers — Supabase Storage si présent, sinon disque local.
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_CLE_SERVICE: z.string().optional(),
-  SUPABASE_BUCKET: z.string().optional(),
+  SUPABASE_BUCKET_PUBLIC: z.string().optional(),
+  SUPABASE_BUCKET_PRIVE: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;
