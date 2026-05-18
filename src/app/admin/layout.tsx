@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { imageProfil } from "@/lib/avatar";
 import { CoquilleDashboard } from "@/composants/site/coquille-dashboard";
 import { obtenirRecentes, compterNonLues } from "@/domaine/notifications";
 
@@ -20,7 +21,7 @@ export default async function MiseAdmin({ children }: { children: React.ReactNod
         id: session.user.id,
         nom: session.user.name ?? null,
         email: session.user.email ?? null,
-        image: session.user.image ?? null,
+        image: await imageProfil(session.user.id),
         role: session.user.role,
       }}
       notifications={recentes}

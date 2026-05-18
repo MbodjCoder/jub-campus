@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { imageProfil } from "@/lib/avatar";
 import { CoquilleApp } from "@/composants/maquette/coquille-app";
 import { versApercu, SELECT_APERCU } from "@/lib/projet-apercu";
 import type { StatutProjet } from "@/generated/prisma/client";
@@ -39,7 +40,7 @@ export default async function MiseEtudiant({ children }: { children: React.React
         id: session.user.id,
         nom: session.user.name ?? null,
         email: session.user.email ?? null,
-        image: session.user.image ?? null,
+        image: await imageProfil(session.user.id),
         role: session.user.role,
       }}
       notifications={notifications}

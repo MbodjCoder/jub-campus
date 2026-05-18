@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { imageProfil } from "@/lib/avatar";
 import { EnTeteSite } from "@/composants/site/en-tete";
 import { PiedSite } from "@/composants/site/pied";
 
@@ -9,7 +10,7 @@ export default async function MisePublique({ children }: { children: React.React
         id: session.user.id,
         nom: session.user.name ?? null,
         email: session.user.email ?? null,
-        image: session.user.image ?? null,
+        image: await imageProfil(session.user.id),
         role: session.user.role,
       }
     : null;
