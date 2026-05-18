@@ -93,7 +93,7 @@ export default async function PageTableauDeBord() {
       <section
         style={{
           marginTop: 8,
-          marginBottom: 110,
+          marginBottom: 200,
           position: "relative",
           padding: "24px",
           borderRadius: 18,
