@@ -35,7 +35,14 @@ export async function POST(req: Request) {
 
   try {
     const r = await stockerFichier(fichier, "avatars");
-    await prisma.etudiant.update({
+    // Photo commune à tous les rôles : Utilisateur.imageUrl.
+    await prisma.utilisateur.update({
+      where: { id: session.user.id },
+      data: { imageUrl: r.url },
+    });
+    // Synchronise l'avatar dédié de l'étudiant s'il en a un
+    // (updateMany ne lève pas si l'utilisateur n'est pas étudiant).
+    await prisma.etudiant.updateMany({
       where: { utilisateurId: session.user.id },
       data: { avatarUrl: r.url },
     });

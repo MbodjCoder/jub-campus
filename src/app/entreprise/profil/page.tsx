@@ -6,6 +6,7 @@ import { Carte, CorpsCarte, EnteteCarte, TitreCarte, DescriptionCarte } from "@/
 import { Champ, ChampEtiquete, Selecteur, ZoneTexte } from "@/composants/ui/champ";
 import { Bouton } from "@/composants/ui/bouton";
 import { Insigne } from "@/composants/ui/insigne";
+import { AvatarModifiable } from "@/composants/site/avatar-modifiable";
 
 export const metadata = { title: "Profil entreprise" };
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export default async function PageProfilEntreprise() {
 
   const entreprise = await prisma.entreprise.findUnique({
     where: { utilisateurId: session.user.id },
-    include: { utilisateur: { select: { email: true } } },
+    include: { utilisateur: { select: { email: true, imageUrl: true } } },
   });
   if (!entreprise) {
     return <p className="text-texte-discret">Profil entreprise introuvable.</p>;
@@ -24,9 +25,15 @@ export default async function PageProfilEntreprise() {
 
   return (
     <>
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Profil entreprise</h1>
-        <p className="text-texte-discret">Tes informations affichées aux étudiants.</p>
+      <header className="mb-6 flex flex-col items-center gap-3 text-center">
+        <AvatarModifiable
+          nom={entreprise.raisonSociale}
+          src={entreprise.utilisateur.imageUrl}
+        />
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Profil entreprise</h1>
+          <p className="text-texte-discret">Tes informations affichées aux étudiants.</p>
+        </div>
       </header>
 
       <Carte>

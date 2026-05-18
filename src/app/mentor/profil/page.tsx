@@ -6,6 +6,7 @@ import { Carte, CorpsCarte, EnteteCarte, TitreCarte } from "@/composants/ui/cart
 import { Champ, ChampEtiquete, Selecteur, ZoneTexte } from "@/composants/ui/champ";
 import { Bouton } from "@/composants/ui/bouton";
 import { Insigne } from "@/composants/ui/insigne";
+import { AvatarModifiable } from "@/composants/site/avatar-modifiable";
 import { UNIVERSITES_SENEGAL } from "@/lib/constantes";
 
 export const metadata = { title: "Profil mentor" };
@@ -17,20 +18,26 @@ export default async function PageMentorProfil() {
 
   const mentor = await prisma.mentor.findUnique({
     where: { utilisateurId: session.user.id },
-    include: { universite: true },
+    include: { universite: true, utilisateur: { select: { imageUrl: true } } },
   });
   if (!mentor) return <p>Profil introuvable.</p>;
 
   return (
     <>
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Mon profil mentor</h1>
-        <p className="text-sm text-texte-discret">
-          Statut :{" "}
-          <Insigne ton={mentor.estVerifie ? "vert" : "orange"}>
-            {mentor.estVerifie ? "VÉRIFIÉ" : "EN VÉRIFICATION"}
-          </Insigne>
-        </p>
+      <header className="mb-6 flex flex-col items-center gap-3 text-center">
+        <AvatarModifiable
+          nom={`${mentor.prenom} ${mentor.nom}`}
+          src={mentor.utilisateur.imageUrl}
+        />
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Mon profil mentor</h1>
+          <p className="text-sm text-texte-discret">
+            Statut :{" "}
+            <Insigne ton={mentor.estVerifie ? "vert" : "orange"}>
+              {mentor.estVerifie ? "VÉRIFIÉ" : "EN VÉRIFICATION"}
+            </Insigne>
+          </p>
+        </div>
       </header>
 
       <Carte>

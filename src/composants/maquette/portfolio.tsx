@@ -3,11 +3,11 @@
 // Portfolio étudiant — port 1:1 de la maquette (screens-app.jsx ·
 // PagePortfolio + BlocKpiClick + ModalPartager).
 
-import { useState, useRef, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Icon } from "./icones";
-import { Bouton, Avatar } from "./primitifs";
+import { Bouton } from "./primitifs";
+import { AvatarModifiable } from "@/composants/site/avatar-modifiable";
 import { PHOTOS } from "@/lib/medias";
 
 export interface PortfolioData {
@@ -58,7 +58,7 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
         />
         <div style={{ position: "relative", color: "white" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-            <AvatarModifiable nom={nomComplet} src={e.avatarUrl} />
+            <AvatarModifiable nom={nomComplet} src={e.avatarUrl} taille={64} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <h1
                 style={{
@@ -220,89 +220,6 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
 
       {showShare ? <ModalPartager slug={e.slug} onClose={() => setShowShare(false)} /> : null}
     </main>
-  );
-}
-
-// Photo de profil cliquable — ouvre le sélecteur de fichier, envoie
-// l'image à /api/portfolio/avatar puis rafraîchit la page.
-function AvatarModifiable({ nom, src }: { nom: string; src: string | null }) {
-  const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [chargement, setChargement] = useState(false);
-  const [erreur, setErreur] = useState<string | null>(null);
-
-  async function onChange(ev: React.ChangeEvent<HTMLInputElement>) {
-    const fichier = ev.target.files?.[0];
-    ev.target.value = "";
-    if (!fichier) return;
-    setErreur(null);
-    setChargement(true);
-    try {
-      const fd = new FormData();
-      fd.append("fichier", fichier);
-      const res = await fetch("/api/portfolio/avatar", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.erreur ?? "Échec de l'envoi");
-      router.refresh();
-    } catch (e) {
-      setErreur((e as Error).message);
-    } finally {
-      setChargement(false);
-    }
-  }
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        title="Changer ma photo de profil"
-        style={{
-          position: "relative",
-          width: 64,
-          height: 64,
-          padding: 0,
-          border: 0,
-          borderRadius: 999,
-          background: "transparent",
-          cursor: chargement ? "wait" : "pointer",
-          flexShrink: 0,
-          opacity: chargement ? 0.6 : 1,
-        }}
-      >
-        <Avatar nom={nom} src={src} size={64} />
-        <span
-          style={{
-            position: "absolute",
-            right: -2,
-            bottom: -2,
-            width: 24,
-            height: 24,
-            borderRadius: 999,
-            background: "var(--orange-500)",
-            color: "var(--sage-950)",
-            border: "2px solid var(--sage-900)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Icon.Upload size={12} />
-        </span>
-      </button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/png,image/jpeg,image/webp"
-        onChange={onChange}
-        style={{ display: "none" }}
-      />
-      {erreur ? (
-        <span className="t-xs" style={{ color: "var(--orange-300)" }}>
-          {erreur}
-        </span>
-      ) : null}
-    </div>
   );
 }
 
