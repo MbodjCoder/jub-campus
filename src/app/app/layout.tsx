@@ -19,6 +19,16 @@ export default async function MiseEtudiant({ children }: { children: React.React
     redirect("/");
   }
 
+  // Compte étudiant sans profil (inscription Google non finalisée) :
+  // on l'envoie compléter son université / niveau.
+  if (session.user.role === "ETUDIANT") {
+    const profil = await prisma.etudiant.findUnique({
+      where: { utilisateurId: session.user.id },
+      select: { id: true },
+    });
+    if (!profil) redirect("/bienvenue");
+  }
+
   const [notifications, projets] = await Promise.all([
     prisma.notification.findMany({
       where: { destinataireId: session.user.id },

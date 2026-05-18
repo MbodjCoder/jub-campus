@@ -84,12 +84,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return true;
       }
 
-      // Un compte étudiant métier exige une université + un niveau. Google
-      // n'apporte pas ces données ; créer un utilisateur "nu" produirait un
-      // compte inutilisable et une session impossible à autoriser proprement.
-      // On refuse donc l'inscription OAuth spontanée jusqu'au futur onboarding
-      // guidé, tout en laissant les comptes déjà créés se reconnecter.
-      return false;
+      // Inscription via Google : on crée un compte étudiant minimal.
+      // L'email est déjà vérifié par Google. Le profil métier (université,
+      // niveau) est complété ensuite sur l'écran d'onboarding /bienvenue,
+      // vers lequel les comptes incomplets sont redirigés.
+      const cree = await prisma.utilisateur.create({
+        data: {
+          email: user.email,
+          nomComplet: user.name ?? user.email,
+          imageUrl: user.image ?? null,
+          role: "ETUDIANT",
+          emailVerifieLe: new Date(),
+        },
+      });
+      user.id = cree.id;
+      user.role = cree.role;
+      return true;
     },
     async jwt({ token, user }) {
       const t = token as typeof token & { role?: Role; utilisateurId?: string };

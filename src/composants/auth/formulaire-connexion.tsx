@@ -57,6 +57,9 @@ export function FormulaireConnexion({ googleActif = false }: { googleActif?: boo
             <span className="h-px flex-1 bg-bordure" />
           </div>
           <form action="/api/auth/signin/google" method="post" className="p-5 pt-0">
+            {/* Après OAuth : /bienvenue finalise le profil si besoin,
+                sinon renvoie vers l'espace du compte. */}
+            <input type="hidden" name="callbackUrl" value="/bienvenue" />
             <Bouton apparence="contour" pleineLargeur type="submit">
               Continuer avec Google
             </Bouton>
