@@ -3,8 +3,9 @@
 // Portfolio étudiant — port 1:1 de la maquette (screens-app.jsx ·
 // PagePortfolio + BlocKpiClick + ModalPartager).
 
-import { useState, type ReactNode } from "react";
+import { useState, useRef, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Icon } from "./icones";
 import { Bouton, Avatar } from "./primitifs";
 import { PHOTOS } from "@/lib/medias";
@@ -57,7 +58,7 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
         />
         <div style={{ position: "relative", color: "white" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-            <Avatar nom={nomComplet} src={e.avatarUrl} size={64} />
+            <AvatarModifiable nom={nomComplet} src={e.avatarUrl} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <h1
                 style={{
@@ -120,9 +121,18 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
         <BlocKpi libelle="Score JUB" valeur={e.scoreJub} icon={<Icon.TrendingUp size={17} />} href="/app" />
       </div>
 
-      {/* Compétences */}
-      <section style={{ marginTop: 36 }}>
-        <SectionTitre icon={<Icon.Sparkles size={15} />}>Compétences</SectionTitre>
+      {/* Compétences + Jobs réalisés — alignés horizontalement */}
+      <div
+        className="profil-sections"
+        style={{
+          marginTop: 36,
+          display: "grid",
+          gap: 28,
+          gridTemplateColumns: "minmax(0, 1fr)",
+        }}
+      >
+      <section>
+        <SectionTitre icon={<Icon.Sparkles size={18} />}>Compétences</SectionTitre>
         {e.competences.length === 0 ? (
           <p className="t-small" style={{ marginTop: 12 }}>Aucune compétence ajoutée.</p>
         ) : (
@@ -161,8 +171,8 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
       </section>
 
       {/* Jobs réalisés */}
-      <section style={{ marginTop: 36 }}>
-        <SectionTitre icon={<Icon.Briefcase size={15} />}>Jobs réalisés</SectionTitre>
+      <section>
+        <SectionTitre icon={<Icon.Briefcase size={18} />}>Jobs réalisés</SectionTitre>
         {e.jobs.length === 0 ? (
           <p className="t-small" style={{ marginTop: 12 }}>Tes jobs certifiés apparaîtront ici.</p>
         ) : (
@@ -205,9 +215,94 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
           </div>
         )}
       </section>
+      </div>
+      <style>{`@media (min-width: 720px) { .profil-sections { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }`}</style>
 
       {showShare ? <ModalPartager slug={e.slug} onClose={() => setShowShare(false)} /> : null}
     </main>
+  );
+}
+
+// Photo de profil cliquable — ouvre le sélecteur de fichier, envoie
+// l'image à /api/portfolio/avatar puis rafraîchit la page.
+function AvatarModifiable({ nom, src }: { nom: string; src: string | null }) {
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [chargement, setChargement] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+
+  async function onChange(ev: React.ChangeEvent<HTMLInputElement>) {
+    const fichier = ev.target.files?.[0];
+    ev.target.value = "";
+    if (!fichier) return;
+    setErreur(null);
+    setChargement(true);
+    try {
+      const fd = new FormData();
+      fd.append("fichier", fichier);
+      const res = await fetch("/api/portfolio/avatar", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.erreur ?? "Échec de l'envoi");
+      router.refresh();
+    } catch (e) {
+      setErreur((e as Error).message);
+    } finally {
+      setChargement(false);
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        title="Changer ma photo de profil"
+        style={{
+          position: "relative",
+          width: 64,
+          height: 64,
+          padding: 0,
+          border: 0,
+          borderRadius: 999,
+          background: "transparent",
+          cursor: chargement ? "wait" : "pointer",
+          flexShrink: 0,
+          opacity: chargement ? 0.6 : 1,
+        }}
+      >
+        <Avatar nom={nom} src={src} size={64} />
+        <span
+          style={{
+            position: "absolute",
+            right: -2,
+            bottom: -2,
+            width: 24,
+            height: 24,
+            borderRadius: 999,
+            background: "var(--orange-500)",
+            color: "var(--sage-950)",
+            border: "2px solid var(--sage-900)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Icon.Upload size={12} />
+        </span>
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        onChange={onChange}
+        style={{ display: "none" }}
+      />
+      {erreur ? (
+        <span className="t-xs" style={{ color: "var(--orange-300)" }}>
+          {erreur}
+        </span>
+      ) : null}
+    </div>
   );
 }
 
@@ -278,11 +373,7 @@ function SectionTitre({ children, icon }: { children: ReactNode; icon?: ReactNod
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            width: 30,
-            height: 30,
-            borderRadius: 9,
-            background: "var(--sage-700)",
-            color: "var(--orange-400)",
+            color: "var(--sage-500)",
             flexShrink: 0,
           }}
         >
