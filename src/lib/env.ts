@@ -9,8 +9,11 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL manquant.").url("DATABASE_URL invalide."),
   AUTH_SECRET: z.string().min(16, "AUTH_SECRET trop court (16+ caractères)."),
 
-  // Optionnelles — dégradation gracieuse si absentes.
-  URL_PUBLIQUE: z.string().url().optional(),
+  // Optionnelles — dégradation gracieuse si absentes ou mal formées.
+  // Volontairement non strictes (pas de .url()) : une intégration
+  // optionnelle mal configurée ne doit JAMAIS faire échouer le build
+  // ni le démarrage de toute la plateforme.
+  URL_PUBLIQUE: z.string().optional(),
   RESEND_CLE_API: z.string().optional(),
   EMAIL_EXPEDITEUR: z.string().optional(),
   EMAIL_CONTACT: z.string().optional(),
@@ -18,7 +21,7 @@ const schema = z.object({
   AUTH_GOOGLE_SECRET: z.string().optional(),
 
   // Stockage fichiers — Supabase Storage si présent, sinon disque local.
-  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_URL: z.string().optional(),
   SUPABASE_CLE_SERVICE: z.string().optional(),
   SUPABASE_BUCKET_PUBLIC: z.string().optional(),
   SUPABASE_BUCKET_PRIVE: z.string().optional(),
