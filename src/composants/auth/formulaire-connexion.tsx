@@ -6,7 +6,10 @@ import { Champ, ChampEtiquete } from "@/composants/ui/champ";
 import { CorpsCarte } from "@/composants/ui/carte";
 import { renvoyerVerification, seConnecter } from "@/app/(public)/inscription/actions";
 
-export function FormulaireConnexion() {
+// `googleActif` : vrai seulement si les identifiants OAuth Google sont
+// configurés. Sinon on masque le bouton — un bouton qui ne mène nulle
+// part est pire que pas de bouton.
+export function FormulaireConnexion({ googleActif = false }: { googleActif?: boolean }) {
   const [etat, action, enCours] = useActionState(seConnecter, null);
   const [etatVerification, actionVerification, verificationEnCours] = useActionState(renvoyerVerification, null);
 
@@ -46,16 +49,20 @@ export function FormulaireConnexion() {
           </div>
         </div>
       </form>
-      <div className="flex items-center gap-2 px-5 text-xs text-texte-discret">
-        <span className="h-px flex-1 bg-bordure" />
-        <span>OU</span>
-        <span className="h-px flex-1 bg-bordure" />
-      </div>
-      <form action="/api/auth/signin/google" method="post" className="p-5 pt-0">
-        <Bouton apparence="contour" pleineLargeur type="submit">
-          Continuer avec Google
-        </Bouton>
-      </form>
+      {googleActif ? (
+        <>
+          <div className="flex items-center gap-2 px-5 text-xs text-texte-discret">
+            <span className="h-px flex-1 bg-bordure" />
+            <span>OU</span>
+            <span className="h-px flex-1 bg-bordure" />
+          </div>
+          <form action="/api/auth/signin/google" method="post" className="p-5 pt-0">
+            <Bouton apparence="contour" pleineLargeur type="submit">
+              Continuer avec Google
+            </Bouton>
+          </form>
+        </>
+      ) : null}
     </>
   );
 }

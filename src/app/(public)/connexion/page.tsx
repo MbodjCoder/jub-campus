@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { env } from "@/lib/env";
 import { Carte, EnteteCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
 import { FormulaireConnexion } from "@/composants/auth/formulaire-connexion";
 import { urlsParRole } from "@/lib/role";
@@ -39,7 +40,7 @@ export default async function PageConnexion({
             Compte créé, mais l&apos;email d&apos;activation n&apos;a pas pu partir. Réessaie via le formulaire ci-dessous.
           </p>
         ) : null}
-        <FormulaireConnexion />
+        <FormulaireConnexion googleActif={Boolean(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET)} />
         <div className="space-y-2 border-t border-bordure p-5 text-center text-sm">
           <p>
             <Link href="/mot-de-passe-oublie" className="font-medium text-orange-600 hover:underline">
