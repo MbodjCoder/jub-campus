@@ -1,15 +1,15 @@
 // Client Supabase Storage — côté serveur uniquement.
 //
-// On importe @supabase/storage-js (Storage seul) et non @supabase/supabase-js :
-// ce dernier embarque le module Realtime qui référence `WebSocket` au niveau
-// module — absent sur d'anciennes versions de Node et cause d'un échec de
-// build. Storage-js n'a pas cette dépendance.
+// @supabase/storage-js est chargé PARESSEUSEMENT (import dynamique dans
+// stockageSupabase()). Il ne fait donc pas partie du graphe de modules
+// évalué au build : la phase « collect page data » de Next ne l'exécute
+// jamais, ce qui évite tout échec de build lié au paquet.
 //
 // Deux buckets — modèle « mixte » :
 //   • public  → photos de profil (déjà publiques sur le portfolio)
 //   • privé   → livrables, certificats (accès via URL signée temporaire)
 
-import { StorageClient } from "@supabase/storage-js";
+import type { StorageClient } from "@supabase/storage-js";
 import { env } from "./env";
 
 export const SUPABASE_ACTIF = Boolean(env.SUPABASE_URL && env.SUPABASE_CLE_SERVICE);
@@ -19,13 +19,14 @@ export const BUCKET_PRIVE = env.SUPABASE_BUCKET_PRIVE ?? "medias-prive";
 
 let client: StorageClient | null = null;
 
-// Client paresseux — créé au premier appel, réutilisé ensuite.
+// Client paresseux — le paquet n'est importé qu'au premier appel réel.
 // La clé service donne les droits complets : jamais exposée au client.
-export function stockageSupabase(): StorageClient {
+export async function stockageSupabase(): Promise<StorageClient> {
   if (!SUPABASE_ACTIF) {
     throw new Error("Supabase non configuré (SUPABASE_URL / SUPABASE_CLE_SERVICE).");
   }
   if (!client) {
+    const { StorageClient } = await import("@supabase/storage-js");
     const cle = env.SUPABASE_CLE_SERVICE!;
     const base = env.SUPABASE_URL!.replace(/\/+$/, "");
     client = new StorageClient(`${base}/storage/v1`, {

@@ -21,7 +21,8 @@ const EXPIRATION_URL_SIGNEE = 60 * 60; // 1 h
 // Génère une URL signée temporaire pour un fichier du bucket privé.
 // `chemin` = "{dossier}/{nom}". Lève si Supabase est inactif.
 export async function urlSigneeFichier(chemin: string): Promise<string> {
-  const { data, error } = await stockageSupabase()
+  const sb = await stockageSupabase();
+  const { data, error } = await sb
     .from(BUCKET_PRIVE)
     .createSignedUrl(chemin, EXPIRATION_URL_SIGNEE);
   if (error || !data) {
@@ -137,7 +138,8 @@ export async function stockerFichier(fichier: File, dossier = "livrables"): Prom
   // Supabase Storage — persistant, recommandé en production.
   if (SUPABASE_ACTIF) {
     const bucket = estPublic ? BUCKET_PUBLIC : BUCKET_PRIVE;
-    const { error } = await stockageSupabase()
+    const sb = await stockageSupabase();
+    const { error } = await sb
       .from(bucket)
       .upload(chemin, buffer, { contentType: typeMime, upsert: false });
     if (error) {
@@ -146,7 +148,7 @@ export async function stockerFichier(fichier: File, dossier = "livrables"): Prom
     // Public → URL directe. Privé → route applicative qui exige
     // une session et résout une URL signée temporaire à la volée.
     const url = estPublic
-      ? stockageSupabase().from(bucket).getPublicUrl(chemin).data.publicUrl
+      ? sb.from(bucket).getPublicUrl(chemin).data.publicUrl
       : `/api/fichiers/${chemin}`;
     return { url, typeMime, tailleOctets: fichier.size };
   }
