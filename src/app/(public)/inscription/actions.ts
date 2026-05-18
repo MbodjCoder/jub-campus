@@ -26,6 +26,11 @@ async function envoyerVerification(email: string, prenom: string): Promise<boole
     const url = `${base}/verifier-email?email=${encodeURIComponent(email)}&jeton=${jeton}`;
     const envoi = await envoyerEmail(emailVerification({ destinataire: email, prenom, url }));
     if (!envoi.succes || envoi.modeLog) {
+      if (envoi.erreur) {
+        // Visible dans les logs Vercel — typiquement « domaine non vérifié »
+        // ou la limite du mode test onboarding@resend.dev.
+        console.error("[verification-email] échec envoi Resend :", envoi.erreur);
+      }
       await prisma.jetonVerification.deleteMany({
         where: { identifiant: identifiantJeton("email", email) },
       });
