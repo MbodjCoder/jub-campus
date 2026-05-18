@@ -8,11 +8,29 @@ on:
 jobs:
   verifier:
     runs-on: ubuntu-latest
+
+    # Base PostgreSQL jetable : le client Prisma, les migrations, les tests
+    # et le build (qui exécute `prisma migrate deploy`) en ont besoin.
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
-      # Valeurs factices : suffisantes pour generate/typecheck/lint/test/build
-      # (les pages dynamiques ne se connectent pas à la base au build).
+      # Valeurs factices, suffisantes pour generate/migrate/typecheck/lint/test/build.
       DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
       AUTH_SECRET: ci-secret-build-uniquement-0123456789
+
     steps:
       - uses: actions/checkout@v4
 
@@ -28,6 +46,9 @@ jobs:
 
       - name: Générer le client Prisma
         run: pnpm bdd:generer
+
+      - name: Appliquer les migrations
+        run: pnpm bdd:deployer
 
       - name: Vérification de types
         run: pnpm typecheck
