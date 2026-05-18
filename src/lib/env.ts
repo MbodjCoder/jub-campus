@@ -16,6 +16,11 @@ const schema = z.object({
   EMAIL_CONTACT: z.string().optional(),
   AUTH_GOOGLE_ID: z.string().optional(),
   AUTH_GOOGLE_SECRET: z.string().optional(),
+
+  // Stockage fichiers — Supabase Storage si présent, sinon disque local.
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_CLE_SERVICE: z.string().optional(),
+  SUPABASE_BUCKET: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;

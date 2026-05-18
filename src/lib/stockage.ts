@@ -1,6 +1,6 @@
 // Couche de stockage de fichiers JUB Campus.
-// Implémentation : disque local (public/uploads/{dossier}/{uuid}.{ext}).
-// Bascule Supabase Storage prévue (V1.3).
+// Implémentation : Supabase Storage si configuré, sinon disque local
+// (public/uploads/{dossier}/{uuid}.{ext}) — dégradation gracieuse.
 //
 // Sécurité : liste blanche d'extensions (SVG exclu — vecteur XSS),
 // limite de taille, et vérification des octets-magiques pour empêcher
@@ -9,6 +9,7 @@
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
+import { SUPABASE_ACTIF, BUCKET_MEDIAS, supabase } from "./supabase";
 
 export interface ResultatStockage {
   url: string;
@@ -109,14 +110,30 @@ export async function stockerFichier(fichier: File, dossier = "livrables"): Prom
   }
 
   const nomSur = `${randomUUID()}.${extension}`;
+  // Type MIME fiable, dérivé de l'extension validée (jamais du client).
+  const typeMime = MIME_PAR_EXT[extension] ?? "application/octet-stream";
+
+  // Supabase Storage — persistant, recommandé en production.
+  if (SUPABASE_ACTIF) {
+    const chemin = `${dossier}/${nomSur}`;
+    const { error } = await supabase()
+      .storage.from(BUCKET_MEDIAS)
+      .upload(chemin, buffer, { contentType: typeMime, upsert: false });
+    if (error) {
+      throw new Error(`Échec du stockage Supabase : ${error.message}`);
+    }
+    const { data } = supabase().storage.from(BUCKET_MEDIAS).getPublicUrl(chemin);
+    return { url: data.publicUrl, typeMime, tailleOctets: fichier.size };
+  }
+
+  // Repli — disque local (dev ou Supabase non configuré).
   const racine = join(process.cwd(), "public", "uploads", dossier);
   await mkdir(racine, { recursive: true });
   await writeFile(join(racine, nomSur), buffer);
 
   return {
     url: `/uploads/${dossier}/${nomSur}`,
-    // Type MIME fiable, dérivé de l'extension validée (jamais du client).
-    typeMime: MIME_PAR_EXT[extension] ?? "application/octet-stream",
+    typeMime,
     tailleOctets: fichier.size,
   };
 }
