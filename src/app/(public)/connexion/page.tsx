@@ -29,6 +29,11 @@ export default async function PageConnexion({
             Compte créé. Vérifie ta boîte mail pour activer ton accès.
           </p>
         ) : null}
+        {inscription === "compte-actif" ? (
+          <p className="mx-5 mt-5 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+            Compte créé et activé. Connecte-toi ci-dessous.
+          </p>
+        ) : null}
         {inscription === "email-indisponible" ? (
           <p className="mx-5 mt-5 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
             Compte créé, mais l&apos;email d&apos;activation n&apos;a pas pu partir. Réessaie via le formulaire ci-dessous.

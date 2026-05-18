@@ -40,6 +40,23 @@ async function envoyerVerification(email: string, prenom: string): Promise<boole
   }
 }
 
+// Finalise l'inscription. Si Resend est configuré : envoie l'email de
+// vérification (le compte reste à vérifier). Sinon : aucune infrastructure
+// email n'existe — on active directement le compte plutôt que de le laisser
+// bloqué et inutilisable. Dès que Resend est branché, la vraie vérification
+// reprend automatiquement. Retourne le paramètre de redirection.
+async function finaliserInscription(email: string, prenom: string): Promise<string> {
+  if (!env.RESEND_CLE_API) {
+    await prisma.utilisateur.update({
+      where: { email },
+      data: { emailVerifieLe: new Date() },
+    });
+    return "compte-actif";
+  }
+  const envoye = await envoyerVerification(email, prenom);
+  return envoye ? "verification-envoyee" : "email-indisponible";
+}
+
 // Helper : extrait les champs d'un FormData en objet brut.
 function extraire(formData: FormData): Record<string, string> {
   const objet: Record<string, string> = {};
@@ -104,8 +121,7 @@ export async function inscrireEtudiant(_etat: ResultatAction | null, formData: F
     },
   });
 
-  const verificationEnvoyee = await envoyerVerification(d.email, d.prenom);
-  redirect(`/connexion?inscription=${verificationEnvoyee ? "verification-envoyee" : "email-indisponible"}`);
+  redirect(`/connexion?inscription=${await finaliserInscription(d.email, d.prenom)}`);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -153,8 +169,7 @@ export async function inscrireEntreprise(_etat: ResultatAction | null, formData:
     },
   });
 
-  const verificationEnvoyee = await envoyerVerification(d.email, d.raisonSociale);
-  redirect(`/connexion?inscription=${verificationEnvoyee ? "verification-envoyee" : "email-indisponible"}`);
+  redirect(`/connexion?inscription=${await finaliserInscription(d.email, d.raisonSociale)}`);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -205,8 +220,7 @@ export async function inscrireMentor(_etat: ResultatAction | null, formData: For
     },
   });
 
-  const verificationEnvoyee = await envoyerVerification(d.email, d.prenom);
-  redirect(`/connexion?inscription=${verificationEnvoyee ? "verification-envoyee" : "email-indisponible"}`);
+  redirect(`/connexion?inscription=${await finaliserInscription(d.email, d.prenom)}`);
 }
 
 // ─────────────────────────────────────────────────────────────
