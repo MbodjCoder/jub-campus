@@ -5,7 +5,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { DocumentCertificat } from "@/composants/certificat/document-pdf";
-import { urlVerification } from "@/domaine/certificats";
+import { calculerHashIntegrite, urlVerification } from "@/domaine/certificats";
 import { LIBELLES_NIVEAU_ETUDE } from "@/lib/constantes";
 
 export const runtime = "nodejs";
@@ -28,7 +28,17 @@ export async function GET(
   if (!cert) {
     return new Response("Certificat introuvable", { status: 404 });
   }
-  if (cert.statut !== "VALIDE") {
+  const integriteOk =
+    calculerHashIntegrite({
+      numeroPublic: cert.numeroPublic,
+      etudiantId: cert.etudiantId,
+      projetId: cert.projetId,
+      scoreFinal: cert.scoreFinal,
+      competencesValidees: cert.competencesValidees,
+      periodeDebut: cert.periodeDebut,
+      periodeFin: cert.periodeFin,
+    }) === cert.hashIntegrite;
+  if (cert.statut !== "VALIDE" || !integriteOk) {
     return new Response(`Certificat ${cert.statut.toLowerCase()}`, { status: 410 });
   }
 

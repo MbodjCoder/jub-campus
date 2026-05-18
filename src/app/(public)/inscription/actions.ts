@@ -11,18 +11,32 @@ import {
 } from "@/lib/zod/inscription";
 import { slugifier } from "@/lib/utils";
 import { nanoid } from "nanoid";
-import { creerJeton } from "@/domaine/jetons";
+import { creerJeton, identifiantJeton } from "@/domaine/jetons";
 import { envoyerEmail, emailVerification } from "@/lib/email";
+import { limiterDebit } from "@/lib/rate-limit";
+import { env } from "@/lib/env";
 
-// Envoie l'email de confirmation d'adresse (best-effort, ne bloque pas).
-async function envoyerVerification(email: string, prenom: string): Promise<void> {
+// Crée un jeton puis n'en conserve la trace que si l'email est réellement
+// parti. Un jeton impossible à recevoir serait une dette invisible pour
+// l'utilisateur et un faux sentiment de sécurité pour la plateforme.
+async function envoyerVerification(email: string, prenom: string): Promise<boolean> {
   try {
     const jeton = await creerJeton("email", email);
-    const base = process.env.URL_PUBLIQUE ?? "http://localhost:3000";
+    const base = env.URL_PUBLIQUE ?? "http://localhost:3000";
     const url = `${base}/verifier-email?email=${encodeURIComponent(email)}&jeton=${jeton}`;
-    await envoyerEmail(emailVerification({ destinataire: email, prenom, url }));
+    const envoi = await envoyerEmail(emailVerification({ destinataire: email, prenom, url }));
+    if (!envoi.succes || envoi.modeLog) {
+      await prisma.jetonVerification.deleteMany({
+        where: { identifiant: identifiantJeton("email", email) },
+      });
+      return false;
+    }
+    return true;
   } catch {
-    // best-effort
+    await prisma.jetonVerification.deleteMany({
+      where: { identifiant: identifiantJeton("email", email) },
+    }).catch(() => undefined);
+    return false;
   }
 }
 
@@ -90,13 +104,8 @@ export async function inscrireEtudiant(_etat: ResultatAction | null, formData: F
     },
   });
 
-  await envoyerVerification(d.email, d.prenom);
-  await signIn("credentials", {
-    email: d.email,
-    motDePasse: d.motDePasse,
-    redirect: false,
-  });
-  redirect("/app");
+  const verificationEnvoyee = await envoyerVerification(d.email, d.prenom);
+  redirect(`/connexion?inscription=${verificationEnvoyee ? "verification-envoyee" : "email-indisponible"}`);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -144,9 +153,8 @@ export async function inscrireEntreprise(_etat: ResultatAction | null, formData:
     },
   });
 
-  await envoyerVerification(d.email, d.raisonSociale);
-  await signIn("credentials", { email: d.email, motDePasse: d.motDePasse, redirect: false });
-  redirect("/entreprise");
+  const verificationEnvoyee = await envoyerVerification(d.email, d.raisonSociale);
+  redirect(`/connexion?inscription=${verificationEnvoyee ? "verification-envoyee" : "email-indisponible"}`);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -197,9 +205,8 @@ export async function inscrireMentor(_etat: ResultatAction | null, formData: For
     },
   });
 
-  await envoyerVerification(d.email, d.prenom);
-  await signIn("credentials", { email: d.email, motDePasse: d.motDePasse, redirect: false });
-  redirect("/mentor");
+  const verificationEnvoyee = await envoyerVerification(d.email, d.prenom);
+  redirect(`/connexion?inscription=${verificationEnvoyee ? "verification-envoyee" : "email-indisponible"}`);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -212,19 +219,56 @@ export async function seConnecter(_etat: ResultatAction | null, formData: FormDa
   if (!email || !motDePasse) {
     return { succes: false, message: "Email et mot de passe requis." };
   }
+
+  const utilisateur = await prisma.utilisateur.findUnique({
+    where: { email },
+    select: { emailVerifieLe: true, role: true },
+  });
+  if (utilisateur && !utilisateur.emailVerifieLe) {
+    return {
+      succes: false,
+      message: "Confirme d'abord ton adresse email avant de te connecter.",
+    };
+  }
+
   try {
     await signIn("credentials", { email, motDePasse, redirect: false });
   } catch {
     return { succes: false, message: "Email ou mot de passe incorrect." };
   }
-  const u = await prisma.utilisateur.findUnique({ where: { email } });
-  switch (u?.role) {
+  switch (utilisateur?.role) {
     case "ENTREPRISE": redirect("/entreprise");
     case "MENTOR":     redirect("/mentor");
     case "ADMIN":
     case "SUPER_ADMIN": redirect("/admin");
     default:           redirect("/app");
   }
+}
+
+export async function renvoyerVerification(
+  _etat: ResultatAction | null,
+  formData: FormData,
+): Promise<ResultatAction> {
+  const email = String(formData.get("email") ?? "").toLowerCase().trim();
+  if (!email) return { succes: false, message: "Email requis." };
+  if (!limiterDebit(`verification-email:${email}`, 3, 3_600_000).autorise) {
+    return { succes: false, message: "Trop de demandes. Réessaie plus tard." };
+  }
+
+  const utilisateur = await prisma.utilisateur.findUnique({
+    where: { email },
+    select: { nomComplet: true, emailVerifieLe: true },
+  });
+  if (utilisateur && !utilisateur.emailVerifieLe) {
+    const prenom = utilisateur.nomComplet?.split(" ")[0] ?? "";
+    await envoyerVerification(email, prenom);
+  }
+
+  // Réponse uniforme pour ne pas exposer l'existence des comptes.
+  return {
+    succes: true,
+    message: "Si un compte non vérifié existe, un nouvel email vient d'être demandé.",
+  };
 }
 
 export async function seDeconnecter() {

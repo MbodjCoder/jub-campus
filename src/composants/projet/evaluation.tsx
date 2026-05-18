@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { Star, Award, ChevronDown, ChevronUp } from "lucide-react";
 import { Bouton } from "@/composants/ui/bouton";
-import { Champ, ChampEtiquete, Selecteur, ZoneTexte } from "@/composants/ui/champ";
+import { ChampEtiquete, Selecteur, ZoneTexte } from "@/composants/ui/champ";
 import { Carte, CorpsCarte, EnteteCarte, TitreCarte } from "@/composants/ui/carte";
 import { Insigne } from "@/composants/ui/insigne";
 import { cn } from "@/lib/utils";

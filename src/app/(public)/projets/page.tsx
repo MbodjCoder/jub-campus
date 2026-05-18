@@ -24,10 +24,24 @@ export default async function PageJobs({
 }) {
   const q = ((await searchParams).q ?? "").trim();
   const session = await auth();
+  const etudiantConnecte = session?.user?.id
+    ? await prisma.etudiant.findUnique({
+        where: { utilisateurId: session.user.id },
+        select: { universiteId: true },
+      })
+    : null;
 
   const [projets, etudiant] = await Promise.all([
     prisma.projet.findMany({
-      where: { statut: { in: STATUTS_OUVERTS }, visibilite: { in: ["PUBLIQUE", "UNIVERSITE"] } },
+      where: {
+        statut: { in: STATUTS_OUVERTS },
+        OR: [
+          { visibilite: "PUBLIQUE" },
+          ...(etudiantConnecte?.universiteId
+            ? [{ visibilite: "UNIVERSITE" as const, universiteId: etudiantConnecte.universiteId }]
+            : []),
+        ],
+      },
       orderBy: { publieLe: "desc" },
       take: 80,
       select: {

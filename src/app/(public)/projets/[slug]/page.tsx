@@ -6,6 +6,12 @@ import { prisma } from "@/lib/prisma";
 import { imageProjet } from "@/lib/medias";
 import { chargerEtudiantMatching, scoreMatch } from "@/lib/matching-courant";
 import { DetailJob } from "@/composants/maquette/detail-job";
+import {
+  chargerContexteAccesProjet,
+  projetEstVisiblePourUniversite,
+  projetEstVisiblePubliquement,
+  utilisateurPeutAccederProjet,
+} from "@/domaine/acces-projet";
 
 export const dynamic = "force-dynamic";
 
@@ -16,47 +22,55 @@ export default async function PageDetailJob({ params }: { params: Promise<{ slug
     where: { slug },
     include: {
       entreprise: { select: { raisonSociale: true, utilisateurId: true } },
-      mentorPrincipal: { select: { prenom: true, nom: true, titreOuPoste: true, estVerifie: true, utilisateurId: true } },
+      mentorPrincipal: {
+        select: {
+          prenom: true,
+          nom: true,
+          titreOuPoste: true,
+          estVerifie: true,
+          utilisateurId: true,
+        },
+      },
       competencesRequises: { include: { competence: { select: { nom: true } } } },
       equipe: { include: { membres: { select: { etudiantId: true } } } },
+      partenaires: {
+        select: {
+          entreprise: { select: { raisonSociale: true } },
+          typeContribution: true,
+        },
+      },
     },
   });
   if (!projet) notFound();
 
   const session = await auth();
+  const contexte = session?.user?.id
+    ? await chargerContexteAccesProjet(session.user.id)
+    : null;
+
   let candidatureStatut: string | null = null;
-  let estEtudiant = false;
-  let etudiantId: string | null = null;
-  if (session?.user?.id) {
-    const etudiant = await prisma.etudiant.findUnique({
-      where: { utilisateurId: session.user.id },
-      select: { id: true },
+  if (contexte?.etudiantId) {
+    const candidature = await prisma.candidature.findUnique({
+      where: {
+        projetId_etudiantId: {
+          projetId: projet.id,
+          etudiantId: contexte.etudiantId,
+        },
+      },
+      select: { statut: true },
     });
-    if (etudiant) {
-      estEtudiant = true;
-      etudiantId = etudiant.id;
-      const c = await prisma.candidature.findUnique({
-        where: { projetId_etudiantId: { projetId: projet.id, etudiantId: etudiant.id } },
-        select: { statut: true },
-      });
-      candidatureStatut = c?.statut ?? null;
-    }
+    candidatureStatut = candidature?.statut ?? null;
   }
 
-  // Garde-fou de visibilité : un projet privé ou non publié n'est lisible
-  // que par son entreprise, son mentor, un membre de l'équipe ou un admin.
-  const STATUTS_CACHES = ["BROUILLON", "EN_VALIDATION", "ANNULE", "ARCHIVE"];
-  const estPublic =
-    projet.visibilite !== "PRIVEE" && !STATUTS_CACHES.includes(projet.statut);
-  if (!estPublic) {
-    const role = session?.user?.role;
-    const estAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
-    const estProprietaire =
-      (projet.entreprise?.utilisateurId != null && projet.entreprise.utilisateurId === session?.user?.id) ||
-      (projet.mentorPrincipal?.utilisateurId != null && projet.mentorPrincipal.utilisateurId === session?.user?.id);
-    const estMembre =
-      etudiantId != null && (projet.equipe?.membres.some((m) => m.etudiantId === etudiantId) ?? false);
-    if (!estAdmin && !estProprietaire && !estMembre) notFound();
+  const visiblePubliquement = projetEstVisiblePubliquement(projet.visibilite, projet.statut);
+  const visiblePourUniversite = projetEstVisiblePourUniversite(
+    projet.visibilite,
+    projet.statut,
+    projet.universiteId,
+    contexte?.universiteId ?? null,
+  );
+  if (!visiblePubliquement && !visiblePourUniversite) {
+    if (!contexte || !utilisateurPeutAccederProjet(projet, contexte)) notFound();
   }
 
   const etudiantMatch = await chargerEtudiantMatching(session?.user?.id);
@@ -90,10 +104,18 @@ export default async function PageDetailJob({ params }: { params: Promise<{ slug
               verifie: projet.mentorPrincipal.estVerifie,
             }
           : null,
+        partenaires: projet.partenaires.map((p) => ({
+          entreprise: p.entreprise.raisonSociale,
+          typeContribution: p.typeContribution,
+        })),
       }}
       candidatureStatut={candidatureStatut}
-      estEtudiant={estEtudiant}
+      estEtudiant={Boolean(contexte?.etudiantId)}
       estConnecte={Boolean(session?.user?.id)}
+      role={contexte?.role ?? null}
+      estEntrepriseProprietaire={Boolean(
+        contexte?.entrepriseId && contexte.entrepriseId === projet.entrepriseId,
+      )}
     />
   );
 }

@@ -5,9 +5,10 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import { envoyerEmail, emailNotification } from "@/lib/email";
+import { env } from "@/lib/env";
 import type { TypeNotification } from "@/generated/prisma/client";
 
-const URL_BASE = process.env.URL_PUBLIQUE ?? "http://localhost:3000";
+const URL_BASE = env.URL_PUBLIQUE ?? "http://localhost:3000";
 
 export interface ParametresNotification {
   destinataireId: string;

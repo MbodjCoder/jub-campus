@@ -38,5 +38,8 @@ jobs:
       - name: Tests unitaires
         run: pnpm test
 
+      - name: Audit des dépendances de production
+        run: pnpm audit:prod
+
       - name: Build de production
         run: pnpm build

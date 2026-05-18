@@ -28,6 +28,9 @@ export function FormulaireInscriptionMentor() {
         <ChampEtiquete libelle="Mot de passe" pour="motDePasse" erreur={erreurs.motDePasse}>
           <Champ id="motDePasse" name="motDePasse" type="password" required minLength={8} />
         </ChampEtiquete>
+        <ChampEtiquete libelle="Confirmer le mot de passe" pour="motDePasseConfirme" erreur={erreurs.motDePasseConfirme}>
+          <Champ id="motDePasseConfirme" name="motDePasseConfirme" type="password" required minLength={8} />
+        </ChampEtiquete>
         <div className="grid gap-4 sm:grid-cols-2">
           <ChampEtiquete libelle="Type de mentor" pour="type" erreur={erreurs.type}>
             <Selecteur id="type" name="type" required>

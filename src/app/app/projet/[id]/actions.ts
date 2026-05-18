@@ -13,6 +13,7 @@ import {
   emailFeedbackRecu,
   emailEvaluationRecue,
 } from "@/lib/email";
+import { env } from "@/lib/env";
 
 // ─────────────────────────────────────────────────────────────
 // Garde-fou : récupère l'utilisateur connecté.
@@ -237,7 +238,7 @@ export async function ajouterFeedback(formData: FormData) {
         livrableTitre: livrableComplet.titre,
         auteurNom: auteurFeedback?.nomComplet ?? "Un mentor",
         apercu: parsed.data.contenu.slice(0, 200),
-        urlProjet: `${process.env.URL_PUBLIQUE ?? "http://localhost:3000"}/app/projet/${livrable.projetId}`,
+        urlProjet: `${env.URL_PUBLIQUE ?? "http://localhost:3000"}/app/projet/${livrable.projetId}`,
       }),
     );
   }
@@ -412,7 +413,7 @@ export async function soumettreEvaluation(formData: FormData) {
           projetTitre: projetComplet.titre,
           source: d.source,
           scoreGlobal,
-          urlProjet: `${process.env.URL_PUBLIQUE ?? "http://localhost:3000"}/app/projet/${d.projetId}`,
+          urlProjet: `${env.URL_PUBLIQUE ?? "http://localhost:3000"}/app/projet/${d.projetId}`,
         }),
       );
     }
@@ -439,7 +440,7 @@ export async function emettreCertificatDemo(projetId: string): Promise<ResultatE
   // Réservée aux admins (ou activée explicitement hors production).
   const role = session.user.role;
   const estAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
-  const demoAutorisee = process.env.AUTORISER_CERTIFICAT_DEMO === "true";
+  const demoAutorisee = env.AUTORISER_CERTIFICAT_DEMO === "true";
   if (!estAdmin && !demoAutorisee) {
     return {
       succes: false,

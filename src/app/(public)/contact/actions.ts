@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { envoyerEmail } from "@/lib/email";
 import { limiterDebit } from "@/lib/rate-limit";
+import { env } from "@/lib/env";
 
 const schemaContact = z.object({
   email: z.string().email("Email invalide."),
@@ -17,7 +18,7 @@ export interface ResultatContact {
 }
 
 // Adresse de réception interne (équipe JUB).
-const DESTINATAIRE_EQUIPE = process.env.EMAIL_CONTACT ?? "contact@jubcampus.sn";
+const DESTINATAIRE_EQUIPE = env.EMAIL_CONTACT ?? "contact@jubcampus.sn";
 
 export async function envoyerMessageContact(formData: FormData): Promise<ResultatContact> {
   // Anti-spam : 5 messages / heure par IP.

@@ -5,18 +5,14 @@
 import "server-only"; // empêche tout import accidentel côté client
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
+import { env } from "@/lib/env";
 
 declare global {
-  // eslint-disable-next-line no-var
   var prismaClientGlobal: PrismaClient | undefined;
 }
 
 function creerClientPrisma(): PrismaClient {
-  const urlBdd = process.env.DATABASE_URL;
-  if (!urlBdd) {
-    throw new Error("DATABASE_URL manquant dans l'environnement.");
-  }
-  const adaptateur = new PrismaPg({ connectionString: urlBdd });
+  const adaptateur = new PrismaPg({ connectionString: env.DATABASE_URL });
   return new PrismaClient({ adapter: adaptateur });
 }
 

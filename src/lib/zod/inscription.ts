@@ -11,10 +11,14 @@ export const schemaInscriptionEtudiant = z.object({
   nom: z.string().min(2, "Trop court."),
   email: emailNorme,
   motDePasse: motDePasseFort,
+  motDePasseConfirme: motDePasseFort,
   universite: z.string().min(2),
   niveau: z.enum(["L1", "L2", "L3", "M1", "M2", "DOCTORAT"]),
   filiere: z.string().optional(),
   cgu: z.literal("on", { message: "Tu dois accepter les CGU." }),
+}).refine((d) => d.motDePasse === d.motDePasseConfirme, {
+  path: ["motDePasseConfirme"],
+  message: "Les deux mots de passe ne correspondent pas.",
 });
 
 export const schemaInscriptionEntreprise = z.object({
@@ -26,7 +30,11 @@ export const schemaInscriptionEntreprise = z.object({
   siteWeb: z.string().url().or(z.literal("")).optional(),
   email: emailNorme,
   motDePasse: motDePasseFort,
+  motDePasseConfirme: motDePasseFort,
   description: z.string().optional(),
+}).refine((d) => d.motDePasse === d.motDePasseConfirme, {
+  path: ["motDePasseConfirme"],
+  message: "Les deux mots de passe ne correspondent pas.",
 });
 
 export const schemaInscriptionMentor = z.object({
@@ -34,11 +42,15 @@ export const schemaInscriptionMentor = z.object({
   nom: z.string().min(2),
   email: emailNorme,
   motDePasse: motDePasseFort,
+  motDePasseConfirme: motDePasseFort,
   type: z.enum(["PROFESSEUR", "PROFESSIONNEL", "ALUMNI", "EXPERT_INVITE"]),
   universite: z.string().optional(),
   titreOuPoste: z.string().optional(),
   specialites: z.string().min(2),
   biographie: z.string().optional(),
+}).refine((d) => d.motDePasse === d.motDePasseConfirme, {
+  path: ["motDePasseConfirme"],
+  message: "Les deux mots de passe ne correspondent pas.",
 });
 
 export const schemaConnexion = z.object({

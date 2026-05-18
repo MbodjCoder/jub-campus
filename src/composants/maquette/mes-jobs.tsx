@@ -75,11 +75,14 @@ export function MesJobs({ enCours, candidatures, termines }: Proprietes) {
         style={{
           marginTop: 20,
           marginBottom: 24,
-          display: "inline-flex",
+          display: "flex",
+          flexWrap: "wrap",
           gap: 4,
           background: "var(--sage-50)",
           borderRadius: 999,
           padding: 3,
+          width: "fit-content",
+          maxWidth: "100%",
         }}
       >
         {[
@@ -144,7 +147,7 @@ function ProjetEnCoursInline({ projet: p }: { projet: ProjetEnCours | null }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap", marginBottom: 16 }}>
-        <div style={{ flex: 1, minWidth: 240 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div className="t-xs t-discret">{p.organisation}</div>
           <h2 style={{ fontSize: 20, fontWeight: 600, margin: "4px 0 0", letterSpacing: "-0.01em" }}>{p.titre}</h2>
         </div>
@@ -298,7 +301,14 @@ function VueLivrables({ projet: p }: { projet: ProjetEnCours }) {
           {p.livrables.map((l) => (
             <div
               key={l.id}
-              style={{ background: "var(--fond-eleve)", padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}
+              style={{
+                background: "var(--fond-eleve)",
+                padding: "14px 18px",
+                display: "flex",
+                alignItems: "center",
+                gap: 14,
+                flexWrap: "wrap",
+              }}
             >
               <div
                 style={{
@@ -427,7 +437,17 @@ function ListeCandidatures({ candidatures }: { candidatures: CandidatureApercu[]
       }}
     >
       {candidatures.map((c, i) => (
-        <div key={i} style={{ background: "var(--fond-eleve)", padding: "16px 20px", display: "flex", alignItems: "center", gap: 14 }}>
+        <div
+          key={i}
+          style={{
+            background: "var(--fond-eleve)",
+            padding: "16px 20px",
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            flexWrap: "wrap",
+          }}
+        >
           <span className="pulse-dot" style={{ width: 8, height: 8, borderRadius: 999, background: "var(--orange-500)", flexShrink: 0 }} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 600 }}>{c.projet}</div>
@@ -472,6 +492,7 @@ function ListeProjetsTermines({ termines }: { termines: TermineApercu[] }) {
             display: "flex",
             alignItems: "center",
             gap: 14,
+            flexWrap: "wrap",
             textAlign: "left",
             cursor: "pointer",
           }}

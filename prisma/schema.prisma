@@ -208,6 +208,9 @@ enum TypeNotification {
   CANDIDATURE_RECUE
   CANDIDATURE_ACCEPTEE
   CANDIDATURE_REFUSEE
+  DEMANDE_PARTENARIAT_RECUE
+  DEMANDE_PARTENARIAT_ACCEPTEE
+  DEMANDE_PARTENARIAT_REFUSEE
   LIVRABLE_DEPOSE
   LIVRABLE_FEEDBACK
   PROJET_VALIDE
@@ -224,6 +227,21 @@ enum StatutSignalement {
   EN_COURS
   RESOLU
   REJETE
+}
+
+enum TypePartenariat {
+  FINANCEMENT
+  CO_REALISATION
+  RECRUTEMENT
+  MENTORAT
+  DIFFUSION
+}
+
+enum StatutPartenariat {
+  EN_ATTENTE
+  ACCEPTEE
+  REFUSEE
+  ANNULEE
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -258,6 +276,7 @@ model Utilisateur {
   feedbacksRediges    Feedback[]
   livrablesDeposes    Livrable[]     @relation("DeposeurLivrable")
   journalActions      JournalAudit[]
+  projetsPublies      Projet[]        @relation("ProjetsPubliesPar")
 
   @@index([role])
 }
@@ -366,6 +385,8 @@ model Entreprise {
 
   utilisateur    Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
   projetsPublies Projet[]
+  demandesPartenariat DemandePartenariat[]
+  partenariats        PartenaireProjet[]
 
   @@index([statutValidation])
 }
@@ -427,6 +448,7 @@ model Universite {
   departements Departement[]
   etudiants    Etudiant[]
   mentors      Mentor[]
+  projets      Projet[]
 }
 
 model Departement {
@@ -491,6 +513,7 @@ model Projet {
   visibilite         Visibilite       @default(PUBLIQUE)
   publieParId        String
   entrepriseId       String?
+  universiteId        String?
   mentorPrincipalId  String?
   sponsorId          String?
   programmeId        String?
@@ -501,9 +524,11 @@ model Projet {
   misAJourLe         DateTime         @updatedAt
 
   entreprise      Entreprise? @relation(fields: [entrepriseId], references: [id])
+  universite       Universite?  @relation(fields: [universiteId], references: [id])
   mentorPrincipal Mentor?     @relation("ProjetMentorPrincipal", fields: [mentorPrincipalId], references: [id])
   sponsor         Sponsor?    @relation("ProjetSponsor", fields: [sponsorId], references: [id])
   programme       Programme?  @relation(fields: [programmeId], references: [id])
+  publiePar        Utilisateur @relation("ProjetsPubliesPar", fields: [publieParId], references: [id])
 
   competencesRequises CompetenceProjet[]
   candidatures        Candidature[]
@@ -512,12 +537,17 @@ model Projet {
   livrables           Livrable[]
   evaluations         Evaluation[]
   certificats         Certificat[]
+  demandesPartenariat DemandePartenariat[]
+  partenaires          PartenaireProjet[]
 
   @@index([statut])
   @@index([categorie, niveau])
   @@index([source])
   @@index([entrepriseId])
   @@index([statut, visibilite, publieLe])
+  @@index([mentorPrincipalId])
+  @@index([publieParId])
+  @@index([universiteId])
 }
 
 model CompetenceProjet {
@@ -573,6 +603,7 @@ model MembreEquipe {
   etudiant Etudiant @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
 
   @@id([equipeId, etudiantId])
+  @@index([etudiantId])
 }
 
 model Tache {
@@ -630,6 +661,39 @@ model Feedback {
   @@index([livrableId])
 }
 
+model DemandePartenariat {
+  id               String            @id @default(cuid())
+  projetId         String
+  entrepriseId     String
+  typeContribution TypePartenariat
+  message          String            @db.Text
+  statut           StatutPartenariat @default(EN_ATTENTE)
+  reponse          String?           @db.Text
+  reponduLe        DateTime?
+  creeLe           DateTime          @default(now())
+  misAJourLe       DateTime          @updatedAt
+
+  projet     Projet     @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  entreprise Entreprise @relation(fields: [entrepriseId], references: [id], onDelete: Cascade)
+
+  @@unique([projetId, entrepriseId])
+  @@index([statut])
+  @@index([entrepriseId])
+}
+
+model PartenaireProjet {
+  projetId         String
+  entrepriseId     String
+  typeContribution TypePartenariat
+  accepteLe        DateTime @default(now())
+
+  projet     Projet     @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  entreprise Entreprise @relation(fields: [entrepriseId], references: [id], onDelete: Cascade)
+
+  @@id([projetId, entrepriseId])
+  @@index([entrepriseId])
+}
+
 // ─────────────────────────────────────────────────────────────
 // Évaluation & certification
 // ─────────────────────────────────────────────────────────────
@@ -660,6 +724,7 @@ model Evaluation {
 
   @@unique([projetId, etudiantId, source, evaluateurId])
   @@index([etudiantId])
+  @@index([evaluateurId])
 }
 
 model Certificat {

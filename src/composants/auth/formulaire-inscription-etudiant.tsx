@@ -34,6 +34,9 @@ export function FormulaireInscriptionEtudiant() {
         <ChampEtiquete libelle="Mot de passe" pour="motDePasse" aide="8 caractères minimum." erreur={erreurs.motDePasse}>
           <Champ id="motDePasse" name="motDePasse" type="password" required autoComplete="new-password" minLength={8} />
         </ChampEtiquete>
+        <ChampEtiquete libelle="Confirmer le mot de passe" pour="motDePasseConfirme" erreur={erreurs.motDePasseConfirme}>
+          <Champ id="motDePasseConfirme" name="motDePasseConfirme" type="password" required autoComplete="new-password" minLength={8} />
+        </ChampEtiquete>
         <div className="grid gap-4 sm:grid-cols-2">
           <ChampEtiquete libelle="Université" pour="universite" erreur={erreurs.universite}>
             <Selecteur id="universite" name="universite" required defaultValue="UGB">

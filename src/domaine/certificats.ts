@@ -5,6 +5,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { customAlphabet } from "nanoid";
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
 import { recalculerScoreJub, validerCompetences } from "@/domaine/score";
 
 // Alphabet sans 0/O/1/I/L pour éviter toute confusion à la lecture humaine.
@@ -47,13 +48,13 @@ export function calculerHashIntegrite(donnees: DonneesCertificat & { numeroPubli
 
 // Construit l'URL publique de vérification.
 export function urlVerification(numeroPublic: string, base?: string): string {
-  const racine = base ?? process.env.URL_PUBLIQUE ?? "http://localhost:3000";
+  const racine = base ?? env.URL_PUBLIQUE ?? "http://localhost:3000";
   return `${racine.replace(/\/$/, "")}/v/${numeroPublic}`;
 }
 
 // URL de téléchargement / aperçu du PDF.
 export function urlPdfCertificat(numeroPublic: string, base?: string): string {
-  const racine = base ?? process.env.URL_PUBLIQUE ?? "http://localhost:3000";
+  const racine = base ?? env.URL_PUBLIQUE ?? "http://localhost:3000";
   return `${racine.replace(/\/$/, "")}/api/certificats/${numeroPublic}/pdf`;
 }
 

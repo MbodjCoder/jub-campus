@@ -186,6 +186,7 @@ export async function deciderCandidature(formData: FormData): Promise<void> {
     },
   });
   if (!candidature) return;
+  if (candidature.statut !== "EN_ATTENTE") return;
 
   // Vérifie que l'utilisateur est bien l'entreprise du projet (ou admin).
   if (session.user.role === "ENTREPRISE") {
@@ -236,9 +237,14 @@ export async function deciderCandidature(formData: FormData): Promise<void> {
             where: { id: candidature.id },
             data: { statut: "ACCEPTEE", motifReponse: d.motif ?? null, reponduLe: new Date() },
           });
+          const nbMembresApresAcceptation = await tx.membreEquipe.count({ where: { equipeId: equipe.id } });
           await tx.projet.update({
             where: { id: candidature.projet.id },
-            data: { statut: "EN_COURS" },
+            data: {
+              statut: nbMembresApresAcceptation >= candidature.projet.placesMax
+                ? "EN_COURS"
+                : "EQUIPE_EN_CONSTITUTION",
+            },
           });
         },
         { isolationLevel: "Serializable" },
@@ -276,4 +282,106 @@ export async function deciderCandidature(formData: FormData): Promise<void> {
   revalidatePath("/entreprise/candidatures");
   revalidatePath(`/projets/${candidature.projet.slug}`);
   revalidatePath("/app/mes-projets");
+}
+
+// ─────────────────────────────────────────────────────────────
+// Décision sur une demande de partenariat
+// ─────────────────────────────────────────────────────────────
+
+const schemaDecisionPartenariat = z.object({
+  demandeId: z.string().cuid(),
+  decision: z.enum(["ACCEPTEE", "REFUSEE"]),
+  reponse: z.string().max(1000).optional(),
+});
+
+export async function deciderPartenariat(formData: FormData): Promise<void> {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/connexion");
+  if (session.user.role !== "ENTREPRISE" && session.user.role !== "ADMIN" && session.user.role !== "SUPER_ADMIN") {
+    redirect("/");
+  }
+
+  const parsed = schemaDecisionPartenariat.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  const d = parsed.data;
+
+  const demande = await prisma.demandePartenariat.findUnique({
+    where: { id: d.demandeId },
+    include: {
+      entreprise: { select: { utilisateurId: true, raisonSociale: true } },
+      projet: {
+        select: {
+          id: true,
+          titre: true,
+          slug: true,
+          entrepriseId: true,
+          publieParId: true,
+        },
+      },
+    },
+  });
+  if (!demande || demande.statut !== "EN_ATTENTE") return;
+
+  if (session.user.role === "ENTREPRISE") {
+    const monEntreprise = await prisma.entreprise.findUnique({
+      where: { utilisateurId: session.user.id },
+      select: { id: true },
+    });
+    const estProprietaire = monEntreprise?.id === demande.projet.entrepriseId;
+    const estPublieur = demande.projet.publieParId === session.user.id;
+    if (!estProprietaire && !estPublieur) return;
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.demandePartenariat.update({
+      where: { id: demande.id },
+      data: {
+        statut: d.decision,
+        reponse: d.reponse || null,
+        reponduLe: new Date(),
+      },
+    });
+
+    if (d.decision === "ACCEPTEE") {
+      await tx.partenaireProjet.upsert({
+        where: {
+          projetId_entrepriseId: {
+            projetId: demande.projet.id,
+            entrepriseId: demande.entrepriseId,
+          },
+        },
+        update: { typeContribution: demande.typeContribution },
+        create: {
+          projetId: demande.projet.id,
+          entrepriseId: demande.entrepriseId,
+          typeContribution: demande.typeContribution,
+        },
+      });
+    }
+  });
+
+  await creerNotification({
+    destinataireId: demande.entreprise.utilisateurId,
+    type: d.decision === "ACCEPTEE"
+      ? "DEMANDE_PARTENARIAT_ACCEPTEE"
+      : "DEMANDE_PARTENARIAT_REFUSEE",
+    titre: d.decision === "ACCEPTEE" ? "Partenariat accepté" : "Partenariat refusé",
+    contenu: d.decision === "ACCEPTEE"
+      ? `Ta proposition sur « ${demande.projet.titre} » a été acceptée.`
+      : `Ta proposition sur « ${demande.projet.titre} » a été refusée.${d.reponse ? ` Motif : ${d.reponse}` : ""}`,
+    lien: "/entreprise/partenariats",
+  });
+
+  await prisma.journalAudit.create({
+    data: {
+      acteurId: session.user.id,
+      action: d.decision === "ACCEPTEE" ? "PARTENARIAT.ACCEPTE" : "PARTENARIAT.REFUSE",
+      ressourceType: "DemandePartenariat",
+      ressourceId: demande.id,
+      metadonnees: { projetId: demande.projet.id, entreprisePartenaireId: demande.entrepriseId },
+    },
+  });
+
+  revalidatePath("/entreprise/partenariats");
+  revalidatePath(`/projets/${demande.projet.slug}`);
 }

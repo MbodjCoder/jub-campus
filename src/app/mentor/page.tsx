@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { FolderKanban, Users, FileCheck, Star } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { Carte, CorpsCarte, EnteteCarte, TitreCarte } from "@/composants/ui/carte";
+import { Carte, CorpsCarte } from "@/composants/ui/carte";
 import { Insigne } from "@/composants/ui/insigne";
 import { LIBELLES_STATUT_PROJET } from "@/lib/constantes";
 

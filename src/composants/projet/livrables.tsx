@@ -93,10 +93,11 @@ function FormulaireDeposer({ projetId, onFerme }: { projetId: string; onFerme: (
   async function televerser(fichier: File) {
     setErreur(null);
     setEnTeleversement(true);
-    try {
-      const fd = new FormData();
-      fd.append("fichier", fichier);
-      const reponse = await fetch("/api/livrables/upload", { method: "POST", body: fd });
+      try {
+        const fd = new FormData();
+        fd.append("fichier", fichier);
+        fd.append("projetId", projetId);
+        const reponse = await fetch("/api/livrables/upload", { method: "POST", body: fd });
       const donnees = await reponse.json();
       if (!reponse.ok || !donnees.url) {
         throw new Error(donnees.erreur ?? "Échec du téléversement.");

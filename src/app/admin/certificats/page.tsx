@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { Carte, CorpsCarte, EnteteCarte, TitreCarte } from "@/composants/ui/carte";
+import { Carte, CorpsCarte, EnteteCarte } from "@/composants/ui/carte";
 import { Insigne } from "@/composants/ui/insigne";
 import { Bouton } from "@/composants/ui/bouton";
 import { Champ } from "@/composants/ui/champ";

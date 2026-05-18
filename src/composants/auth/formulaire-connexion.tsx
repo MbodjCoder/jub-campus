@@ -4,10 +4,11 @@ import { useActionState } from "react";
 import { Bouton } from "@/composants/ui/bouton";
 import { Champ, ChampEtiquete } from "@/composants/ui/champ";
 import { CorpsCarte } from "@/composants/ui/carte";
-import { seConnecter } from "@/app/(public)/inscription/actions";
+import { renvoyerVerification, seConnecter } from "@/app/(public)/inscription/actions";
 
 export function FormulaireConnexion() {
   const [etat, action, enCours] = useActionState(seConnecter, null);
+  const [etatVerification, actionVerification, verificationEnCours] = useActionState(renvoyerVerification, null);
 
   return (
     <>
@@ -28,6 +29,22 @@ export function FormulaireConnexion() {
             {enCours ? "Connexion…" : "Se connecter"}
           </Bouton>
         </CorpsCarte>
+      </form>
+      <form action={actionVerification} className="px-5 pb-5">
+        <div className="space-y-3 rounded-lg border border-bordure bg-fond/60 p-3">
+          <p className="text-xs text-texte-discret">
+            Email non reçu après l&apos;inscription ?
+          </p>
+          {etatVerification?.message ? (
+            <p className="text-xs text-texte-discret">{etatVerification.message}</p>
+          ) : null}
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Champ name="email" type="email" placeholder="ton@email.sn" required autoComplete="email" />
+            <Bouton apparence="contour" type="submit" chargement={verificationEnCours}>
+              Renvoyer
+            </Bouton>
+          </div>
+        </div>
       </form>
       <div className="flex items-center gap-2 px-5 text-xs text-texte-discret">
         <span className="h-px flex-1 bg-bordure" />

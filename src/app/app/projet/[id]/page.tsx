@@ -18,6 +18,10 @@ import {
   LIBELLES_STATUT_PROJET,
 } from "@/lib/constantes";
 import { formaterDureeJours, formaterMontantFcfa } from "@/lib/utils";
+import {
+  chargerContexteAccesProjet,
+  utilisateurPeutAccederProjet,
+} from "@/domaine/acces-projet";
 
 type ProprietesPage = { params: Promise<{ id: string }> };
 
@@ -52,24 +56,23 @@ export default async function PageEspaceProjet({ params }: ProprietesPage) {
 
   if (!projet) notFound();
 
+  const contexte = await chargerContexteAccesProjet(session.user.id);
+  if (!contexte || !utilisateurPeutAccederProjet(projet, contexte)) notFound();
+
   const membres = projet.equipe?.membres.map((m) => m.etudiant) ?? [];
 
   // Détermine les sources d'évaluation autorisées pour l'utilisateur connecté.
-  const utilisateurConnecte = await prisma.utilisateur.findUnique({
-    where: { id: session.user.id },
-    include: { etudiant: true, mentor: true, entreprise: true },
-  });
   const sourcesDispos: Array<"MENTOR" | "ENTREPRISE" | "PAIR" | "AUTO" | "ADMIN"> = [];
-  if (utilisateurConnecte?.mentor) sourcesDispos.push("MENTOR");
-  if (utilisateurConnecte?.entreprise) sourcesDispos.push("ENTREPRISE");
-  if (utilisateurConnecte?.etudiant) {
-    const estMembre = projet.equipe?.membres.some((m) => m.etudiantId === utilisateurConnecte.etudiant!.id);
+  if (contexte.mentorId) sourcesDispos.push("MENTOR");
+  if (contexte.entrepriseId) sourcesDispos.push("ENTREPRISE");
+  if (contexte.etudiantId) {
+    const estMembre = projet.equipe?.membres.some((m) => m.etudiantId === contexte.etudiantId);
     if (estMembre) {
       sourcesDispos.push("AUTO");
       if ((projet.equipe?.membres.length ?? 0) > 1) sourcesDispos.push("PAIR");
     }
   }
-  if (utilisateurConnecte?.role === "ADMIN" || utilisateurConnecte?.role === "SUPER_ADMIN") {
+  if (contexte.role === "ADMIN" || contexte.role === "SUPER_ADMIN") {
     sourcesDispos.push("ADMIN");
   }
 

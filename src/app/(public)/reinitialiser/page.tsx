@@ -1,36 +1,44 @@
 "use client";
 
-// Choix d'un nouveau mot de passe via le lien reçu par email.
-
-import { useState, useTransition, Suspense } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useRef, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Bouton } from "@/composants/maquette/primitifs";
 import { Icon } from "@/composants/maquette/icones";
 import { reinitialiserMotDePasse } from "../mot-de-passe-oublie/actions";
 
 function Formulaire() {
+  const router = useRouter();
   const sp = useSearchParams();
   const email = sp.get("email") ?? "";
   const jeton = sp.get("jeton") ?? "";
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const [fait, setFait] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [confirmationOuverte, setConfirmationOuverte] = useState(false);
   const [enCours, demarrer] = useTransition();
 
   function soumettre(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErreur(null);
-    const form = e.currentTarget;
-    const fd = new FormData(form);
+    const fd = new FormData(e.currentTarget);
     if (fd.get("motDePasse") !== fd.get("motDePasseConfirme")) {
       setErreur("Les deux mots de passe ne correspondent pas.");
       return;
     }
+    setConfirmationOuverte(true);
+  }
+
+  function confirmer() {
+    const form = formRef.current;
+    if (!form) return;
+    setConfirmationOuverte(false);
     demarrer(async () => {
-      const r = await reinitialiserMotDePasse(fd);
-      if (r.succes) setFait(true);
-      else setErreur(r.message ?? "Erreur.");
+      const r = await reinitialiserMotDePasse(new FormData(form));
+      if (r.succes) {
+        router.replace("/connexion?motdepasse=modifie");
+      } else {
+        setErreur(r.message ?? "Erreur.");
+      }
     });
   }
 
@@ -38,45 +46,56 @@ function Formulaire() {
     return <p className="t-small">Lien invalide. Refais une demande de réinitialisation.</p>;
   }
 
-  if (fait) {
-    return (
-      <div
-        style={{
-          marginTop: 8,
-          padding: 20,
-          background: "var(--fond-eleve)",
-          border: "1px solid var(--bordure)",
-          borderRadius: 14,
-          textAlign: "center",
-        }}
-      >
-        <p className="t-small" style={{ margin: "0 0 14px" }}>
-          Mot de passe mis à jour. Tu peux te connecter.
-        </p>
-        <Bouton as={Link} href="/connexion" variant="accent">
-          Se connecter
-        </Bouton>
-      </div>
-    );
-  }
-
   return (
-    <form onSubmit={soumettre} style={{ marginTop: 20, display: "grid", gap: 12 }}>
-      <input type="hidden" name="email" value={email} />
-      <input type="hidden" name="jeton" value={jeton} />
-      <label className="grid gap-1">
-        <span className="text-xs font-semibold">Nouveau mot de passe</span>
-        <input className="champ" type="password" name="motDePasse" minLength={8} required placeholder="8 caractères minimum" />
-      </label>
-      <label className="grid gap-1">
-        <span className="text-xs font-semibold">Confirme le mot de passe</span>
-        <input className="champ" type="password" name="motDePasseConfirme" minLength={8} required />
-      </label>
-      {erreur ? <p style={{ margin: 0, color: "var(--danger)", fontSize: 13 }}>{erreur}</p> : null}
-      <Bouton variant="accent" type="submit" disabled={enCours} iconRight={<Icon.Check size={15} />}>
-        {enCours ? "Mise à jour…" : "Réinitialiser"}
-      </Bouton>
-    </form>
+    <>
+      <form ref={formRef} onSubmit={soumettre} style={{ marginTop: 20, display: "grid", gap: 12 }}>
+        <input type="hidden" name="email" value={email} />
+        <input type="hidden" name="jeton" value={jeton} />
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold">Nouveau mot de passe</span>
+          <input className="champ" type="password" name="motDePasse" minLength={8} required placeholder="8 caractères minimum" />
+        </label>
+        <label className="grid gap-1">
+          <span className="text-xs font-semibold">Confirme le mot de passe</span>
+          <input className="champ" type="password" name="motDePasseConfirme" minLength={8} required />
+        </label>
+        {erreur ? <p style={{ margin: 0, color: "var(--danger)", fontSize: 13 }}>{erreur}</p> : null}
+        <Bouton variant="accent" type="submit" disabled={enCours} iconRight={<Icon.Check size={15} />}>
+          {enCours ? "Mise à jour…" : "Réinitialiser"}
+        </Bouton>
+      </form>
+
+      {confirmationOuverte ? (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 120,
+            display: "grid",
+            placeItems: "center",
+            padding: 16,
+            background: "rgba(20,26,19,0.5)",
+          }}
+        >
+          <div style={{ width: "100%", maxWidth: 420, borderRadius: 16, background: "white", padding: 20 }}>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Confirmer le changement</h2>
+            <p className="t-small" style={{ marginTop: 10 }}>
+              Tu vas modifier ton mot de passe. Le lien de réinitialisation sera immédiatement invalidé.
+            </p>
+            <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <Bouton variant="fantome" type="button" onClick={() => setConfirmationOuverte(false)}>
+                Annuler
+              </Bouton>
+              <Bouton variant="accent" type="button" onClick={confirmer}>
+                Confirmer
+              </Bouton>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
 

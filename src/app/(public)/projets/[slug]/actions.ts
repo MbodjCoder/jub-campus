@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -65,7 +64,7 @@ export async function soumettreCandidature(formData: FormData): Promise<Resultat
   });
   if (existante) return { succes: false, message: "Tu as déjà postulé sur ce projet." };
 
-  await prisma.candidature.create({
+  const candidature = await prisma.candidature.create({
     data: {
       projetId: projet.id,
       etudiantId: etudiant.id,
@@ -88,7 +87,7 @@ export async function soumettreCandidature(formData: FormData): Promise<Resultat
       acteurId: session.user.id,
       action: "CANDIDATURE.SOUMISE",
       ressourceType: "Candidature",
-      ressourceId: projet.id,
+      ressourceId: candidature.id,
       metadonnees: { projetSlug: projet.slug },
     },
   });
@@ -97,5 +96,118 @@ export async function soumettreCandidature(formData: FormData): Promise<Resultat
   revalidatePath("/app/mes-projets");
   revalidatePath("/entreprise/candidatures");
 
+  return { succes: true };
+}
+
+const schemaPartenariat = z.object({
+  projetId: z.string().cuid(),
+  typeContribution: z.enum(["FINANCEMENT", "CO_REALISATION", "RECRUTEMENT", "MENTORAT", "DIFFUSION"]),
+  message: z.string().min(80, "Explique la proposition en 80 caractères minimum.").max(1500),
+});
+
+export async function soumettreDemandePartenariat(formData: FormData): Promise<Resultat> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { succes: false, message: "Connecte-toi pour proposer un partenariat." };
+  }
+  if (session.user.role !== "ENTREPRISE") {
+    return { succes: false, message: "Seules les entreprises peuvent proposer un partenariat." };
+  }
+
+  const limite = limiterDebit(`partenariat:${session.user.id}`, 8, 3_600_000);
+  if (!limite.autorise) {
+    return { succes: false, message: "Trop de demandes envoyées. Réessaie plus tard." };
+  }
+
+  const parsed = schemaPartenariat.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    return { succes: false, message: parsed.error.issues[0]?.message ?? "Champs invalides." };
+  }
+
+  const [entreprise, projet] = await Promise.all([
+    prisma.entreprise.findUnique({
+      where: { utilisateurId: session.user.id },
+      select: { id: true, raisonSociale: true, statutValidation: true },
+    }),
+    prisma.projet.findUnique({
+      where: { id: parsed.data.projetId },
+      select: { id: true, titre: true, slug: true, publieParId: true, entrepriseId: true, statut: true },
+    }),
+  ]);
+  if (!entreprise) return { succes: false, message: "Profil entreprise introuvable." };
+  if (entreprise.statutValidation !== "VALIDEE") {
+    return { succes: false, message: "Ton compte entreprise doit être validé avant de proposer un partenariat." };
+  }
+  if (!projet) return { succes: false, message: "Projet introuvable." };
+  if (projet.entrepriseId === entreprise.id) {
+    return { succes: false, message: "Tu gères déjà ce projet." };
+  }
+  if (!["PUBLIE", "CANDIDATURES_OUVERTES", "EQUIPE_EN_CONSTITUTION", "EN_COURS"].includes(projet.statut)) {
+    return { succes: false, message: "Ce projet n'accepte pas de partenariat pour le moment." };
+  }
+
+  try {
+    const existante = await prisma.demandePartenariat.findUnique({
+      where: {
+        projetId_entrepriseId: {
+          projetId: projet.id,
+          entrepriseId: entreprise.id,
+        },
+      },
+      select: { id: true, statut: true },
+    });
+    if (existante?.statut === "EN_ATTENTE") {
+      return { succes: false, message: "Une demande est déjà en attente sur ce projet." };
+    }
+    if (existante?.statut === "ACCEPTEE") {
+      return { succes: false, message: "Ton entreprise est déjà partenaire de ce projet." };
+    }
+
+    const demande = existante
+      ? await prisma.demandePartenariat.update({
+          where: { id: existante.id },
+          data: {
+            typeContribution: parsed.data.typeContribution,
+            message: parsed.data.message,
+            statut: "EN_ATTENTE",
+            reponse: null,
+            reponduLe: null,
+          },
+        })
+      : await prisma.demandePartenariat.create({
+          data: {
+            projetId: projet.id,
+            entrepriseId: entreprise.id,
+            typeContribution: parsed.data.typeContribution,
+            message: parsed.data.message,
+          },
+        });
+
+    await creerNotification({
+      destinataireId: projet.publieParId,
+      type: "DEMANDE_PARTENARIAT_RECUE",
+      titre: "Nouvelle proposition de partenariat",
+      contenu: `${entreprise.raisonSociale} souhaite contribuer au projet « ${projet.titre} ».`,
+      lien: "/entreprise/partenariats",
+    });
+
+    await prisma.journalAudit.create({
+      data: {
+        acteurId: session.user.id,
+        action: "PARTENARIAT.DEMANDE_SOUMISE",
+        ressourceType: "DemandePartenariat",
+        ressourceId: demande.id,
+        metadonnees: { projetId: projet.id, projetSlug: projet.slug },
+      },
+    });
+  } catch {
+    return {
+      succes: false,
+      message: "L'envoi de la demande a échoué. Réessaie dans un instant.",
+    };
+  }
+
+  revalidatePath(`/projets/${projet.slug}`);
+  revalidatePath("/entreprise/partenariats");
   return { succes: true };
 }

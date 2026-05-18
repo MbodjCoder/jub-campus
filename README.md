@@ -13,9 +13,9 @@
 |---|---|
 | Framework | Next.js 16 (App Router) + React 19 + Turbopack |
 | Styling | Tailwind CSS 4 (composants maison, sans shadcn) |
-| Auth | Auth.js v5 (à câbler — Credentials + Google) |
+| Auth | Auth.js v5 (Credentials + Google pour comptes existants) |
 | ORM / DB | Prisma 7 (`prisma-client` ESM) + PostgreSQL via adaptateur `@prisma/adapter-pg` |
-| Stockage | Supabase Storage prévu (livrables + certificats) |
+| Stockage | Supabase Storage (livrables + certificats privés, avatars publics) |
 | Email | Resend |
 | Génération PDF | `@react-pdf/renderer` + `qrcode` |
 | Validation | Zod 4 |
@@ -26,7 +26,7 @@
 - **Tout en français** : variables, fichiers, composants, énumérations Prisma, libellés UI.
   Ex : `CarteProjet`, `formaterMontantFcfa`, `StatutCandidature.ACCEPTEE`.
 - **Pas d&apos;emojis** dans le code/UI sauf demande explicite.
-- **Pas de mocks ni TODO laissés**. Commentaires = pourquoi, pas quoi.
+- **Pas de faux parcours silencieux** : si un module n&apos;est pas encore ouvert, l&apos;interface doit le dire clairement.
 - **Mobile-first** strict. Performance critique (audiences sur 3G/4G).
 
 ## Structure du projet
@@ -89,6 +89,12 @@ pnpm dev                # http://localhost:3000
 | `pnpm bdd:migrer` | Créer/appliquer une migration |
 | `pnpm bdd:semer` | Re-peupler les données de référence |
 | `pnpm bdd:studio` | Ouvrir Prisma Studio |
+| `pnpm audit:prod` | Audit des dépendances de production |
+| `pnpm release:verify` | Lint + types + tests + build avant mise en ligne |
+
+## Déploiement
+
+Voir `DEPLOIEMENT.md` pour les variables Vercel, l'ordre d'application des migrations et la checklist de sortie.
 
 ## Système de certification
 
@@ -107,7 +113,7 @@ Voir `src/domaine/certificats.ts` et `src/app/v/[numero]/page.tsx`.
 - [x] Sprint 0 — Setup repo, design tokens, UI primitives, schéma Prisma
 - [x] Sprint 1 — Landing publique, pages inscription/connexion (formulaires)
 - [x] Sprint 2 — Catalogue projets + détail (démo statique), portfolio public, vérification certificat
-- [ ] Sprint 3 — Câbler Auth.js v5 + middleware RBAC + flows réels d&apos;inscription
+- [x] Sprint 3 — Câbler Auth.js v5 + middleware RBAC + flows réels d&apos;inscription
 - [ ] Sprint 4 — Espace projet (kanban tâches + livrables + feedback)
 - [ ] Sprint 5 — Système d&apos;évaluation multi-source + génération PDF + QR
 - [ ] Sprint 6 — Notifications email Resend + tableaux de bord temps réel

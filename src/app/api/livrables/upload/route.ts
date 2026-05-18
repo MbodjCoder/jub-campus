@@ -4,6 +4,11 @@
 
 import { auth } from "@/auth";
 import { stockerFichier } from "@/lib/stockage";
+import {
+  chargerContexteAccesProjet,
+  utilisateurPeutAccederProjet,
+} from "@/domaine/acces-projet";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,9 +22,29 @@ export async function POST(req: Request) {
   }
 
   const formData = await req.formData();
+  const projetId = formData.get("projetId");
   const fichier = formData.get("fichier");
+  if (typeof projetId !== "string" || !projetId) {
+    return Response.json({ erreur: "Projet manquant" }, { status: 400 });
+  }
   if (!(fichier instanceof File)) {
     return Response.json({ erreur: "Fichier manquant" }, { status: 400 });
+  }
+
+  const [contexte, projet] = await Promise.all([
+    chargerContexteAccesProjet(session.user.id),
+    prisma.projet.findUnique({
+      where: { id: projetId },
+      select: {
+        publieParId: true,
+        entrepriseId: true,
+        mentorPrincipalId: true,
+        equipe: { select: { membres: { select: { etudiantId: true } } } },
+      },
+    }),
+  ]);
+  if (!contexte || !projet || !utilisateurPeutAccederProjet(projet, contexte)) {
+    return Response.json({ erreur: "Accès refusé" }, { status: 403 });
   }
   if (fichier.size === 0) {
     return Response.json({ erreur: "Fichier vide" }, { status: 400 });

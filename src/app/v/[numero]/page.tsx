@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import { createHash } from "node:crypto";
 import { Download, ShieldCheck, ShieldAlert } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
+import type { Prisma } from "@/generated/prisma/client";
 import { Bouton } from "@/composants/ui/bouton";
 import { Carte, CorpsCarte, EnteteCarte, TitreCarte } from "@/composants/ui/carte";
 import { Insigne } from "@/composants/ui/insigne";
@@ -11,6 +13,13 @@ import { formaterDate, formaterDureeJours } from "@/lib/utils";
 import { calculerHashIntegrite, urlPdfCertificat } from "@/domaine/certificats";
 
 export const dynamic = "force-dynamic";
+
+type CertificatAvecRelations = Prisma.CertificatGetPayload<{
+  include: {
+    etudiant: { include: { universite: true } };
+    projet: { include: { entreprise: true } };
+  };
+}>;
 
 export async function generateMetadata({ params }: { params: Promise<{ numero: string }> }) {
   const { numero } = await params;
@@ -38,7 +47,7 @@ export default async function PageVerificationCertificat({ params }: ParametresP
   if (cert) {
     const entetes = await headers();
     const ip = entetes.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonyme";
-    const ipHash = createHash("sha256").update(ip + (process.env.AUTH_SECRET ?? "")).digest("hex");
+  const ipHash = createHash("sha256").update(ip + env.AUTH_SECRET).digest("hex");
     await prisma.verificationCertificat.create({
       data: {
         certificatId: cert.id,
@@ -96,7 +105,7 @@ export default async function PageVerificationCertificat({ params }: ParametresP
 function BlocCertificatExistant({
   cert,
 }: {
-  cert: NonNullable<Awaited<ReturnType<typeof recupererCertPourTypage>>>;
+  cert: CertificatAvecRelations;
 }) {
   // Vérification croisée : on recalcule le hash à partir des champs persistés.
   const hashRecalcule = calculerHashIntegrite({
@@ -231,13 +240,3 @@ function Champ({ libelle, valeur, mettreEnAvant }: { libelle: string; valeur: st
   );
 }
 
-// Helper de typage : signature identique à l'include utilisé plus haut.
-async function recupererCertPourTypage() {
-  return prisma.certificat.findUnique({
-    where: { numeroPublic: "" },
-    include: {
-      etudiant: { include: { universite: true } },
-      projet: { include: { entreprise: true } },
-    },
-  });
-}

@@ -138,10 +138,10 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
         ) : (
           <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
             {e.competences.map((c) => (
-              <div key={c.nom} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div key={c.nom} style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                 <div
                   style={{
-                    flex: "0 0 120px",
+                    flex: "1 1 120px",
                     fontSize: 13.5,
                     fontWeight: 500,
                     display: "flex",
@@ -152,7 +152,16 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
                   {c.nom}
                   {c.valide ? <Icon.ShieldCheck size={11} style={{ color: "var(--orange-500)" }} /> : null}
                 </div>
-                <div style={{ flex: 1, height: 4, borderRadius: 999, background: "var(--sage-50)", overflow: "hidden" }}>
+                <div
+                  style={{
+                    flex: "1 1 140px",
+                    minWidth: 120,
+                    height: 4,
+                    borderRadius: 999,
+                    background: "var(--sage-50)",
+                    overflow: "hidden",
+                  }}
+                >
                   <div
                     style={{
                       width: `${(c.niveau / 5) * 100}%`,

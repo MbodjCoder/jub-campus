@@ -9,6 +9,7 @@ import bcryptjs from "bcryptjs";
 import { configAuthEdge } from "@/auth.config";
 import { schemaConnexion } from "@/lib/zod/inscription";
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
 import type { Role } from "@/generated/prisma/client";
 
 declare module "next-auth" {
@@ -39,6 +40,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: { email: parsed.data.email },
         });
         if (!utilisateur?.motDePasseHash) return null;
+        if (!utilisateur.emailVerifieLe) return null;
         const valide = await bcryptjs.compare(parsed.data.motDePasse, utilisateur.motDePasseHash);
         if (!valide) return null;
         await prisma.utilisateur.update({
@@ -55,8 +57,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
     Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      clientId: env.AUTH_GOOGLE_ID,
+      clientSecret: env.AUTH_GOOGLE_SECRET,
       // Pas de liaison automatique par email (risque de détournement de
       // compte). Le rapprochement est géré explicitement via signIn.
     }),
@@ -65,7 +67,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ...configAuthEdge.callbacks,
     async signIn({ user, account }) {
       if (account?.provider !== "google" || !user.email) return true;
-      const existant = await prisma.utilisateur.findUnique({ where: { email: user.email } });
+      const existant = await prisma.utilisateur.findUnique({
+        where: { email: user.email },
+        include: { etudiant: { select: { id: true } } },
+      });
       if (existant) {
         await prisma.utilisateur.update({
           where: { id: existant.id },
@@ -74,18 +79,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             imageUrl: user.image ?? existant.imageUrl,
           },
         });
+        user.id = existant.id;
+        user.role = existant.role;
         return true;
       }
-      await prisma.utilisateur.create({
-        data: {
-          email: user.email,
-          nomComplet: user.name ?? user.email,
-          imageUrl: user.image,
-          emailVerifieLe: new Date(),
-          role: "ETUDIANT",
-        },
-      });
-      return true;
+
+      // Un compte étudiant métier exige une université + un niveau. Google
+      // n'apporte pas ces données ; créer un utilisateur "nu" produirait un
+      // compte inutilisable et une session impossible à autoriser proprement.
+      // On refuse donc l'inscription OAuth spontanée jusqu'au futur onboarding
+      // guidé, tout en laissant les comptes déjà créés se reconnecter.
+      return false;
     },
     async jwt({ token, user }) {
       const t = token as typeof token & { role?: Role; utilisateurId?: string };

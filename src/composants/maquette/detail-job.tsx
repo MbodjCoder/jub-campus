@@ -10,7 +10,11 @@ import { useRouter } from "next/navigation";
 import { Icon } from "./icones";
 import { fmt } from "./format";
 import { Pilule, Bouton, Avatar, MODE_REM } from "./primitifs";
-import { soumettreCandidature } from "@/app/(public)/projets/[slug]/actions";
+import {
+  soumettreCandidature,
+  soumettreDemandePartenariat,
+} from "@/app/(public)/projets/[slug]/actions";
+import type { Role, TypePartenariat } from "@/generated/prisma/client";
 
 export interface DetailJobData {
   id: string;
@@ -28,6 +32,7 @@ export interface DetailJobData {
   matchScore: number | null;
   competences: string[];
   mentor: { nom: string; titre: string | null; verifie: boolean } | null;
+  partenaires: { entreprise: string; typeContribution: TypePartenariat }[];
 }
 
 export function DetailJob({
@@ -35,15 +40,20 @@ export function DetailJob({
   candidatureStatut,
   estEtudiant,
   estConnecte,
+  role,
+  estEntrepriseProprietaire,
 }: {
   projet: DetailJobData;
   candidatureStatut: string | null;
   estEtudiant: boolean;
   estConnecte: boolean;
+  role: Role | null;
+  estEntrepriseProprietaire: boolean;
 }) {
   const router = useRouter();
   const [postule, setPostule] = useState(candidatureStatut != null);
   const [showLetter, setShowLetter] = useState(false);
+  const [showPartenariat, setShowPartenariat] = useState(false);
   const placesRestantes = Math.max(0, p.placesMax - p.placesPrises);
   const mode = MODE_REM[p.modeRemuneration];
 
@@ -55,6 +65,45 @@ export function DetailJob({
     if (!estEtudiant) return;
     setShowLetter(true);
   };
+
+  const actionPrincipale = (() => {
+    if (!estConnecte) {
+      return {
+        libelle: "Se connecter",
+        onClick: ouvrirCandidature,
+        variant: "accent" as const,
+      };
+    }
+    if (role === "ENTREPRISE") {
+      if (estEntrepriseProprietaire) {
+        return {
+          libelle: "Gérer ce projet",
+          href: "/entreprise/projets",
+          variant: "primaire" as const,
+        };
+      }
+      return {
+        libelle: "Proposer un partenariat",
+        onClick: () => setShowPartenariat(true),
+        variant: "accent" as const,
+      };
+    }
+    if (role === "MENTOR") {
+      return {
+        libelle: "Voir comme mentor",
+        href: "/mentor/projets",
+        variant: "primaire" as const,
+      };
+    }
+    if (role === "ADMIN" || role === "SUPER_ADMIN") {
+      return {
+        libelle: "Voir en admin",
+        href: "/admin/projets",
+        variant: "primaire" as const,
+      };
+    }
+    return null;
+  })();
 
   return (
     <main className="fadein" style={{ paddingBottom: 100 }}>
@@ -190,6 +239,19 @@ export function DetailJob({
             </div>
           </div>
         ) : null}
+
+        {p.partenaires.length > 0 ? (
+          <div style={{ marginTop: 28 }}>
+            <SectionTitre icon={<Icon.Users size={13} />}>Partenaires</SectionTitre>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+              {p.partenaires.map((partenaire) => (
+                <Pilule key={`${partenaire.entreprise}-${partenaire.typeContribution}`} variant="neutre">
+                  {partenaire.entreprise}
+                </Pilule>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <div
@@ -231,15 +293,15 @@ export function DetailJob({
               {p.montant != null ? fmt.fcfa(p.montant) : "Apprentissage certifiant"}
             </div>
           </div>
-          {postule ? (
+          {estEtudiant && postule ? (
             <Bouton variant="contour" taille="md" icon={<Icon.Check size={14} />}>
-              Postulé
+              Postul?
             </Bouton>
           ) : estEtudiant && placesRestantes <= 0 ? (
             <Bouton variant="contour" taille="md" disabled>
               Complet
             </Bouton>
-          ) : (
+          ) : estEtudiant ? (
             <Bouton
               variant="accent"
               taille="md"
@@ -247,6 +309,29 @@ export function DetailJob({
               iconRight={<Icon.Arrow size={14} />}
             >
               Postuler
+            </Bouton>
+          ) : actionPrincipale?.href ? (
+            <Bouton
+              as={Link}
+              href={actionPrincipale.href}
+              variant={actionPrincipale.variant}
+              taille="md"
+              iconRight={<Icon.Arrow size={14} />}
+            >
+              {actionPrincipale.libelle}
+            </Bouton>
+          ) : actionPrincipale ? (
+            <Bouton
+              variant={actionPrincipale.variant}
+              taille="md"
+              onClick={actionPrincipale.onClick}
+              iconRight={<Icon.Arrow size={14} />}
+            >
+              {actionPrincipale.libelle}
+            </Bouton>
+          ) : (
+            <Bouton variant="contour" taille="md" disabled>
+              Acc?s r?serv?
             </Bouton>
           )}
         </div>
@@ -262,6 +347,14 @@ export function DetailJob({
             setPostule(true);
             setShowLetter(false);
           }}
+        />
+      ) : null}
+      {showPartenariat ? (
+        <ModalPartenariat
+          projetId={p.id}
+          titre={p.titre}
+          organisation={p.organisation}
+          onClose={() => setShowPartenariat(false)}
         />
       ) : null}
     </main>
@@ -308,6 +401,154 @@ function SectionTitre({ children, icon }: { children: ReactNode; icon?: ReactNod
       {icon ? <span style={{ color: "var(--sage-500)" }}>{icon}</span> : null}
       {children}
     </h2>
+  );
+}
+
+function ModalPartenariat({
+  projetId,
+  titre,
+  organisation,
+  onClose,
+}: {
+  projetId: string;
+  titre: string;
+  organisation: string;
+  onClose: () => void;
+}) {
+  const [typeContribution, setTypeContribution] = useState<TypePartenariat>("CO_REALISATION");
+  const [message, setMessage] = useState("");
+  const [envoyee, setEnvoyee] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [enCours, demarrer] = useTransition();
+
+  function envoyer() {
+    setErreur(null);
+    const fd = new FormData();
+    fd.set("projetId", projetId);
+    fd.set("typeContribution", typeContribution);
+    fd.set("message", message);
+    demarrer(async () => {
+      const r = await soumettreDemandePartenariat(fd);
+      if (r.succes) setEnvoyee(true);
+      else setErreur(r.message ?? "Erreur inconnue.");
+    });
+  }
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+      }}
+      className="modal-wrap"
+    >
+      <div style={{ position: "absolute", inset: 0, background: "rgba(20,26,19,0.5)" }} onClick={onClose} />
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          maxWidth: 560,
+          background: "white",
+          borderRadius: "16px 16px 0 0",
+          padding: 24,
+          maxHeight: "92vh",
+          overflow: "auto",
+        }}
+        className="modal-card"
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+          <div>
+            <div className="t-xs t-discret">{organisation}</div>
+            <h2 style={{ fontSize: 20, fontWeight: 600, margin: "4px 0 0" }}>{titre}</h2>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: "var(--sage-50)",
+              border: 0,
+              width: 32,
+              height: 32,
+              borderRadius: 999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+            }}
+          >
+            <Icon.X size={16} />
+          </button>
+        </div>
+
+        {envoyee ? (
+          <div
+            style={{
+              background: "var(--fond-eleve)",
+              border: "1px solid var(--bordure)",
+              borderRadius: 12,
+              padding: 16,
+            }}
+          >
+            <p className="t-small" style={{ margin: 0 }}>
+              Proposition envoyée. Le porteur du projet pourra l&apos;accepter ou la refuser depuis son espace entreprise.
+            </p>
+          </div>
+        ) : (
+          <>
+            <label className="grid gap-1">
+              <span className="text-xs font-semibold">Type de contribution</span>
+              <select
+                className="champ"
+                value={typeContribution}
+                onChange={(e) => setTypeContribution(e.target.value as TypePartenariat)}
+              >
+                <option value="CO_REALISATION">Co-réalisation</option>
+                <option value="FINANCEMENT">Financement</option>
+                <option value="RECRUTEMENT">Débouchés / recrutement</option>
+                <option value="MENTORAT">Mentorat</option>
+                <option value="DIFFUSION">Diffusion</option>
+              </select>
+            </label>
+            <label className="grid gap-1" style={{ marginTop: 12 }}>
+              <span className="text-xs font-semibold">Proposition</span>
+              <textarea
+                className="champ champ--ta"
+                rows={6}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Explique ce que ton entreprise apporte concrètement au projet."
+              />
+            </label>
+            <div className="t-xs t-discret" style={{ marginTop: 4 }}>
+              {message.length}/80 caractères minimum
+            </div>
+            {erreur ? <p style={{ color: "var(--danger)", fontSize: 13 }}>{erreur}</p> : null}
+            <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <Bouton variant="fantome" onClick={onClose}>
+                Annuler
+              </Bouton>
+              <Bouton
+                variant="accent"
+                onClick={envoyer}
+                disabled={enCours || message.length < 80}
+                iconRight={<Icon.Send size={14} />}
+              >
+                {enCours ? "Envoi…" : "Envoyer"}
+              </Bouton>
+            </div>
+          </>
+        )}
+      </div>
+      <style>{`
+        @media (min-width: 700px) {
+          .modal-wrap { align-items: center !important; padding: 24px !important; }
+          .modal-card { border-radius: 16px !important; }
+        }
+      `}</style>
+    </div>
   );
 }
 

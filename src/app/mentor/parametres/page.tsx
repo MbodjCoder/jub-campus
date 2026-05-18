@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Bouton } from "@/composants/ui/bouton";
 import { Carte, CorpsCarte, EnteteCarte, TitreCarte, DescriptionCarte } from "@/composants/ui/carte";
 
@@ -18,7 +19,9 @@ export default function PageMentorParametres() {
             <DescriptionCarte>Mot de passe et sessions.</DescriptionCarte>
           </EnteteCarte>
           <CorpsCarte>
-            <Bouton apparence="contour">Changer le mot de passe</Bouton>
+            <Link href="/mot-de-passe-oublie">
+              <Bouton apparence="contour">Changer le mot de passe</Bouton>
+            </Link>
           </CorpsCarte>
         </Carte>
 
@@ -36,8 +39,9 @@ export default function PageMentorParametres() {
           <EnteteCarte className="border-red-200 bg-red-50">
             <TitreCarte className="text-red-900">Zone dangereuse</TitreCarte>
           </EnteteCarte>
-          <CorpsCarte>
-            <Bouton apparence="danger">Supprimer mon compte mentor</Bouton>
+          <CorpsCarte className="text-sm text-texte-discret">
+            La suppression autonome sera ouverte avec le module de conformité. Pour éviter toute perte accidentelle,
+            contacte l&apos;équipe JUB avant suppression.
           </CorpsCarte>
         </Carte>
       </div>

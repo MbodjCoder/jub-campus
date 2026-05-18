@@ -3,17 +3,18 @@
 // dans la console en dev (best-effort) sans bloquer le flux métier.
 
 import { Resend } from "resend";
+import { env } from "@/lib/env";
 
 let clientResend: Resend | null = null;
 function obtenirClient(): Resend | null {
   if (clientResend) return clientResend;
-  const cle = process.env.RESEND_CLE_API;
+  const cle = env.RESEND_CLE_API;
   if (!cle) return null;
   clientResend = new Resend(cle);
   return clientResend;
 }
 
-const EXPEDITEUR_PAR_DEFAUT = process.env.EMAIL_EXPEDITEUR ?? "JUB Campus <hello@jubcampus.sn>";
+const EXPEDITEUR_PAR_DEFAUT = env.EMAIL_EXPEDITEUR ?? "JUB Campus <hello@jubcampus.sn>";
 
 export interface OptionsEnvoi {
   destinataire: string | string[];
