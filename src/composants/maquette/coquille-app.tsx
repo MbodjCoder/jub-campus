@@ -1,15 +1,16 @@
 "use client";
 
-// Coquille de l'espace étudiant — port 1:1 de la maquette (screens-app.jsx ·
-// ShellApp + TopBarApp + DrawerNotifications + ModalRecherche).
-// setEcran → liens Next ; NOTIFICATIONS / PROJETS mock → données réelles.
+// Coquille de l'espace étudiant — sidebar desktop, barre d'onglets mobile,
+// drawer notifications, palette de recherche.
+// Migré maquette → classes : responsive Tailwind (min-[900px]:*), zéro <style>.
 
 import { useState, useRef, useEffect, useMemo, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Logo } from "@/composants/ui/logo";
 import { Icon } from "./icones";
 import { fmt } from "./format";
-import { Logo } from "./primitifs";
 import type { ProjetApercu } from "./lignes-job";
 import { MenuUtilisateur } from "@/composants/site/menu-utilisateur";
 import { marquerToutesNotificationsLues } from "@/app/app/notifications/actions";
@@ -58,109 +59,58 @@ export function CoquilleApp({
   const estActif = (id: string) => (id === "/app" ? chemin === "/app" : chemin.startsWith(id));
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "var(--fond)" }}>
-      <aside
-        className="sidebar"
-        style={{
-          width: 224,
-          flexShrink: 0,
-          padding: 20,
-          borderRight: "1px solid var(--bordure)",
-          background: "var(--fond)",
-          display: "none",
-          flexDirection: "column",
-          gap: 28,
-          position: "sticky",
-          top: 0,
-          height: "100vh",
-        }}
-      >
-        <Link href="/" style={{ background: "transparent", border: 0, padding: 0, display: "flex", alignItems: "center", gap: 10 }}>
+    <div className="flex min-h-screen bg-fond">
+      <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col gap-7 border-r border-bordure bg-fond p-5 min-[900px]:flex">
+        <Link href="/" className="flex items-center gap-2.5">
           <Logo mot />
         </Link>
 
-        <nav style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <nav className="flex flex-col gap-0.5">
           {LIENS.map((l) => {
             const actif = estActif(l.id);
             return (
               <Link
                 key={l.id}
                 href={l.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: "9px 12px",
-                  borderRadius: 10,
-                  border: 0,
-                  background: actif ? "var(--sage-700)" : "transparent",
-                  color: actif ? "white" : "var(--sage-800)",
-                  fontWeight: 500,
-                  fontSize: 14,
-                  textAlign: "left",
-                  cursor: "pointer",
-                }}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-sm font-medium no-underline",
+                  actif ? "bg-sage-700 text-white" : "text-sage-800 hover:bg-sage-50",
+                )}
               >
-                <span style={{ color: actif ? "var(--orange-400)" : "var(--sage-500)" }}>{l.icon}</span>
+                <span className={actif ? "text-orange-400" : "text-sage-500"}>{l.icon}</span>
                 <span>{l.l}</span>
               </Link>
             );
           })}
         </nav>
-
       </aside>
 
-      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+      <div className="flex min-w-0 flex-1 flex-col">
         <TopBarApp notifications={notifications} projetsRecherche={projetsRecherche} session={session} />
-        <div style={{ flex: 1, paddingBottom: 96 }}>{children}</div>
+        <div className="flex-1 pb-24">{children}</div>
       </div>
 
-      <nav
-        className="bottom-nav"
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: "white",
-          borderTop: "1px solid var(--bordure)",
-          display: "flex",
-          justifyContent: "space-around",
-          padding: "8px 0 18px",
-          zIndex: 40,
-        }}
-      >
+      <nav className="fixed inset-x-0 bottom-0 z-40 flex justify-around border-t border-bordure bg-white pb-[18px] pt-2 min-[900px]:hidden">
         {LIENS.map((l) => {
           const actif = estActif(l.id);
           return (
             <Link
               key={l.id}
               href={l.id}
-              style={{
-                background: "transparent",
-                border: 0,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 3,
-                color: actif ? "var(--sage-900)" : "var(--sage-500)",
-                padding: "4px 14px",
-                cursor: "pointer",
-              }}
+              className={cn(
+                "flex flex-col items-center gap-[3px] px-3.5 py-1 no-underline",
+                actif ? "text-sage-900" : "text-sage-500",
+              )}
+              aria-current={actif ? "page" : undefined}
             >
-              <span style={{ color: actif ? "var(--orange-500)" : "inherit" }}>{l.icon}</span>
-              <span style={{ fontSize: 10.5, fontWeight: actif ? 700 : 500 }}>{l.l.split(" ")[0]}</span>
+              <span className={actif ? "text-orange-500" : undefined}>{l.icon}</span>
+              <span className={cn("text-[10.5px]", actif ? "font-bold" : "font-medium")}>
+                {l.l.split(" ")[0]}
+              </span>
             </Link>
           );
         })}
       </nav>
-
-      <style>{`
-        @media (min-width: 900px) {
-          .sidebar { display: flex !important; }
-          .bottom-nav { display: none !important; }
-        }
-      `}</style>
     </div>
   );
 }
@@ -179,73 +129,34 @@ function TopBarApp({
   const nonLues = notifications.filter((n) => !n.lue).length;
 
   return (
-    <header
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 30,
-        padding: "12px 20px",
-        background: "var(--fond)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
-      }}
-    >
-      <div className="topbar-mobile-logo" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <Logo size="md" />
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-3 bg-fond px-5 py-3">
+      <div className="flex items-center gap-2.5 min-[900px]:hidden">
+        <Logo taille="md" />
       </div>
-      <h1 className="topbar-title" style={{ fontSize: 15, fontWeight: 600, margin: 0, display: "none" }}>
+      <h1 className="m-0 hidden flex-1 text-[15px] font-semibold min-[900px]:block">
         {TITRES[chemin] ?? ""}
       </h1>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+      <div className="flex shrink-0 items-center gap-2">
         <button
           onClick={() => setShowSearch(true)}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            background: "white",
-            border: "1px solid var(--bordure)",
-            height: 36,
-            padding: "0 12px",
-            borderRadius: 999,
-            color: "var(--sage-500)",
-            cursor: "pointer",
-            fontSize: 13,
-            flexShrink: 0,
-          }}
-          className="search-button"
+          className="inline-flex h-9 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-bordure bg-white px-3 text-[13px] text-sage-500 min-[900px]:min-w-[200px]"
         >
           <Icon.Search size={15} /> <span className="hide-sm">Rechercher</span>
         </button>
 
         <button
           onClick={() => setNotifOuvert(true)}
-          style={{
-            background: nonLues > 0 ? "var(--orange-500)" : "white",
-            color: nonLues > 0 ? "var(--sage-950)" : "var(--sage-700)",
-            border: nonLues > 0 ? "1px solid var(--orange-500)" : "1px solid var(--bordure)",
-            width: "auto",
-            height: 36,
-            padding: nonLues > 0 ? "0 12px" : 0,
-            minWidth: 36,
-            flexShrink: 0,
-            borderRadius: 999,
-            position: "relative",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 6,
-            cursor: "pointer",
-            boxShadow: nonLues > 0 ? "0 4px 14px -4px color-mix(in oklab, var(--orange-500) 60%, transparent)" : "none",
-          }}
+          className={cn(
+            "relative inline-flex h-9 min-w-9 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-full border",
+            nonLues > 0
+              ? "border-orange-500 bg-orange-500 px-3 text-sage-950 shadow-[0_4px_14px_-4px_rgba(255,170,0,0.6)]"
+              : "border-bordure bg-white p-0 text-sage-700",
+          )}
           title={`${nonLues} notification${nonLues > 1 ? "s" : ""}`}
         >
           <Icon.Bell size={15} />
-          {nonLues > 0 ? <span style={{ fontSize: 12, fontWeight: 800 }}>{nonLues}</span> : null}
+          {nonLues > 0 ? <span className="text-xs font-extrabold">{nonLues}</span> : null}
         </button>
 
         {/* Menu profil — présent sur toutes les pages de l'espace.
@@ -256,14 +167,6 @@ function TopBarApp({
 
       {notifOuvert ? <DrawerNotifications notifications={notifications} onClose={() => setNotifOuvert(false)} /> : null}
       {showSearch ? <ModalRecherche projets={projetsRecherche} onClose={() => setShowSearch(false)} /> : null}
-
-      <style>{`
-        @media (min-width: 900px) {
-          .topbar-mobile-logo { display: none !important; }
-          .topbar-title { display: block !important; flex: 1; }
-          .search-button { min-width: 200px; }
-        }
-      `}</style>
     </header>
   );
 }
@@ -279,78 +182,49 @@ function DrawerNotifications({
   const nonLues = notifications.filter((n) => !n.lue).length;
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 100 }}>
-      <div style={{ position: "absolute", inset: 0, background: "rgba(20,26,19,0.4)" }} onClick={onClose} />
-      <div
-        className="slidein"
-        style={{
-          position: "absolute",
-          right: 0,
-          top: 0,
-          bottom: 0,
-          width: "100%",
-          maxWidth: 380,
-          background: "white",
-          boxShadow: "-20px 0 60px -20px rgba(0,0,0,0.2)",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <div style={{ padding: 18, borderBottom: "1px solid var(--bordure)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className="fixed inset-0 z-[100]">
+      <div className="absolute inset-0 bg-sage-950/40" onClick={onClose} />
+      <div className="slidein absolute inset-y-0 right-0 flex w-full max-w-[380px] flex-col bg-white shadow-[-20px_0_60px_-20px_rgba(0,0,0,0.2)]">
+        <div className="flex items-center justify-between border-b border-bordure p-[18px]">
           <div>
-            <h2 style={{ fontSize: 17, fontWeight: 600, margin: 0, letterSpacing: "-0.01em" }}>Notifications</h2>
-            <p className="t-xs t-discret" style={{ marginTop: 2 }}>{nonLues} nouvelles</p>
+            <h2 className="m-0 text-[17px] font-semibold tracking-[-0.01em]">Notifications</h2>
+            <p className="t-xs t-discret mt-0.5 mb-0">{nonLues} nouvelles</p>
           </div>
           <button
             onClick={onClose}
-            style={{ background: "var(--sage-50)", border: 0, width: 32, height: 32, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-0 bg-sage-50"
+            aria-label="Fermer"
           >
             <Icon.X size={16} />
           </button>
         </div>
-        <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
+        <div className="flex-1 overflow-y-auto py-2">
           {notifications.length === 0 ? (
-            <p className="t-small" style={{ padding: 40, textAlign: "center" }}>Aucune notification.</p>
+            <p className="t-small p-10 text-center">Aucune notification.</p>
           ) : (
             notifications.map((n) => {
               const corps = (
                 <div
-                  style={{
-                    padding: "14px 18px",
-                    borderBottom: "1px solid var(--bordure)",
-                    display: "flex",
-                    gap: 12,
-                    alignItems: "flex-start",
-                    background: n.lue ? "transparent" : "color-mix(in oklab, var(--orange-500) 6%, transparent)",
-                    cursor: n.lien ? "pointer" : "default",
-                  }}
+                  className={cn(
+                    "flex items-start gap-3 border-b border-bordure px-[18px] py-3.5",
+                    !n.lue && "bg-orange-500/5",
+                    n.lien ? "cursor-pointer hover:bg-fond-eleve" : "cursor-default",
+                  )}
                 >
-                  <span
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      flexShrink: 0,
-                      background: "var(--sage-700)",
-                      color: "var(--orange-400)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sage-700 text-orange-400">
                     <IconePourType type={n.type} />
                   </span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13.5, fontWeight: n.lue ? 500 : 600, lineHeight: 1.4 }}>{n.titre}</div>
-                    <div className="t-xs t-discret" style={{ marginTop: 4 }}>{fmt.ilYa(n.creeLe)}</div>
+                  <div className="flex-1">
+                    <div className={cn("text-[13.5px] leading-[1.4]", n.lue ? "font-medium" : "font-semibold")}>
+                      {n.titre}
+                    </div>
+                    <div className="t-xs t-discret mt-1">{fmt.ilYa(n.creeLe)}</div>
                   </div>
-                  {!n.lue ? (
-                    <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--orange-500)", marginTop: 6 }} />
-                  ) : null}
+                  {!n.lue ? <span className="mt-1.5 h-[7px] w-[7px] rounded-full bg-orange-500" /> : null}
                 </div>
               );
               return n.lien ? (
-                <Link key={n.id} href={n.lien} onClick={onClose}>
+                <Link key={n.id} href={n.lien} onClick={onClose} className="no-underline text-inherit">
                   {corps}
                 </Link>
               ) : (
@@ -359,21 +233,11 @@ function DrawerNotifications({
             })
           )}
         </div>
-        <div style={{ padding: 14, borderTop: "1px solid var(--bordure)" }}>
+        <div className="border-t border-bordure p-3.5">
           <button
             onClick={() => demarrer(async () => { await marquerToutesNotificationsLues(); onClose(); })}
-            className="t-xs"
+            className="t-xs w-full cursor-pointer border-0 bg-transparent px-3 py-2.5 font-semibold text-sage-700 disabled:opacity-50"
             disabled={enCours || nonLues === 0}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              background: "transparent",
-              border: 0,
-              color: "var(--sage-700)",
-              fontWeight: 600,
-              cursor: "pointer",
-              opacity: nonLues === 0 ? 0.5 : 1,
-            }}
           >
             Tout marquer comme lu
           </button>
@@ -412,23 +276,11 @@ function ModalRecherche({
   }, [projets, q]);
 
   return (
-    <div
-      style={{ position: "fixed", inset: 0, zIndex: 100, padding: "8vh 16px 16px", display: "flex", flexDirection: "column", alignItems: "center" }}
-    >
-      <div style={{ position: "absolute", inset: 0, background: "rgba(20,26,19,0.4)", backdropFilter: "blur(4px)" }} onClick={onClose} />
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          maxWidth: 560,
-          background: "white",
-          borderRadius: 14,
-          boxShadow: "var(--ombre-lg)",
-          overflow: "hidden",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderBottom: "1px solid var(--bordure)" }}>
-          <Icon.Search size={17} style={{ color: "var(--sage-500)" }} />
+    <div className="fixed inset-0 z-[100] flex flex-col items-center px-4 pb-4 pt-[8vh]">
+      <div className="absolute inset-0 bg-sage-950/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-[560px] overflow-hidden rounded-[14px] bg-white shadow-lg">
+        <div className="flex items-center gap-2.5 border-b border-bordure px-[18px] py-3.5">
+          <Icon.Search size={17} className="text-sage-500" />
           <input
             ref={inputRef}
             value={q}
@@ -438,61 +290,50 @@ function ModalRecherche({
               if (e.key === "Enter") { router.push(`/projets?q=${encodeURIComponent(q)}`); onClose(); }
             }}
             placeholder="Chercher un job, une entreprise, une compétence…"
-            style={{ flex: 1, border: 0, outline: 0, background: "transparent", font: "inherit", fontSize: 15 }}
+            className="flex-1 border-0 bg-transparent text-[15px] outline-none [font:inherit]"
           />
           <button
             onClick={onClose}
-            style={{ background: "var(--sage-50)", border: 0, padding: "3px 8px", borderRadius: 4, fontSize: 11, color: "var(--sage-600)", cursor: "pointer" }}
+            className="cursor-pointer rounded border-0 bg-sage-50 px-2 py-[3px] text-[11px] text-sage-600"
           >
             Esc
           </button>
         </div>
-        <div style={{ maxHeight: "60vh", overflowY: "auto" }}>
+        <div className="max-h-[60vh] overflow-y-auto">
           {results.length === 0 ? (
-            <div style={{ padding: 40, textAlign: "center" }}>
+            <div className="p-10 text-center">
               <p className="t-small">Aucun résultat.</p>
             </div>
           ) : (
-            <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            <ul className="m-0 list-none p-0">
               {results.map((p) => (
                 <li key={p.slug}>
                   <Link
                     href={`/projets/${p.slug}`}
                     onClick={onClose}
-                    style={{ width: "100%", background: "transparent", border: 0, padding: "12px 18px", textAlign: "left", display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--fond-eleve)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    className="flex w-full cursor-pointer items-center gap-3 px-[18px] py-3 text-left no-underline text-inherit hover:bg-fond-eleve"
                   >
                     <div
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 8,
-                        flexShrink: 0,
-                        backgroundImage: `url(${p.image})`,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }}
+                      className="h-9 w-9 shrink-0 rounded-lg bg-cover bg-center"
+                      // eslint-disable-next-line react/forbid-dom-props -- URL d'image dynamique
+                      style={{ backgroundImage: `url(${p.image})` }}
                     />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {p.titre}
-                      </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold">{p.titre}</div>
                       <div className="t-xs t-discret">{p.organisation}</div>
                     </div>
-                    <Icon.ChevronRight size={14} style={{ color: "var(--sage-400)" }} />
+                    <Icon.ChevronRight size={14} className="text-sage-400" />
                   </Link>
                 </li>
               ))}
             </ul>
           )}
         </div>
-        <div style={{ padding: "10px 18px", borderTop: "1px solid var(--bordure)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="flex items-center justify-between border-t border-bordure px-[18px] py-2.5">
           <span className="t-xs t-discret">{results.length} suggestion{results.length > 1 ? "s" : ""}</span>
           <button
             onClick={() => { router.push("/projets"); onClose(); }}
-            className="t-xs"
-            style={{ background: "transparent", border: 0, color: "var(--orange-600)", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4, cursor: "pointer" }}
+            className="t-xs inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent font-semibold text-orange-600"
           >
             Tous les jobs <Icon.Arrow size={11} />
           </button>

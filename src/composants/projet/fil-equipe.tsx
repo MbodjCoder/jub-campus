@@ -4,6 +4,7 @@
 
 import { useState, useRef, useTransition } from "react";
 import { Send } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { posterMessageProjet } from "@/app/app/projet/[id]/actions";
 
 export interface MessageFil {
@@ -43,43 +44,29 @@ export function FilEquipe({ projetId, messages }: { projetId: string; messages: 
   }
 
   return (
-    <div className="carte" style={{ padding: 20 }}>
-      <h2 className="t-h3" style={{ marginTop: 0, marginBottom: 14 }}>
+    <div className="carte p-5">
+      <h2 className="t-h3 mb-3.5 mt-0">
         Fil d&apos;équipe
       </h2>
 
       {messages.length === 0 ? (
-        <p className="t-small" style={{ margin: "0 0 14px" }}>
+        <p className="t-small mb-3.5 mt-0">
           Aucun message. Lance la discussion avec ton équipe et ton mentor.
         </p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16, maxHeight: 360, overflowY: "auto" }}>
+        <div className="mb-4 flex max-h-[360px] flex-col gap-3 overflow-y-auto">
           {messages.map((m) => (
-            <div key={m.id} style={{ display: "flex", flexDirection: m.moi ? "row-reverse" : "row", gap: 8 }}>
-              <div style={{ maxWidth: "80%" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 6,
-                    marginBottom: 3,
-                    flexDirection: m.moi ? "row-reverse" : "row",
-                  }}
-                >
-                  <span style={{ fontSize: 12, fontWeight: 600 }}>{m.moi ? "Moi" : m.auteur}</span>
+            <div key={m.id} className={cn("flex gap-2", m.moi && "flex-row-reverse")}>
+              <div className="max-w-[80%]">
+                <div className={cn("mb-[3px] flex gap-1.5", m.moi && "flex-row-reverse")}>
+                  <span className="text-xs font-semibold">{m.moi ? "Moi" : m.auteur}</span>
                   <span className="t-xs t-discret">· {ilYa(m.creeLe)}</span>
                 </div>
                 <div
-                  style={{
-                    background: m.moi ? "var(--sage-700)" : "var(--fond-eleve)",
-                    color: m.moi ? "white" : "var(--texte)",
-                    padding: "10px 14px",
-                    borderRadius: 14,
-                    borderTopRightRadius: m.moi ? 4 : 14,
-                    borderTopLeftRadius: m.moi ? 14 : 4,
-                    fontSize: 13.5,
-                    lineHeight: 1.5,
-                    whiteSpace: "pre-wrap",
-                  }}
+                  className={cn(
+                    "whitespace-pre-wrap rounded-[14px] px-3.5 py-2.5 text-[13.5px] leading-normal",
+                    m.moi ? "rounded-tr bg-sage-700 text-white" : "rounded-tl bg-fond-eleve text-texte",
+                  )}
                 >
                   {m.contenu}
                 </div>
@@ -89,22 +76,21 @@ export function FilEquipe({ projetId, messages }: { projetId: string; messages: 
         </div>
       )}
 
-      <form ref={formRef} onSubmit={envoyer} style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
+      <form ref={formRef} onSubmit={envoyer} className="flex items-end gap-2">
         <textarea
           value={contenu}
           onChange={(e) => setContenu(e.target.value)}
           placeholder="Écrire à l'équipe…"
           rows={2}
           maxLength={2000}
-          className="champ champ--ta"
-          style={{ flex: 1 }}
+          className="champ champ--ta flex-1"
         />
         <button type="submit" className="btn btn--primaire btn--icone" disabled={enCours || !contenu.trim()}>
           <Send size={14} />
         </button>
       </form>
       {erreur ? (
-        <p style={{ marginTop: 8, marginBottom: 0, color: "var(--danger)", fontSize: 13 }}>{erreur}</p>
+        <p className="mb-0 mt-2 text-[13px] text-danger">{erreur}</p>
       ) : null}
     </div>
   );

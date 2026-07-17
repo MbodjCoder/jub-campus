@@ -1,15 +1,20 @@
 "use client";
 
-// Détail d'un job — port 1:1 de la maquette (screens-public-2.jsx ·
-// PageDetailProjet + RecapCase + SectionTitre + ModalCandidature).
-// Candidature câblée sur la vraie server action.
+// Détail d'un job — candidature et partenariat câblés sur les server actions.
+// Migré maquette → classes ; modales via FeuilleModale ; primitives ui/.
 
 import { useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Insigne } from "@/composants/ui/insigne";
+import { Bouton } from "@/composants/ui/bouton";
+import { LienBouton } from "@/composants/ui/lien-bouton";
+import { Avatar } from "@/composants/ui/avatar";
+import { FeuilleModale } from "@/composants/ui/feuille-modale";
+import { LIBELLES_MODE_REMUNERATION } from "@/lib/constantes";
 import { Icon } from "./icones";
 import { fmt } from "./format";
-import { Pilule, Bouton, Avatar, MODE_REM } from "./primitifs";
 import {
   soumettreCandidature,
   soumettreDemandePartenariat,
@@ -35,6 +40,13 @@ export interface DetailJobData {
   partenaires: { entreprise: string; typeContribution: TypePartenariat }[];
 }
 
+const ICONE_MODE: Record<string, ReactNode> = {
+  APPRENTISSAGE: <Icon.GraduationCap size={12} />,
+  PRIME: <Icon.Award size={12} />,
+  REMUNERE: <Icon.Wallet size={12} />,
+  SPONSORISE: <Icon.Sparkles size={12} />,
+};
+
 export function DetailJob({
   projet: p,
   candidatureStatut,
@@ -55,7 +67,6 @@ export function DetailJob({
   const [showLetter, setShowLetter] = useState(false);
   const [showPartenariat, setShowPartenariat] = useState(false);
   const placesRestantes = Math.max(0, p.placesMax - p.placesPrises);
-  const mode = MODE_REM[p.modeRemuneration];
 
   const ouvrirCandidature = () => {
     if (!estConnecte) {
@@ -71,7 +82,7 @@ export function DetailJob({
       return {
         libelle: "Se connecter",
         onClick: ouvrirCandidature,
-        variant: "accent" as const,
+        apparence: "accent" as const,
       };
     }
     if (role === "ENTREPRISE") {
@@ -79,120 +90,71 @@ export function DetailJob({
         return {
           libelle: "Gérer ce projet",
           href: "/entreprise/projets",
-          variant: "primaire" as const,
+          apparence: "primaire" as const,
         };
       }
       return {
         libelle: "Proposer un partenariat",
         onClick: () => setShowPartenariat(true),
-        variant: "accent" as const,
+        apparence: "accent" as const,
       };
     }
     if (role === "MENTOR") {
       return {
         libelle: "Voir comme mentor",
         href: "/mentor/projets",
-        variant: "primaire" as const,
+        apparence: "primaire" as const,
       };
     }
     if (role === "ADMIN" || role === "SUPER_ADMIN") {
       return {
         libelle: "Voir en admin",
         href: "/admin/projets",
-        variant: "primaire" as const,
+        apparence: "primaire" as const,
       };
     }
     return null;
   })();
 
   return (
-    <main className="fadein" style={{ paddingBottom: 100 }}>
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: "20px 20px 0" }}>
+    <main className="fadein pb-[100px]">
+      <div className="mx-auto max-w-[800px] px-5 pt-5">
         <Link
           href="/projets"
-          className="t-small"
-          style={{
-            background: "transparent",
-            border: 0,
-            color: "var(--sage-600)",
-            fontWeight: 500,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4,
-          }}
+          className="t-small inline-flex items-center gap-1 font-medium text-sage-600 no-underline"
         >
           <Icon.ArrowLeft size={14} /> Jobs
         </Link>
       </div>
 
-      <section style={{ maxWidth: 800, margin: "0 auto", padding: "16px 20px 0" }}>
+      <section className="mx-auto max-w-[800px] px-5 pt-4">
         <div
-          style={{
-            width: "100%",
-            aspectRatio: "21 / 9",
-            borderRadius: 16,
-            overflow: "hidden",
-            position: "relative",
-            backgroundImage: `url(${p.image})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
+          className="relative aspect-[21/9] w-full overflow-hidden rounded-2xl bg-cover bg-center"
+          // eslint-disable-next-line react/forbid-dom-props -- URL d'image dynamique
+          style={{ backgroundImage: `url(${p.image})` }}
         >
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(180deg, rgba(20,26,19,0.15) 0%, rgba(20,26,19,0.75) 100%)",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              padding: 18,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-              <Pilule variant="neutre">{p.organisation}</Pilule>
+          <div className="absolute inset-0 bg-gradient-to-b from-sage-950/15 to-sage-950/75" />
+          <div className="absolute inset-0 flex flex-col justify-between p-[18px]">
+            <div className="flex flex-wrap justify-between gap-2">
+              <Insigne ton="neutre">{p.organisation}</Insigne>
               {p.matchScore != null && p.matchScore >= 80 ? (
-                <Pilule variant="orange" icon={<Icon.Sparkles size={11} />}>
-                  {p.matchScore}%
-                </Pilule>
+                <Insigne ton="orange">
+                  <Icon.Sparkles size={11} /> {p.matchScore}%
+                </Insigne>
               ) : null}
             </div>
-            <Pilule variant="neutre" icon={mode.icon}>
-              {mode.libelle}
-            </Pilule>
+            <Insigne ton="neutre" className="self-start">
+              {ICONE_MODE[p.modeRemuneration]}
+              {LIBELLES_MODE_REMUNERATION[p.modeRemuneration as keyof typeof LIBELLES_MODE_REMUNERATION] ?? p.modeRemuneration}
+            </Insigne>
           </div>
         </div>
 
-        <h1
-          style={{
-            marginTop: 24,
-            fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
-            fontWeight: 600,
-            letterSpacing: "-0.025em",
-            lineHeight: 1.05,
-          }}
-        >
+        <h1 className="mt-6 text-[clamp(1.75rem,4vw,2.5rem)] font-semibold leading-[1.05] tracking-[-0.025em]">
           {p.titre}
         </h1>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-            gap: 1,
-            marginTop: 24,
-            background: "var(--bordure)",
-            border: "1px solid var(--bordure)",
-            borderRadius: 12,
-            overflow: "hidden",
-          }}
-        >
+        <div className="liste-bordee mt-6 grid-cols-3 rounded-xl">
           <RecapCase
             libelle="Récompense"
             valeur={p.montant != null ? (fmt.fcfa(p.montant) ?? "") : "Apprentissage"}
@@ -203,36 +165,34 @@ export function DetailJob({
           <RecapCase libelle="Équipe" valeur={`${p.placesPrises}/${p.placesMax}`} icon={<Icon.Users size={14} />} />
         </div>
 
-        <div style={{ marginTop: 36 }}>
+        <div className="mt-9">
           <SectionTitre icon={<Icon.FileText size={13} />}>Le job</SectionTitre>
-          <p style={{ marginTop: 8, fontSize: 15, lineHeight: 1.6, color: "var(--texte)" }}>{p.resume}</p>
-          <p style={{ marginTop: 12, fontSize: 15, lineHeight: 1.6, color: "var(--texte)", whiteSpace: "pre-wrap" }}>
-            {p.description}
-          </p>
+          <p className="mt-2 text-[15px] leading-[1.6] text-texte">{p.resume}</p>
+          <p className="mt-3 whitespace-pre-wrap text-[15px] leading-[1.6] text-texte">{p.description}</p>
         </div>
 
         {p.competences.length > 0 ? (
-          <div style={{ marginTop: 28 }}>
+          <div className="mt-7">
             <SectionTitre icon={<Icon.Sparkles size={13} />}>Compétences</SectionTitre>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+            <div className="mt-2 flex flex-wrap gap-1.5">
               {p.competences.map((c) => (
-                <Pilule key={c} variant="neutre">
+                <Insigne key={c} ton="neutre">
                   {c}
-                </Pilule>
+                </Insigne>
               ))}
             </div>
           </div>
         ) : null}
 
         {p.mentor ? (
-          <div style={{ marginTop: 28 }}>
+          <div className="mt-7">
             <SectionTitre icon={<Icon.ShieldCheck size={13} />}>Mentor</SectionTitre>
-            <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>
-              <Avatar nom={p.mentor.nom} size={40} />
+            <div className="mt-2.5 flex items-center gap-3">
+              <Avatar nom={p.mentor.nom} taille={40} />
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
+                <div className="flex items-center gap-[5px] text-sm font-semibold">
                   {p.mentor.nom}
-                  {p.mentor.verifie ? <Icon.ShieldCheck size={13} style={{ color: "var(--orange-500)" }} /> : null}
+                  {p.mentor.verifie ? <Icon.ShieldCheck size={13} className="text-orange-500" /> : null}
                 </div>
                 {p.mentor.titre ? <div className="t-xs t-discret">{p.mentor.titre}</div> : null}
               </div>
@@ -241,97 +201,54 @@ export function DetailJob({
         ) : null}
 
         {p.partenaires.length > 0 ? (
-          <div style={{ marginTop: 28 }}>
+          <div className="mt-7">
             <SectionTitre icon={<Icon.Users size={13} />}>Partenaires</SectionTitre>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+            <div className="mt-2 flex flex-wrap gap-1.5">
               {p.partenaires.map((partenaire) => (
-                <Pilule key={`${partenaire.entreprise}-${partenaire.typeContribution}`} variant="neutre">
+                <Insigne key={`${partenaire.entreprise}-${partenaire.typeContribution}`} ton="neutre">
                   {partenaire.entreprise}
-                </Pilule>
+                </Insigne>
               ))}
             </div>
           </div>
         ) : null}
       </section>
 
-      <div
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          padding: 16,
-          background: "linear-gradient(180deg, transparent, var(--fond) 40%)",
-          zIndex: 50,
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 760,
-            margin: "0 auto",
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            background: "white",
-            borderRadius: 14,
-            padding: "10px 12px 10px 18px",
-            boxShadow: "var(--ombre-md)",
-            border: "1px solid var(--bordure)",
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="fixed inset-x-0 bottom-0 z-50 bg-gradient-to-b from-transparent from-0% via-fond/95 via-40% to-fond p-4">
+        <div className="mx-auto flex max-w-[760px] items-center gap-3 rounded-[14px] border border-bordure bg-white py-2.5 pl-[18px] pr-3 shadow-md">
+          <div className="min-w-0 flex-1">
             <div className="t-xs t-discret">Récompense</div>
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: 700,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
+            <div className="truncate text-sm font-bold">
               {p.montant != null ? fmt.fcfa(p.montant) : "Apprentissage certifiant"}
             </div>
           </div>
           {estEtudiant && postule ? (
-            <Bouton variant="contour" taille="md" icon={<Icon.Check size={14} />}>
-              Postul?
+            <Bouton apparence="contour">
+              <Icon.Check size={14} /> Postulé
             </Bouton>
           ) : estEtudiant && placesRestantes <= 0 ? (
-            <Bouton variant="contour" taille="md" disabled>
+            <Bouton apparence="contour" disabled>
               Complet
             </Bouton>
           ) : estEtudiant ? (
-            <Bouton
-              variant="accent"
-              taille="md"
-              onClick={ouvrirCandidature}
-              iconRight={<Icon.Arrow size={14} />}
-            >
-              Postuler
+            <Bouton apparence="accent" onClick={ouvrirCandidature}>
+              Postuler <Icon.Arrow size={14} />
             </Bouton>
           ) : actionPrincipale?.href ? (
-            <Bouton
-              as={Link}
+            <LienBouton
               href={actionPrincipale.href}
-              variant={actionPrincipale.variant}
-              taille="md"
-              iconRight={<Icon.Arrow size={14} />}
+              apparence={actionPrincipale.apparence}
+              iconeDroite={<Icon.Arrow size={14} />}
             >
               {actionPrincipale.libelle}
-            </Bouton>
+            </LienBouton>
           ) : actionPrincipale ? (
-            <Bouton
-              variant={actionPrincipale.variant}
-              taille="md"
-              onClick={actionPrincipale.onClick}
-              iconRight={<Icon.Arrow size={14} />}
-            >
-              {actionPrincipale.libelle}
+            <Bouton apparence={actionPrincipale.apparence} onClick={actionPrincipale.onClick}>
+              {actionPrincipale.libelle} <Icon.Arrow size={14} />
             </Bouton>
           ) : (
-            <Bouton variant="contour" taille="md" disabled>
-              Acc?s r?serv?
+            <Bouton apparence="contour" disabled>
+              Accès réservé
             </Bouton>
           )}
         </div>
@@ -373,21 +290,16 @@ function RecapCase({
   icon?: ReactNode;
 }) {
   return (
-    <div style={{ padding: "14px 16px", background: "var(--fond-eleve)" }}>
-      <div className="t-eyebrow" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-        {icon ? <span style={{ color: "var(--sage-500)" }}>{icon}</span> : null}
+    <div className="bg-fond-eleve px-4 py-3.5">
+      <div className="t-eyebrow flex items-center gap-1">
+        {icon ? <span className="text-sage-500">{icon}</span> : null}
         {libelle}
       </div>
       <div
-        style={{
-          marginTop: 4,
-          fontSize: accent ? 18 : 15,
-          fontWeight: 600,
-          fontFamily: accent ? "var(--fonte-display)" : "inherit",
-          fontStyle: accent ? "italic" : "normal",
-          color: accent ? "var(--orange-600)" : "var(--sage-900)",
-          letterSpacing: "-0.01em",
-        }}
+        className={cn(
+          "mt-1 font-semibold tracking-[-0.01em]",
+          accent ? "t-display text-lg text-orange-600" : "text-[15px] text-sage-900",
+        )}
       >
         {valeur}
       </div>
@@ -397,8 +309,8 @@ function RecapCase({
 
 function SectionTitre({ children, icon }: { children: ReactNode; icon?: ReactNode }) {
   return (
-    <h2 className="t-eyebrow" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      {icon ? <span style={{ color: "var(--sage-500)" }}>{icon}</span> : null}
+    <h2 className="t-eyebrow flex items-center gap-1.5">
+      {icon ? <span className="text-sage-500">{icon}</span> : null}
       {children}
     </h2>
   );
@@ -435,120 +347,52 @@ function ModalPartenariat({
   }
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 100,
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
-      }}
-      className="modal-wrap"
-    >
-      <div style={{ position: "absolute", inset: 0, background: "rgba(20,26,19,0.5)" }} onClick={onClose} />
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          maxWidth: 560,
-          background: "white",
-          borderRadius: "16px 16px 0 0",
-          padding: 24,
-          maxHeight: "92vh",
-          overflow: "auto",
-        }}
-        className="modal-card"
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
-          <div>
-            <div className="t-xs t-discret">{organisation}</div>
-            <h2 style={{ fontSize: 20, fontWeight: 600, margin: "4px 0 0" }}>{titre}</h2>
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: "var(--sage-50)",
-              border: 0,
-              width: 32,
-              height: 32,
-              borderRadius: 999,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}
-          >
-            <Icon.X size={16} />
-          </button>
+    <FeuilleModale onClose={onClose} surTitre={organisation} titre={titre}>
+      {envoyee ? (
+        <div className="rounded-xl border border-bordure bg-fond-eleve p-4">
+          <p className="t-small m-0">
+            Proposition envoyée. Le porteur du projet pourra l&apos;accepter ou la refuser depuis son espace entreprise.
+          </p>
         </div>
-
-        {envoyee ? (
-          <div
-            style={{
-              background: "var(--fond-eleve)",
-              border: "1px solid var(--bordure)",
-              borderRadius: 12,
-              padding: 16,
-            }}
-          >
-            <p className="t-small" style={{ margin: 0 }}>
-              Proposition envoyée. Le porteur du projet pourra l&apos;accepter ou la refuser depuis son espace entreprise.
-            </p>
+      ) : (
+        <>
+          <label className="grid gap-1">
+            <span className="text-xs font-semibold">Type de contribution</span>
+            <select
+              className="champ"
+              value={typeContribution}
+              onChange={(e) => setTypeContribution(e.target.value as TypePartenariat)}
+            >
+              <option value="CO_REALISATION">Co-réalisation</option>
+              <option value="FINANCEMENT">Financement</option>
+              <option value="RECRUTEMENT">Débouchés / recrutement</option>
+              <option value="MENTORAT">Mentorat</option>
+              <option value="DIFFUSION">Diffusion</option>
+            </select>
+          </label>
+          <label className="mt-3 grid gap-1">
+            <span className="text-xs font-semibold">Proposition</span>
+            <textarea
+              className="champ champ--ta"
+              rows={6}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Explique ce que ton entreprise apporte concrètement au projet."
+            />
+          </label>
+          <div className="t-xs t-discret mt-1">{message.length}/80 caractères minimum</div>
+          {erreur ? <p className="text-[13px] text-danger">{erreur}</p> : null}
+          <div className="mt-4 flex justify-end gap-2.5">
+            <Bouton apparence="fantome" onClick={onClose}>
+              Annuler
+            </Bouton>
+            <Bouton apparence="accent" onClick={envoyer} disabled={enCours || message.length < 80}>
+              {enCours ? "Envoi…" : "Envoyer"} <Icon.Send size={14} />
+            </Bouton>
           </div>
-        ) : (
-          <>
-            <label className="grid gap-1">
-              <span className="text-xs font-semibold">Type de contribution</span>
-              <select
-                className="champ"
-                value={typeContribution}
-                onChange={(e) => setTypeContribution(e.target.value as TypePartenariat)}
-              >
-                <option value="CO_REALISATION">Co-réalisation</option>
-                <option value="FINANCEMENT">Financement</option>
-                <option value="RECRUTEMENT">Débouchés / recrutement</option>
-                <option value="MENTORAT">Mentorat</option>
-                <option value="DIFFUSION">Diffusion</option>
-              </select>
-            </label>
-            <label className="grid gap-1" style={{ marginTop: 12 }}>
-              <span className="text-xs font-semibold">Proposition</span>
-              <textarea
-                className="champ champ--ta"
-                rows={6}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Explique ce que ton entreprise apporte concrètement au projet."
-              />
-            </label>
-            <div className="t-xs t-discret" style={{ marginTop: 4 }}>
-              {message.length}/80 caractères minimum
-            </div>
-            {erreur ? <p style={{ color: "var(--danger)", fontSize: 13 }}>{erreur}</p> : null}
-            <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 10 }}>
-              <Bouton variant="fantome" onClick={onClose}>
-                Annuler
-              </Bouton>
-              <Bouton
-                variant="accent"
-                onClick={envoyer}
-                disabled={enCours || message.length < 80}
-                iconRight={<Icon.Send size={14} />}
-              >
-                {enCours ? "Envoi…" : "Envoyer"}
-              </Bouton>
-            </div>
-          </>
-        )}
-      </div>
-      <style>{`
-        @media (min-width: 700px) {
-          .modal-wrap { align-items: center !important; padding: 24px !important; }
-          .modal-card { border-radius: 16px !important; }
-        }
-      `}</style>
-    </div>
+        </>
+      )}
+    </FeuilleModale>
   );
 }
 
@@ -582,101 +426,27 @@ function ModalCandidature({
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 100,
-        display: "flex",
-        alignItems: "flex-end",
-        justifyContent: "center",
-      }}
-      className="modal-wrap"
-    >
-      <div style={{ position: "absolute", inset: 0, background: "rgba(20,26,19,0.5)" }} onClick={onClose} />
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          maxWidth: 520,
-          background: "white",
-          borderRadius: "16px 16px 0 0",
-          padding: 24,
-          maxHeight: "92vh",
-          overflow: "auto",
-        }}
-        className="modal-card"
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
-          <div>
-            <div className="t-xs t-discret">{organisation}</div>
-            <h2 style={{ fontSize: 20, fontWeight: 600, margin: "4px 0 0", letterSpacing: "-0.01em" }}>{titre}</h2>
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: "var(--sage-50)",
-              border: 0,
-              width: 32,
-              height: 32,
-              borderRadius: 999,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}
-          >
-            <Icon.X size={16} />
-          </button>
-        </div>
-        <label className="t-xs" style={{ fontWeight: 600 }}>
-          Pourquoi toi ?
-        </label>
-        <textarea
-          className="champ champ--ta"
-          rows={6}
-          placeholder="Quelques phrases sincères (200 caractères minimum). L'entreprise lit attentivement."
-          value={lettre}
-          onChange={(e) => setLettre(e.target.value)}
-          style={{ marginTop: 6 }}
-        />
-        <div className="t-xs t-discret" style={{ marginTop: 4 }}>
-          {lettre.length}/200 caractères minimum
-        </div>
-        {erreur ? (
-          <p
-            style={{
-              marginTop: 10,
-              background: "color-mix(in oklab, var(--danger) 10%, transparent)",
-              color: "var(--danger)",
-              borderRadius: 8,
-              padding: "8px 12px",
-              fontSize: 13,
-            }}
-          >
-            {erreur}
-          </p>
-        ) : null}
-        <div style={{ marginTop: 16, display: "flex", gap: 10, justifyContent: "flex-end" }}>
-          <Bouton variant="fantome" onClick={onClose}>
-            Annuler
-          </Bouton>
-          <Bouton
-            variant="accent"
-            iconRight={<Icon.Send size={14} />}
-            onClick={envoyer}
-            disabled={enCours || lettre.length < 200}
-          >
-            {enCours ? "Envoi…" : "Envoyer"}
-          </Bouton>
-        </div>
+    <FeuilleModale onClose={onClose} surTitre={organisation} titre={titre} className="max-w-[520px]">
+      <label className="t-xs font-semibold">Pourquoi toi ?</label>
+      <textarea
+        className="champ champ--ta mt-1.5"
+        rows={6}
+        placeholder="Quelques phrases sincères (200 caractères minimum). L'entreprise lit attentivement."
+        value={lettre}
+        onChange={(e) => setLettre(e.target.value)}
+      />
+      <div className="t-xs t-discret mt-1">{lettre.length}/200 caractères minimum</div>
+      {erreur ? (
+        <p className="mt-2.5 rounded-lg bg-danger/10 px-3 py-2 text-[13px] text-danger">{erreur}</p>
+      ) : null}
+      <div className="mt-4 flex justify-end gap-2.5">
+        <Bouton apparence="fantome" onClick={onClose}>
+          Annuler
+        </Bouton>
+        <Bouton apparence="accent" onClick={envoyer} disabled={enCours || lettre.length < 200}>
+          {enCours ? "Envoi…" : "Envoyer"} <Icon.Send size={14} />
+        </Bouton>
       </div>
-      <style>{`
-        @media (min-width: 700px) {
-          .modal-wrap { align-items: center !important; padding: 24px !important; }
-          .modal-card { border-radius: 16px !important; }
-        }
-      `}</style>
-    </div>
+    </FeuilleModale>
   );
 }

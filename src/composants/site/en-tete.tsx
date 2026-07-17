@@ -1,12 +1,14 @@
 "use client";
 
-// En-tête public — port 1:1 de la maquette (screens-public.jsx · HeaderPublic).
-// Adaptations réelles : navigation Next (router/pathname) et menu utilisateur
-// quand une session existe.
+// En-tête public — navigation Next (router/pathname), menu utilisateur
+// quand une session existe. Fond sombre translucide en haut de l'accueil.
+// Migré maquette → classes ; la bascule sombre/clair est en classes conditionnelles.
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Logo } from "@/composants/maquette/primitifs";
+import { cn } from "@/lib/utils";
+import { Logo } from "@/composants/ui/logo";
 import { Icon } from "@/composants/maquette/icones";
 import { MenuUtilisateur } from "@/composants/site/menu-utilisateur";
 import type { Role } from "@/generated/prisma/client";
@@ -40,36 +42,25 @@ export function EnTeteSite({ session }: { session: InfosSession | null }) {
     router.push(t ? `/projets?q=${encodeURIComponent(t)}` : "/projets");
   };
 
+  const classeLienNav = cn(
+    "hide-xs cursor-pointer border-0 bg-transparent px-3 py-2 text-[13.5px] font-semibold",
+    sombre ? "text-white/90" : "text-sage-700",
+  );
+
   return (
     <header
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 40,
-        padding: "12px 20px",
-        background: sombre ? "rgba(20,26,19,0.32)" : "var(--fond)",
-        backdropFilter: sombre ? "blur(10px)" : "none",
-        borderBottom: "1px solid " + (sombre ? "rgba(255,255,255,0.08)" : "transparent"),
-        transition: "background 220ms ease, border-color 220ms ease",
-      }}
+      className={cn(
+        "sticky top-0 z-40 border-b px-5 py-3 transition-[background,border-color] duration-200",
+        sombre
+          ? "border-white/10 bg-sage-950/30 backdrop-blur-[10px]"
+          : "border-transparent bg-fond",
+      )}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 14,
-          maxWidth: 1180,
-          margin: "0 auto",
-        }}
-      >
+      <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-3.5">
         {/* Logo — cadre intégré au composant Logo */}
-        <button
-          onClick={() => router.push("/")}
-          style={{ display: "flex", alignItems: "center", background: "transparent", border: 0, padding: 0, flexShrink: 0, cursor: "pointer" }}
-        >
-          <Logo mot blanc={false} />
-        </button>
+        <Link href="/" className="flex shrink-0 items-center">
+          <Logo mot />
+        </Link>
 
         {/* Barre de recherche centrée, équidistante */}
         <form
@@ -77,56 +68,33 @@ export function EnTeteSite({ session }: { session: InfosSession | null }) {
             e.preventDefault();
             onSearch();
           }}
-          style={{
-            flex: "0 1 360px",
-            minWidth: 0,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            background: sombre ? "rgba(255,255,255,0.10)" : "white",
-            border: "1px solid " + (sombre ? "rgba(255,255,255,0.16)" : "var(--bordure)"),
-            borderRadius: 999,
-            padding: "2px 14px",
-            transition: "background 220ms, border-color 220ms",
-          }}
+          className={cn(
+            "flex min-w-0 flex-[0_1_360px] items-center gap-2 rounded-full border px-3.5 py-0.5 transition-[background,border-color] duration-200",
+            sombre ? "border-white/15 bg-white/10" : "border-bordure bg-white",
+          )}
         >
-          <Icon.Search size={15} style={{ color: sombre ? "rgba(255,255,255,0.65)" : "var(--sage-500)", flexShrink: 0 }} />
+          <Icon.Search size={15} className={cn("shrink-0", sombre ? "text-white/65" : "text-sage-500")} />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Chercher un job…"
-            style={{
-              flex: 1,
-              border: 0,
-              outline: 0,
-              background: "transparent",
-              font: "inherit",
-              fontSize: 13.5,
-              color: sombre ? "white" : "var(--texte)",
-              padding: "3px 0",
-              minWidth: 0,
-            }}
+            className={cn(
+              "min-w-0 flex-1 border-0 bg-transparent py-[3px] text-[13.5px] outline-none [font:inherit]",
+              sombre ? "text-white placeholder:text-white/50" : "text-texte",
+            )}
           />
         </form>
 
         {/* Nav droite */}
-        <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-          <button
-            onClick={() => router.push("/projets")}
-            className="hide-xs"
-            style={{ padding: "8px 12px", background: "transparent", border: 0, fontWeight: 600, fontSize: 13.5, color: sombre ? "rgba(255,255,255,0.9)" : "var(--sage-700)", cursor: "pointer" }}
-          >
+        <div className="flex shrink-0 items-center gap-1">
+          <button onClick={() => router.push("/projets")} className={classeLienNav}>
             Jobs
           </button>
           {session ? (
             <MenuUtilisateur session={session} surFondSombre={sombre} />
           ) : (
             <>
-              <button
-                onClick={() => router.push("/connexion")}
-                className="hide-xs"
-                style={{ padding: "8px 12px", background: "transparent", border: 0, fontWeight: 600, fontSize: 13.5, color: sombre ? "rgba(255,255,255,0.9)" : "var(--sage-700)", cursor: "pointer" }}
-              >
+              <button onClick={() => router.push("/connexion")} className={classeLienNav}>
                 Connexion
               </button>
               <button className="btn btn--accent btn--sm" onClick={() => router.push("/inscription")}>

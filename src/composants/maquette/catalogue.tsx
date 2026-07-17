@@ -1,10 +1,11 @@
 "use client";
 
-// Catalogue jobs — port 1:1 de la maquette (screens-public-2.jsx ·
-// PageCatalogueProjets + FiltreGroupe). Filtrage client en mémoire,
-// identique à la maquette ; PROJETS mock → projets réels en props.
+// Catalogue jobs — filtrage client en mémoire, projets réels en props.
+// Migré maquette → classes (.segmente, .filtre-jeton, .liste-bordee).
 
 import { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { EtatVide } from "@/composants/ui/etat-vide";
 import { Icon } from "./icones";
 import { LigneCatalogue, type ProjetApercu } from "./lignes-job";
 
@@ -53,21 +54,12 @@ export function CatalogueProjets({
   const aFiltres = q || mode || niveau || duree;
 
   return (
-    <main className="fadein" style={{ maxWidth: 1180, margin: "0 auto", padding: "24px 20px 64px" }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: 12,
-          marginBottom: 20,
-        }}
-      >
-        <h1 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2rem)", fontWeight: 600, letterSpacing: "-0.025em", margin: 0 }}>
-          Jobs <span className="t-discret" style={{ fontWeight: 400 }}>· {resultats.length}</span>
+    <main className="fadein mx-auto max-w-[1180px] px-5 pb-16 pt-6">
+      <div className="mb-5 flex flex-wrap items-baseline justify-between gap-3">
+        <h1 className="m-0 text-[clamp(1.5rem,3.5vw,2rem)] font-semibold tracking-[-0.025em]">
+          Jobs <span className="t-discret font-normal">· {resultats.length}</span>
         </h1>
-        <div style={{ display: "flex", gap: 4, background: "var(--sage-50)", borderRadius: 999, padding: 3 }}>
+        <div className="segmente" role="group" aria-label="Trier les jobs">
           {[
             { v: "match", l: "Pour moi" },
             { v: "recent", l: "Récents" },
@@ -76,17 +68,8 @@ export function CatalogueProjets({
             <button
               key={o.v}
               onClick={() => setTri(o.v)}
-              style={{
-                padding: "6px 12px",
-                border: 0,
-                borderRadius: 999,
-                fontSize: 12.5,
-                fontWeight: 600,
-                background: tri === o.v ? "white" : "transparent",
-                color: tri === o.v ? "var(--sage-900)" : "var(--sage-600)",
-                boxShadow: tri === o.v ? "var(--ombre-xs)" : "none",
-                cursor: "pointer",
-              }}
+              className={cn("segmente-btn", tri === o.v && "segmente-btn--actif")}
+              aria-pressed={tri === o.v}
             >
               {o.l}
             </button>
@@ -94,14 +77,13 @@ export function CatalogueProjets({
         </div>
       </div>
 
-      <div style={{ marginBottom: 18, display: "grid", gap: 10 }}>
-        <div style={{ position: "relative" }}>
-          <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--texte-discret)" }}>
+      <div className="mb-4 grid gap-2.5">
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-texte-discret">
             <Icon.Search size={15} />
           </span>
           <input
-            className="champ"
-            style={{ paddingLeft: 38 }}
+            className="champ pl-9"
             placeholder="Rechercher un job, une entreprise, une compétence…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -151,19 +133,7 @@ export function CatalogueProjets({
               setNiveau("");
               setDuree("");
             }}
-            className="t-xs"
-            style={{
-              alignSelf: "flex-start",
-              background: "transparent",
-              border: 0,
-              color: "var(--orange-600)",
-              fontWeight: 600,
-              marginTop: 2,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              cursor: "pointer",
-            }}
+            className="t-xs mt-0.5 inline-flex cursor-pointer items-center gap-1 self-start border-0 bg-transparent font-semibold text-orange-600"
           >
             <Icon.X size={12} /> Effacer tous les filtres
           </button>
@@ -171,28 +141,13 @@ export function CatalogueProjets({
       </div>
 
       {resultats.length === 0 ? (
-        <div
-          style={{
-            padding: 64,
-            textAlign: "center",
-            border: "1px solid var(--bordure)",
-            borderRadius: 14,
-            background: "var(--fond-eleve)",
-          }}
-        >
-          <p className="t-small">Aucun job ne correspond.</p>
-        </div>
+        <EtatVide
+          icone={<Icon.Search size={20} />}
+          titre="Aucun job ne correspond"
+          description="Essaie d'élargir tes filtres ou de modifier ta recherche."
+        />
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gap: 1,
-            background: "var(--bordure)",
-            border: "1px solid var(--bordure)",
-            borderRadius: 14,
-            overflow: "hidden",
-          }}
-        >
+        <div className="liste-bordee">
           {resultats.map((p) => (
             <LigneCatalogue key={p.slug} projet={p} />
           ))}
@@ -214,24 +169,14 @@ function FiltreGroupe({
   options: { v: string; l: string }[];
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-      <span className="t-eyebrow" style={{ minWidth: 100 }}>
-        {libelle}
-      </span>
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label={libelle}>
+      <span className="t-eyebrow min-w-[100px]">{libelle}</span>
       {options.map((o) => (
         <button
           key={o.v}
           onClick={() => setValeur(o.v)}
-          style={{
-            padding: "6px 12px",
-            borderRadius: 999,
-            fontSize: 12.5,
-            fontWeight: 600,
-            background: valeur === o.v ? "var(--sage-700)" : "transparent",
-            color: valeur === o.v ? "white" : "var(--sage-700)",
-            border: "1px solid " + (valeur === o.v ? "var(--sage-700)" : "var(--bordure)"),
-            cursor: "pointer",
-          }}
+          className={cn("filtre-jeton", valeur === o.v && "filtre-jeton--actif")}
+          aria-pressed={valeur === o.v}
         >
           {o.l}
         </button>

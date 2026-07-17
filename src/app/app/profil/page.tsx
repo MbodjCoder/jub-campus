@@ -35,8 +35,8 @@ export default async function PageProfil() {
 
   if (!etudiant) {
     return (
-      <main style={{ maxWidth: 800, margin: "0 auto", padding: "32px 20px" }}>
-        <div className="carte" style={{ padding: 32, textAlign: "center" }}>Profil étudiant introuvable.</div>
+      <main className="mx-auto max-w-[800px] px-5 py-8">
+        <div className="carte p-8 text-center">Profil étudiant introuvable.</div>
       </main>
     );
   }

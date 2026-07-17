@@ -7,6 +7,7 @@
 import { useRef, useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Camera } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { obtenirInitiales } from "@/lib/role";
 
 export function AvatarModifiable({
@@ -49,21 +50,19 @@ export function AvatarModifiable({
         type="button"
         onClick={() => inputRef.current?.click()}
         title="Changer ma photo de profil"
-        className="relative shrink-0 rounded-full border-0 bg-transparent p-0"
-        style={{
-          width: taille,
-          height: taille,
-          cursor: chargement ? "wait" : "pointer",
-          opacity: chargement ? 0.6 : 1,
-        }}
+        className={cn(
+          "relative shrink-0 rounded-full border-0 bg-transparent p-0",
+          chargement ? "cursor-wait opacity-60" : "cursor-pointer",
+        )}
+        // eslint-disable-next-line react/forbid-dom-props -- diamètre dynamique
+        style={{ width: taille, height: taille }}
       >
         <span
-          className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-sage-700 font-semibold text-orange-400"
+          className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-sage-700 bg-cover bg-center font-semibold text-orange-400"
+          // eslint-disable-next-line react/forbid-dom-props -- taille de police et image dynamiques
           style={{
             fontSize: Math.round(taille * 0.36),
             backgroundImage: src ? `url(${src})` : undefined,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
           }}
         >
           {!src ? obtenirInitiales(nom) : null}

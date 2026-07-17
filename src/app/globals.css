@@ -455,6 +455,145 @@ img { display: block; max-width: 100%; }
   color: var(--orange-500);
 }
 
+/* ── Cadre du logo (pastille + mot dans une gélule sage) ─────── */
+.logo-cadre {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--sage-500);
+  border: 1px solid var(--sage-600);
+  border-radius: var(--rayon-pill);
+  padding: 5px 13px;
+}
+
+/* ── Squelette de chargement ─────────────────────────────────── */
+@keyframes jub-squelette {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.squelette {
+  border-radius: var(--rayon-sm);
+  background: linear-gradient(90deg, var(--pierre-200) 25%, var(--pierre-100) 50%, var(--pierre-200) 75%);
+  background-size: 200% 100%;
+  animation: jub-squelette 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .squelette { animation: none; }
+  .fadein, .slidein { animation-duration: 0ms; }
+}
+
+/* ── Barre de progression ────────────────────────────────────── */
+.barre-prog {
+  height: 8px;
+  border-radius: var(--rayon-pill);
+  background: var(--pierre-200);
+  overflow: hidden;
+}
+.barre-prog > span {
+  display: block;
+  height: 100%;
+  border-radius: var(--rayon-pill);
+  background: var(--sage-600);
+  transition: width 400ms ease;
+}
+.barre-prog--accent > span { background: var(--orange-500); }
+
+/* ── Table de données ────────────────────────────────────────── */
+.table-defilante { overflow-x: auto; border-radius: var(--rayon-md); border: 1px solid var(--bordure); }
+.table-donnees { width: 100%; border-collapse: collapse; font-size: 0.875rem; background: var(--fond-eleve); }
+.table-donnees th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--texte-discret);
+  background: var(--pierre-100);
+  border-bottom: 1px solid var(--bordure);
+  white-space: nowrap;
+}
+.table-donnees td { padding: 12px 14px; border-bottom: 1px solid var(--bordure); vertical-align: middle; }
+.table-donnees tbody tr:last-child td { border-bottom: 0; }
+.table-donnees tbody tr:hover { background: white; }
+
+/* ── Stepper (parcours brief client) ─────────────────────────── */
+.stepper { display: flex; align-items: center; gap: 0; }
+.stepper-etape { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.stepper-pastille {
+  width: 28px; height: 28px;
+  border-radius: var(--rayon-pill);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  background: var(--pierre-200); color: var(--texte-discret);
+  border: 1px solid var(--bordure-forte);
+  flex-shrink: 0;
+}
+.stepper-etape--active .stepper-pastille { background: var(--sage-700); color: white; border-color: var(--sage-700); }
+.stepper-etape--faite .stepper-pastille { background: var(--succes); color: white; border-color: var(--succes); }
+.stepper-trait { height: 1px; background: var(--bordure-forte); flex: 1; margin: 0 8px; min-width: 12px; }
+.stepper-etape--faite + .stepper-trait { background: var(--succes); }
+
+/* ── Contrôle segmenté (tri, bascules de vue) ────────────────── */
+.segmente {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--sage-50);
+  border-radius: var(--rayon-pill);
+  padding: 3px;
+}
+.segmente-btn {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--rayon-pill);
+  font-size: 12.5px;
+  font-weight: 600;
+  background: transparent;
+  color: var(--sage-600);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.segmente-btn--actif { background: white; color: var(--sage-900); box-shadow: var(--ombre-xs); }
+
+/* ── Jeton de filtre (sélection exclusive dans un groupe) ────── */
+.filtre-jeton {
+  padding: 6px 12px;
+  border-radius: var(--rayon-pill);
+  font-size: 12.5px;
+  font-weight: 600;
+  background: transparent;
+  color: var(--sage-700);
+  border: 1px solid var(--bordure);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.filtre-jeton--actif { background: var(--sage-700); color: white; border-color: var(--sage-700); }
+
+/* ── Grille-liste bordée (lignes séparées par 1px de bordure) ── */
+.liste-bordee {
+  display: grid;
+  gap: 1px;
+  background: var(--bordure);
+  border: 1px solid var(--bordure);
+  border-radius: var(--rayon-md);
+  overflow: hidden;
+}
+
+/* ── Ligne d'item cliquable (listes de missions/jobs) ────────── */
+.ligne-item {
+  background: var(--fond-eleve);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease;
+  text-decoration: none;
+  color: inherit;
+}
+.ligne-item:hover { background: white; }
+
 /* ── Avatar ──────────────────────────────────────────────────── */
 .avatar {
   width: 32px;

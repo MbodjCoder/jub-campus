@@ -1,9 +1,8 @@
 // Confirmation d'adresse email via lien reçu par email.
 
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { consommerJeton } from "@/domaine/jetons";
-import { Bouton } from "@/composants/maquette/primitifs";
+import { LienBouton } from "@/composants/ui/lien-bouton";
 import { Icon } from "@/composants/maquette/icones";
 
 export const metadata = { title: "Vérification de l'email" };
@@ -28,33 +27,28 @@ export default async function PageVerifierEmail({ searchParams }: { searchParams
   }
 
   return (
-    <main className="fadein" style={{ padding: "48px 20px 64px", maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
+    <main className="fadein mx-auto max-w-[480px] px-5 pb-16 pt-12 text-center">
       <div
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 52,
-          height: 52,
-          borderRadius: 999,
-          background: ok ? "var(--orange-500)" : "color-mix(in oklab, var(--danger) 14%, transparent)",
-          color: ok ? "var(--sage-950)" : "var(--danger)",
-        }}
+        className={
+          ok
+            ? "inline-flex h-[52px] w-[52px] items-center justify-center rounded-full bg-orange-500 text-sage-950"
+            : "inline-flex h-[52px] w-[52px] items-center justify-center rounded-full bg-danger/15 text-danger"
+        }
       >
         {ok ? <Icon.Check size={26} /> : <Icon.X size={26} />}
       </div>
-      <h1 style={{ marginTop: 16, fontSize: "clamp(1.5rem, 3.5vw, 2rem)", fontWeight: 600, letterSpacing: "-0.025em" }}>
+      <h1 className="mt-4 text-[clamp(1.5rem,3.5vw,2rem)] font-semibold tracking-[-0.025em]">
         {ok ? "Email confirmé" : "Lien invalide ou expiré"}
       </h1>
-      <p className="t-small" style={{ marginTop: 8 }}>
+      <p className="t-small mt-2">
         {ok
           ? "Ton adresse email est vérifiée. Ton compte est pleinement activé."
           : "Ce lien de vérification n'est plus valide. Reconnecte-toi pour en recevoir un nouveau."}
       </p>
-      <div style={{ marginTop: 22 }}>
-        <Bouton as={Link} href="/connexion" variant="accent">
+      <div className="mt-[22px]">
+        <LienBouton href="/connexion" apparence="accent">
           Aller à la connexion
-        </Bouton>
+        </LienBouton>
       </div>
     </main>
   );

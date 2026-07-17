@@ -34,6 +34,7 @@ export function Avatar({ nom, src, taille = 32, className }: ProprietesAvatar) {
   return (
     <span
       className={cn("avatar", className)}
+      // eslint-disable-next-line react/forbid-dom-props -- diamètre et image dynamiques
       style={{
         width: taille,
         height: taille,

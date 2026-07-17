@@ -17,39 +17,18 @@ export default function Erreur({
   }, [error]);
 
   return (
-    <main
-      style={{
-        minHeight: "70vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "40px 20px",
-      }}
-    >
-      <div style={{ maxWidth: 420, textAlign: "center" }}>
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 48,
-            height: 48,
-            borderRadius: 999,
-            background: "color-mix(in oklab, var(--danger) 14%, transparent)",
-            color: "var(--danger)",
-            fontSize: 22,
-            fontWeight: 800,
-          }}
-        >
+    <main className="flex min-h-[70vh] items-center justify-center px-5 py-10">
+      <div className="max-w-[420px] text-center">
+        <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-danger/15 text-[22px] font-extrabold text-danger">
           !
         </div>
-        <h1 style={{ marginTop: 16, fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em" }}>
+        <h1 className="mt-4 text-[22px] font-semibold tracking-[-0.02em]">
           Une erreur est survenue
         </h1>
-        <p className="t-small" style={{ marginTop: 8 }}>
+        <p className="t-small mt-2">
           Quelque chose s&apos;est mal passé. Réessaie — si le problème persiste, contacte le support.
         </p>
-        <div style={{ marginTop: 20, display: "flex", gap: 10, justifyContent: "center" }}>
+        <div className="mt-5 flex justify-center gap-2.5">
           <button className="btn btn--accent" onClick={reset}>
             Réessayer
           </button>

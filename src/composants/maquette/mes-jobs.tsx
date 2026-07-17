@@ -1,15 +1,20 @@
 "use client";
 
-// Mes jobs — port 1:1 de la maquette (screens-app.jsx · PageMesProjets +
-// ProjetEnCoursInline + VueKanban + VueLivrables + VueFeedback +
-// ListeCandidatures + ListeProjetsTermines). Données réelles en props ;
-// la gestion fine des tâches/livrables se fait dans l'espace complet.
+// Mes jobs — onglets En cours / Candidatures / Terminés. Données réelles
+// en props ; gestion fine des tâches/livrables dans l'espace complet.
+// Migré maquette → classes ; primitives ui/ ; BarreProgression ; EtatVide.
 
 import { useState } from "react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { Avatar } from "@/composants/ui/avatar";
+import { LienBouton } from "@/composants/ui/lien-bouton";
+import { EtatVide } from "@/composants/ui/etat-vide";
+import { BarreProgression } from "@/composants/ui/barre-progression";
+import { PastilleStatut } from "@/composants/ui/pastille-statut";
+import { Insigne } from "@/composants/ui/insigne";
 import { Icon } from "./icones";
 import { fmt } from "./format";
-import { Bouton, Avatar } from "./primitifs";
 
 export interface TacheApercu {
   id: string;
@@ -66,25 +71,12 @@ export function MesJobs({ enCours, candidatures, termines }: Proprietes) {
   const [onglet, setOnglet] = useState("en-cours");
 
   return (
-    <main className="fadein" style={{ padding: "8px 20px 32px", maxWidth: 1180, margin: "0 auto" }}>
-      <h1 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2rem)", fontWeight: 600, letterSpacing: "-0.025em", margin: 0 }}>
+    <main className="fadein mx-auto max-w-[1180px] px-5 pb-8 pt-2">
+      <h1 className="m-0 text-[clamp(1.5rem,3.5vw,2rem)] font-semibold tracking-[-0.025em]">
         Mes jobs
       </h1>
 
-      <div
-        style={{
-          marginTop: 20,
-          marginBottom: 24,
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 4,
-          background: "var(--sage-50)",
-          borderRadius: 999,
-          padding: 3,
-          width: "fit-content",
-          maxWidth: "100%",
-        }}
-      >
+      <div className="segmente mb-6 mt-5 max-w-full flex-wrap" role="group" aria-label="Filtrer mes jobs">
         {[
           { v: "en-cours", l: "En cours", count: enCours ? 1 : 0 },
           { v: "candidatures", l: "Candidatures", count: candidatures.length },
@@ -93,22 +85,10 @@ export function MesJobs({ enCours, candidatures, termines }: Proprietes) {
           <button
             key={o.v}
             onClick={() => setOnglet(o.v)}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "7px 14px",
-              border: 0,
-              borderRadius: 999,
-              fontSize: 13,
-              fontWeight: 600,
-              background: onglet === o.v ? "white" : "transparent",
-              color: onglet === o.v ? "var(--sage-900)" : "var(--sage-600)",
-              boxShadow: onglet === o.v ? "var(--ombre-xs)" : "none",
-              cursor: "pointer",
-            }}
+            className={cn("segmente-btn inline-flex items-center gap-1.5", onglet === o.v && "segmente-btn--actif")}
+            aria-pressed={onglet === o.v}
           >
-            {o.l} <span style={{ fontSize: 11, color: "var(--sage-400)" }}>{o.count}</span>
+            {o.l} <span className="text-[11px] text-sage-400">{o.count}</span>
           </button>
         ))}
       </div>
@@ -125,51 +105,54 @@ function ProjetEnCoursInline({ projet: p }: { projet: ProjetEnCours | null }) {
 
   if (!p) {
     return (
-      <div
-        style={{
-          padding: 64,
-          textAlign: "center",
-          border: "1px solid var(--bordure)",
-          borderRadius: 14,
-          background: "var(--fond-eleve)",
-        }}
-      >
-        <p className="t-small" style={{ margin: "0 0 14px" }}>
-          Aucun job en cours. Postule à un job pour démarrer.
-        </p>
-        <Bouton as={Link} href="/projets" variant="accent">
-          Découvrir les jobs
-        </Bouton>
-      </div>
+      <EtatVide
+        icone={<Icon.Kanban size={20} />}
+        titre="Aucun job en cours"
+        description="Postule à un job pour démarrer."
+        action={
+          <LienBouton href="/projets" apparence="accent">
+            Découvrir les jobs
+          </LienBouton>
+        }
+      />
     );
   }
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap", marginBottom: 16 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
           <div className="t-xs t-discret">{p.organisation}</div>
-          <h2 style={{ fontSize: 20, fontWeight: 600, margin: "4px 0 0", letterSpacing: "-0.01em" }}>{p.titre}</h2>
+          <h2 className="mb-0 mt-1 text-xl font-semibold tracking-[-0.01em]">{p.titre}</h2>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ display: "flex" }}>
+        <div className="flex items-center gap-2">
+          <span className="flex">
             {p.equipe.map((m, i) => (
-              <span key={m.nom + i} style={{ marginLeft: i === 0 ? 0 : -8 }}>
-                <Avatar nom={m.nom} size={28} />
+              <span key={m.nom + i} className={i === 0 ? undefined : "-ml-2"}>
+                <Avatar nom={m.nom} taille={28} />
               </span>
             ))}
           </span>
-          <Bouton as={Link} href={`/app/projet/${p.id}`} variant="fantome" taille="sm" icon={<Icon.ArrowUpRight size={13} />}>
+          <LienBouton
+            href={`/app/projet/${p.id}`}
+            apparence="fantome"
+            taille="sm"
+            icone={<Icon.ArrowUpRight size={13} />}
+          >
             Espace complet
-          </Bouton>
+          </LienBouton>
         </div>
       </div>
 
-      <div style={{ marginBottom: 20 }}>
-        <div style={{ height: 4, borderRadius: 999, background: "var(--sage-50)", overflow: "hidden" }}>
-          <div style={{ width: `${(p.jourActuel / p.duree) * 100}%`, height: "100%", background: "var(--orange-500)" }} />
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+      <div className="mb-5">
+        <BarreProgression
+          valeur={p.jourActuel}
+          max={p.duree}
+          accent
+          etiquette="Avancement du job"
+          className="h-1"
+        />
+        <div className="mt-1.5 flex justify-between">
           <span className="t-xs t-discret">
             J{p.jourActuel} / {p.duree}
           </span>
@@ -177,7 +160,7 @@ function ProjetEnCoursInline({ projet: p }: { projet: ProjetEnCours | null }) {
         </div>
       </div>
 
-      <div style={{ marginBottom: 18, display: "inline-flex", gap: 4 }}>
+      <div className="mb-[18px] inline-flex gap-1">
         {[
           { v: "kanban", l: "Tâches" },
           { v: "livrables", l: "Livrables", count: p.livrables.length },
@@ -186,25 +169,20 @@ function ProjetEnCoursInline({ projet: p }: { projet: ProjetEnCours | null }) {
           <button
             key={o.v}
             onClick={() => setSousonglet(o.v)}
-            style={{
-              padding: "6px 0",
-              marginRight: 18,
-              background: "transparent",
-              border: 0,
-              borderBottom: "2px solid " + (sousonglet === o.v ? "var(--orange-500)" : "transparent"),
-              fontSize: 13.5,
-              fontWeight: 600,
-              color: sousonglet === o.v ? "var(--sage-900)" : "var(--sage-600)",
-              cursor: "pointer",
-              marginBottom: -1,
-            }}
+            className={cn(
+              "-mb-px mr-[18px] cursor-pointer border-0 border-b-2 bg-transparent py-1.5 text-[13.5px] font-semibold",
+              sousonglet === o.v
+                ? "border-b-orange-500 text-sage-900"
+                : "border-b-transparent text-sage-600",
+            )}
+            aria-pressed={sousonglet === o.v}
           >
             {o.l}
-            {o.count ? <span style={{ marginLeft: 5, color: "var(--sage-400)" }}>{o.count}</span> : null}
+            {o.count ? <span className="ml-[5px] text-sage-400">{o.count}</span> : null}
           </button>
         ))}
       </div>
-      <div style={{ borderTop: "1px solid var(--bordure)", paddingTop: 18 }}>
+      <div className="border-t border-bordure pt-[18px]">
         {sousonglet === "kanban" ? <VueKanban projet={p} /> : null}
         {sousonglet === "livrables" ? <VueLivrables projet={p} /> : null}
         {sousonglet === "feedback" ? <VueFeedback projet={p} /> : null}
@@ -212,6 +190,13 @@ function ProjetEnCoursInline({ projet: p }: { projet: ProjetEnCours | null }) {
     </div>
   );
 }
+
+const POINT_COLONNE: Record<string, string> = {
+  A_FAIRE: "bg-sage-300",
+  EN_COURS: "bg-orange-500",
+  EN_REVUE: "bg-sage-500",
+  TERMINEE: "bg-sage-700",
+};
 
 function VueKanban({ projet: p }: { projet: ProjetEnCours }) {
   const colonnes = [
@@ -221,53 +206,28 @@ function VueKanban({ projet: p }: { projet: ProjetEnCours }) {
     { id: "TERMINEE", titre: "Terminé" },
   ];
   return (
-    <div style={{ display: "grid", gap: 12, gridTemplateColumns: "minmax(0, 1fr)" }} className="kanban-grid">
+    <div className="grid gap-3 min-[700px]:grid-cols-2 min-[1100px]:grid-cols-4">
       {colonnes.map((col) => {
         const taches = p.taches.filter((t) => t.statut === col.id);
         return (
           <div key={col.id}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, padding: "0 4px" }}>
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: 999,
-                  background:
-                    col.id === "A_FAIRE"
-                      ? "var(--sage-300)"
-                      : col.id === "EN_COURS"
-                        ? "var(--orange-500)"
-                        : col.id === "EN_REVUE"
-                          ? "var(--sage-500)"
-                          : "var(--sage-700)",
-                }}
-              />
-              <span style={{ fontSize: 12.5, fontWeight: 600 }}>{col.titre}</span>
+            <div className="mb-2.5 flex items-center gap-2 px-1">
+              <span className={cn("h-1.5 w-1.5 rounded-full", POINT_COLONNE[col.id])} />
+              <span className="text-[12.5px] font-semibold">{col.titre}</span>
               <span className="t-xs t-discret">{taches.length}</span>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div className="flex flex-col gap-1.5">
               {taches.map((t) => (
-                <div
-                  key={t.id}
-                  style={{ background: "white", border: "1px solid var(--bordure)", borderRadius: 10, padding: "12px 14px" }}
-                >
-                  <div style={{ fontSize: 13.5, fontWeight: 500, lineHeight: 1.35 }}>{t.titre}</div>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
-                    <Avatar nom={t.assignee} size={20} />
+                <div key={t.id} className="rounded-[10px] border border-bordure bg-white px-3.5 py-3">
+                  <div className="text-[13.5px] font-medium leading-[1.35]">{t.titre}</div>
+                  <div className="mt-2.5 flex items-center justify-between">
+                    <Avatar nom={t.assignee} taille={20} />
                     {t.echeance ? <span className="t-xs t-discret">{fmt.dateCourt(t.echeance)}</span> : null}
                   </div>
                 </div>
               ))}
               {taches.length === 0 ? (
-                <div
-                  style={{
-                    padding: "12px 14px",
-                    border: "1.5px dashed var(--bordure-forte)",
-                    borderRadius: 8,
-                    fontSize: 12,
-                    color: "var(--sage-400)",
-                  }}
-                >
+                <div className="rounded-lg border-[1.5px] border-dashed border-bordure-forte px-3.5 py-3 text-xs text-sage-400">
                   Vide
                 </div>
               ) : null}
@@ -275,10 +235,6 @@ function VueKanban({ projet: p }: { projet: ProjetEnCours }) {
           </div>
         );
       })}
-      <style>{`
-        @media (min-width: 700px) { .kanban-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }
-        @media (min-width: 1100px) { .kanban-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; } }
-      `}</style>
     </div>
   );
 }
@@ -287,77 +243,34 @@ function VueLivrables({ projet: p }: { projet: ProjetEnCours }) {
   return (
     <div>
       {p.livrables.length > 0 ? (
-        <div
-          style={{
-            display: "grid",
-            gap: 1,
-            background: "var(--bordure)",
-            border: "1px solid var(--bordure)",
-            borderRadius: 12,
-            overflow: "hidden",
-            marginBottom: 18,
-          }}
-        >
+        <div className="liste-bordee mb-[18px] rounded-xl">
           {p.livrables.map((l) => (
-            <div
-              key={l.id}
-              style={{
-                background: "var(--fond-eleve)",
-                padding: "14px 18px",
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-                flexWrap: "wrap",
-              }}
-            >
+            <div key={l.id} className="flex flex-wrap items-center gap-3.5 bg-fond-eleve px-[18px] py-3.5">
               <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  background: l.statut === "VALIDE" ? "var(--orange-500)" : "var(--sage-100)",
-                  color: l.statut === "VALIDE" ? "var(--sage-950)" : "var(--sage-700)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
+                className={cn(
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                  l.statut === "VALIDE" ? "bg-orange-500 text-sage-950" : "bg-sage-100 text-sage-700",
+                )}
               >
                 {l.statut === "VALIDE" ? <Icon.Check size={15} /> : <Icon.FileText size={15} />}
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600 }}>{l.titre}</div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold">{l.titre}</div>
                 <div className="t-xs t-discret">
                   {l.auteur} · {fmt.date(l.deposeLe)}
                 </div>
               </div>
-              <span className={l.statut === "VALIDE" ? "pilule pilule--orange" : "pilule pilule--ghost"}>
-                {l.statut === "VALIDE" ? "Validé" : "En revue"}
-              </span>
+              <PastilleStatut domaine="livrable" statut={l.statut} />
             </div>
           ))}
         </div>
       ) : (
-        <p className="t-small" style={{ marginBottom: 18 }}>Aucun livrable déposé.</p>
+        <p className="t-small mb-[18px]">Aucun livrable déposé.</p>
       )}
 
       <Link
         href={`/app/projet/${p.id}`}
-        style={{
-          width: "100%",
-          padding: "14px 18px",
-          border: "1.5px dashed var(--bordure-forte)",
-          borderRadius: 12,
-          background: "transparent",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 8,
-          color: "var(--sage-700)",
-          fontWeight: 600,
-          fontSize: 14,
-          cursor: "pointer",
-        }}
+        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border-[1.5px] border-dashed border-bordure-forte bg-transparent px-[18px] py-3.5 text-sm font-semibold text-sage-700 no-underline"
       >
         <Icon.Upload size={15} /> Déposer un livrable
       </Link>
@@ -367,36 +280,24 @@ function VueLivrables({ projet: p }: { projet: ProjetEnCours }) {
 
 function VueFeedback({ projet: p }: { projet: ProjetEnCours }) {
   return (
-    <div style={{ maxWidth: 720 }}>
+    <div className="max-w-[720px]">
       {p.feedbacks.length > 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        <div className="flex flex-col gap-3.5">
           {p.feedbacks.map((f) => (
-            <div key={f.id} style={{ display: "flex", gap: 10, flexDirection: f.moi ? "row-reverse" : "row" }}>
-              <Avatar nom={f.auteur} size={28} />
-              <div style={{ maxWidth: "80%" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    marginBottom: 4,
-                    flexDirection: f.moi ? "row-reverse" : "row",
-                  }}
-                >
-                  <span style={{ fontSize: 12, fontWeight: 600 }}>{f.auteur}</span>
+            <div key={f.id} className={cn("flex gap-2.5", f.moi && "flex-row-reverse")}>
+              <Avatar nom={f.auteur} taille={28} />
+              <div className="max-w-[80%]">
+                <div className={cn("mb-1 flex items-center gap-1.5", f.moi && "flex-row-reverse")}>
+                  <span className="text-xs font-semibold">{f.auteur}</span>
                   <span className="t-xs t-discret">· {fmt.dateCourt(f.date)}</span>
                 </div>
                 <div
-                  style={{
-                    background: f.moi ? "var(--sage-700)" : "var(--fond-eleve)",
-                    color: f.moi ? "white" : "var(--texte)",
-                    padding: "10px 14px",
-                    borderRadius: 14,
-                    borderTopRightRadius: f.moi ? 4 : 14,
-                    borderTopLeftRadius: f.moi ? 14 : 4,
-                    fontSize: 13.5,
-                    lineHeight: 1.5,
-                  }}
+                  className={cn(
+                    "rounded-[14px] px-3.5 py-2.5 text-[13.5px] leading-normal",
+                    f.moi
+                      ? "rounded-tr bg-sage-700 text-white"
+                      : "rounded-tl bg-fond-eleve text-texte",
+                  )}
                 >
                   {f.contenu}
                 </div>
@@ -408,10 +309,10 @@ function VueFeedback({ projet: p }: { projet: ProjetEnCours }) {
         <p className="t-small">Aucun échange avec le mentor pour l&apos;instant.</p>
       )}
 
-      <div style={{ marginTop: 20 }}>
-        <Bouton as={Link} href={`/app/projet/${p.id}`} variant="primaire" icon={<Icon.Chat size={13} />}>
+      <div className="mt-5">
+        <LienBouton href={`/app/projet/${p.id}`} apparence="primaire" icone={<Icon.Chat size={13} />}>
           Répondre dans l&apos;espace projet
-        </Bouton>
+        </LienBouton>
       </div>
     </div>
   );
@@ -420,42 +321,30 @@ function VueFeedback({ projet: p }: { projet: ProjetEnCours }) {
 function ListeCandidatures({ candidatures }: { candidatures: CandidatureApercu[] }) {
   if (candidatures.length === 0) {
     return (
-      <div style={{ padding: 64, textAlign: "center", border: "1px solid var(--bordure)", borderRadius: 12, background: "var(--fond-eleve)" }}>
-        <p className="t-small">Aucune candidature envoyée.</p>
-      </div>
+      <EtatVide
+        icone={<Icon.Send size={20} />}
+        titre="Aucune candidature envoyée"
+        description="Ta prochaine mission commence par une candidature."
+        action={
+          <LienBouton href="/projets" apparence="accent">
+            Voir les jobs ouverts
+          </LienBouton>
+        }
+      />
     );
   }
   return (
-    <div
-      style={{
-        display: "grid",
-        gap: 1,
-        background: "var(--bordure)",
-        border: "1px solid var(--bordure)",
-        borderRadius: 12,
-        overflow: "hidden",
-      }}
-    >
+    <div className="liste-bordee rounded-xl">
       {candidatures.map((c, i) => (
-        <div
-          key={i}
-          style={{
-            background: "var(--fond-eleve)",
-            padding: "16px 20px",
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-            flexWrap: "wrap",
-          }}
-        >
-          <span className="pulse-dot" style={{ width: 8, height: 8, borderRadius: 999, background: "var(--orange-500)", flexShrink: 0 }} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>{c.projet}</div>
+        <div key={i} className="flex flex-wrap items-center gap-3.5 bg-fond-eleve px-5 py-4">
+          <span className="pulse-dot h-2 w-2 shrink-0 rounded-full bg-orange-500" />
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold">{c.projet}</div>
             <div className="t-xs t-discret">
               {c.organisation} · postulée {fmt.ilYa(c.date)}
             </div>
           </div>
-          <span className="pilule pilule--ghost">En attente</span>
+          <PastilleStatut domaine="candidature" statut="EN_ATTENTE" />
         </div>
       ))}
     </div>
@@ -465,51 +354,34 @@ function ListeCandidatures({ candidatures }: { candidatures: CandidatureApercu[]
 function ListeProjetsTermines({ termines }: { termines: TermineApercu[] }) {
   if (termines.length === 0) {
     return (
-      <div style={{ padding: 64, textAlign: "center", border: "1px solid var(--bordure)", borderRadius: 12, background: "var(--fond-eleve)" }}>
-        <p className="t-small">Aucun job terminé pour l&apos;instant.</p>
-      </div>
+      <EtatVide
+        icone={<Icon.ShieldCheck size={20} />}
+        titre="Aucun job terminé pour l'instant"
+        description="Chaque job terminé rejoint ton palmarès avec son certificat vérifiable."
+      />
     );
   }
   return (
-    <div
-      style={{
-        display: "grid",
-        gap: 1,
-        background: "var(--bordure)",
-        border: "1px solid var(--bordure)",
-        borderRadius: 12,
-        overflow: "hidden",
-      }}
-    >
+    <div className="liste-bordee rounded-xl">
       {termines.map((p, i) => (
         <Link
           key={i}
           href={p.numeroPublic ? `/v/${p.numeroPublic}` : `/app/projet/${p.projetId}`}
-          style={{
-            background: "var(--fond-eleve)",
-            border: 0,
-            padding: "14px 18px",
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-            flexWrap: "wrap",
-            textAlign: "left",
-            cursor: "pointer",
-          }}
+          className="flex flex-wrap items-center gap-3.5 bg-fond-eleve px-[18px] py-3.5 text-left no-underline text-inherit hover:bg-white"
         >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>{p.titre}</div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold">{p.titre}</div>
             <div className="t-xs t-discret">{p.org}</div>
           </div>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--orange-700)" }}>
+          <span className="t-mono text-[13px] font-bold text-orange-700">
             {p.score.toFixed(1).replace(".", ",")}
           </span>
           {p.numeroPublic ? (
-            <span className="pilule pilule--orange">
+            <Insigne ton="orange">
               <Icon.ShieldCheck size={11} /> Certifié
-            </span>
+            </Insigne>
           ) : null}
-          <Icon.ChevronRight size={14} style={{ color: "var(--sage-400)" }} />
+          <Icon.ChevronRight size={14} className="text-sage-400" />
         </Link>
       ))}
     </div>

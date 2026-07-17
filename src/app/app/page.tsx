@@ -7,7 +7,9 @@ import { prisma } from "@/lib/prisma";
 import { PHOTOS, imageProjet } from "@/lib/medias";
 import { maintenantMs } from "@/lib/utils";
 import { fmt } from "@/composants/maquette/format";
-import { Bouton } from "@/composants/maquette/primitifs";
+import Image from "next/image";
+import { LienBouton } from "@/composants/ui/lien-bouton";
+import { BarreProgression } from "@/composants/ui/barre-progression";
 import { Icon } from "@/composants/maquette/icones";
 
 export const metadata = { title: "Tableau de bord" };
@@ -45,8 +47,8 @@ export default async function PageTableauDeBord() {
 
   if (!etudiant) {
     return (
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 20px" }}>
-        <div className="carte" style={{ padding: 32, textAlign: "center" }}>Profil étudiant introuvable.</div>
+      <main className="mx-auto max-w-[1100px] px-5 py-8">
+        <div className="carte p-8 text-center">Profil étudiant introuvable.</div>
       </main>
     );
   }
@@ -88,297 +90,148 @@ export default async function PageTableauDeBord() {
   const nbActions = etudiant.candidatures.length;
 
   return (
-    <main className="fadein" style={{ padding: "8px 20px 32px", maxWidth: 1100, margin: "0 auto" }}>
+    <main className="fadein mx-auto max-w-[1100px] px-5 pb-8 pt-2">
       {/* Salutation */}
-      <section
-        style={{
-          marginTop: 8,
-          marginBottom: 28,
-          position: "relative",
-          padding: "20px 24px",
-          borderRadius: 18,
-          overflow: "hidden",
-          background: "linear-gradient(135deg, var(--sage-900), var(--sage-800))",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            opacity: 0.18,
-            backgroundImage: `url(${PHOTOS.travail})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "radial-gradient(circle at 90% 10%, color-mix(in oklab, var(--orange-500) 35%, transparent), transparent 55%)",
-          }}
-        />
-        <div
-          style={{
-            position: "relative",
-            color: "white",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            gap: 16,
-            flexWrap: "wrap",
-          }}
-        >
+      <section className="relative mb-7 mt-2 overflow-hidden rounded-[18px] bg-gradient-to-br from-sage-900 to-sage-800 px-6 py-5">
+        <Image src={PHOTOS.travail} alt="" fill sizes="1100px" className="object-cover opacity-[0.18]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_10%,rgba(255,170,0,0.35),transparent_55%)]" />
+        <div className="relative flex flex-wrap items-end justify-between gap-4 text-white">
           <div>
-            <h1
-              style={{
-                fontSize: "clamp(1.5rem, 3.5vw, 2rem)",
-                fontWeight: 600,
-                letterSpacing: "-0.025em",
-                color: "white",
-                margin: 0,
-                lineHeight: 1.15,
-              }}
-            >
+            <h1 className="m-0 text-[clamp(1.5rem,3.5vw,2rem)] font-semibold leading-[1.15] tracking-[-0.025em] text-white">
               Bonjour,{" "}
-              <span className="t-display" style={{ color: "var(--orange-400)", fontSize: "1.05em" }}>
-                {etudiant.prenom}.
-              </span>
+              <span className="t-display text-[1.05em] text-orange-400">{etudiant.prenom}.</span>
             </h1>
-            <p className="t-small" style={{ color: "var(--sage-100)", marginTop: 10, marginBottom: 0 }}>
+            <p className="t-small mb-0 mt-2.5 text-sage-100">
               {nbActions > 0
                 ? `Tu as ${nbActions} action${nbActions > 1 ? "s" : ""} en attente.`
                 : "Prêt à trouver ton prochain job ?"}
             </p>
           </div>
-          <Bouton
-            as={Link}
+          <LienBouton
             href="/projets"
-            variant="accent"
-            taille="md"
-            iconRight={<Icon.Arrow size={14} />}
-            style={{ marginLeft: "auto" }}
+            apparence="accent"
+            iconeDroite={<Icon.Arrow size={14} />}
+            className="ml-auto"
           >
             Voir les jobs
-          </Bouton>
+          </LienBouton>
         </div>
       </section>
 
-      <div style={{ display: "grid", gap: 20, gridTemplateColumns: "minmax(0, 1fr)" }} className="tdb-grid">
+      <div className="grid gap-5 min-[900px]:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] min-[900px]:gap-6">
         {/* Job en cours */}
         <div>
-          <h2
-            style={{
-              marginTop: 0,
-              marginBottom: 12,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 17,
-              fontWeight: 600,
-              letterSpacing: "-0.015em",
-              color: "var(--sage-900)",
-            }}
-          >
-            <Icon.Kanban size={19} style={{ color: "var(--sage-700)", flexShrink: 0 }} />
+          <h2 className="mb-3 mt-0 flex items-center gap-2 text-[17px] font-semibold tracking-[-0.015em] text-sage-900">
+            <Icon.Kanban size={19} className="shrink-0 text-sage-700" />
             Job en cours
-            <span style={{ color: "var(--texte-discret)", fontWeight: 400 }}>· {projetsActifs.length}</span>
+            <span className="font-normal text-texte-discret">· {projetsActifs.length}</span>
           </h2>
           {jobEnCours ? (
-            <div
-              style={{
-                background: "var(--fond-eleve)",
-                border: "1px solid var(--bordure)",
-                borderRadius: 14,
-                padding: 20,
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
+            <div className="carte relative overflow-hidden p-5">
               <div
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  right: 0,
-                  width: "40%",
-                  height: "100%",
-                  backgroundImage: `url(${imageProjet(jobEnCours)})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  opacity: 0.12,
-                  maskImage: "linear-gradient(to right, transparent, black)",
-                  WebkitMaskImage: "linear-gradient(to right, transparent, black)",
-                }}
+                className="absolute right-0 top-0 h-full w-2/5 bg-cover bg-center opacity-[0.12] [mask-image:linear-gradient(to_right,transparent,black)]"
+                // eslint-disable-next-line react/forbid-dom-props -- URL d'image dynamique
+                style={{ backgroundImage: `url(${imageProjet(jobEnCours)})` }}
               />
-              <div style={{ position: "relative" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="relative">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
                     <div className="t-xs t-discret">{jobEnCours.entreprise?.raisonSociale ?? "JUB Campus"}</div>
-                    <h3 style={{ fontSize: 17, fontWeight: 600, margin: "4px 0 0", letterSpacing: "-0.01em" }}>
+                    <h3 className="mb-0 mt-1 text-[17px] font-semibold tracking-[-0.01em]">
                       {jobEnCours.titre}
                     </h3>
                   </div>
                   <span className="pilule pilule--orange">En cours</span>
                 </div>
 
-                <div style={{ marginTop: 16 }}>
-                  <div style={{ height: 4, borderRadius: 999, background: "white", overflow: "hidden" }}>
-                    <div
-                      style={{
-                        width: `${(jourActuel / jobEnCours.dureeJours) * 100}%`,
-                        height: "100%",
-                        background: "var(--orange-500)",
-                      }}
-                    />
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6 }}>
+                <div className="mt-4">
+                  <BarreProgression
+                    valeur={jourActuel}
+                    max={jobEnCours.dureeJours}
+                    accent
+                    etiquette="Avancement du job"
+                    className="h-1 bg-white"
+                  />
+                  <div className="mt-1.5 flex justify-between">
                     <span className="t-xs t-discret">Jour {jourActuel}</span>
                     <span className="t-xs t-discret">{Math.max(0, jobEnCours.dureeJours - jourActuel)}j restants</span>
                   </div>
                 </div>
 
-                <div style={{ marginTop: 22 }}>
-                  <div className="t-eyebrow" style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
-                    <Icon.Check size={12} style={{ color: "var(--sage-500)" }} />À faire · {taches.length}
+                <div className="mt-[22px]">
+                  <div className="t-eyebrow mb-2.5 flex items-center gap-1.5">
+                    <Icon.Check size={12} className="text-sage-500" />À faire · {taches.length}
                   </div>
                   {taches.length > 0 ? (
-                    <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gap: 2 }}>
+                    <ul className="m-0 grid list-none gap-0.5 p-0">
                       {taches.map((t) => (
-                        <li
-                          key={t.id}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            padding: "10px 0",
-                            borderBottom: "1px solid var(--bordure)",
-                          }}
-                        >
-                          <span
-                            style={{ width: 14, height: 14, borderRadius: 3, border: "1.5px solid var(--sage-400)", flexShrink: 0 }}
-                          />
-                          <span style={{ flex: 1, fontSize: 14 }}>{t.titre}</span>
+                        <li key={t.id} className="flex items-center gap-2.5 border-b border-bordure py-2.5">
+                          <span className="h-3.5 w-3.5 shrink-0 rounded-[3px] border-[1.5px] border-sage-400" />
+                          <span className="flex-1 text-sm">{t.titre}</span>
                           {t.echeance ? <span className="t-xs t-discret">{fmt.dateCourt(t.echeance)}</span> : null}
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="t-small" style={{ margin: 0 }}>Aucune tâche en attente.</p>
+                    <p className="t-small m-0">Aucune tâche en attente.</p>
                   )}
                 </div>
 
-                <Bouton
-                  as={Link}
+                <LienBouton
                   href={`/app/projet/${jobEnCours.id}`}
-                  variant="primaire"
-                  iconRight={<Icon.Arrow size={14} />}
-                  style={{ marginTop: 16, width: "100%" }}
+                  apparence="primaire"
+                  iconeDroite={<Icon.Arrow size={14} />}
+                  className="mt-4 w-full"
                 >
                   Ouvrir
-                </Bouton>
+                </LienBouton>
               </div>
             </div>
           ) : (
-            <div
-              style={{
-                background: "var(--fond-eleve)",
-                border: "1px solid var(--bordure)",
-                borderRadius: 14,
-                padding: 32,
-                textAlign: "center",
-              }}
-            >
-              <p className="t-small" style={{ margin: "0 0 14px" }}>
+            <div className="carte p-8 text-center">
+              <p className="t-small mb-3.5 mt-0">
                 Aucun job en cours. Postule à ton premier job&nbsp;!
               </p>
-              <Bouton as={Link} href="/projets" variant="accent">
+              <LienBouton href="/projets" apparence="accent">
                 Découvrir les jobs
-              </Bouton>
+              </LienBouton>
             </div>
           )}
         </div>
 
         {/* Pour toi */}
         <div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-            <h2
-              style={{
-                margin: 0,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                fontSize: 17,
-                fontWeight: 600,
-                letterSpacing: "-0.015em",
-                color: "var(--sage-900)",
-              }}
-            >
-              <Icon.Sparkles size={19} style={{ color: "var(--sage-700)", flexShrink: 0 }} />
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="m-0 flex items-center gap-2 text-[17px] font-semibold tracking-[-0.015em] text-sage-900">
+              <Icon.Sparkles size={19} className="shrink-0 text-sage-700" />
               Pour toi
             </h2>
-            <Link
-              href="/projets"
-              className="t-xs"
-              style={{ background: "transparent", border: 0, color: "var(--orange-600)", fontWeight: 600, cursor: "pointer" }}
-            >
+            <Link href="/projets" className="t-xs cursor-pointer font-semibold text-orange-600">
               Tout voir
             </Link>
           </div>
-          <div
-            style={{
-              display: "grid",
-              gap: 1,
-              background: "var(--bordure)",
-              border: "1px solid var(--bordure)",
-              borderRadius: 12,
-              overflow: "hidden",
-            }}
-          >
+          <div className="liste-bordee rounded-xl">
             {recommandes.map((pp) => (
               <Link
                 key={pp.slug}
                 href={`/projets/${pp.slug}`}
-                style={{
-                  background: "var(--fond-eleve)",
-                  border: 0,
-                  padding: "12px 14px",
-                  textAlign: "left",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  cursor: "pointer",
-                }}
+                className="flex cursor-pointer items-center gap-3 bg-fond-eleve px-3.5 py-3 text-left no-underline text-inherit hover:bg-white"
               >
                 <div
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 8,
-                    flexShrink: 0,
-                    backgroundImage: `url(${imageProjet(pp)})`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }}
+                  className="h-10 w-10 shrink-0 rounded-lg bg-cover bg-center"
+                  // eslint-disable-next-line react/forbid-dom-props -- URL d'image dynamique
+                  style={{ backgroundImage: `url(${imageProjet(pp)})` }}
                 />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {pp.titre}
-                  </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13.5px] font-semibold">{pp.titre}</div>
                   <div className="t-xs t-discret">{pp.entreprise?.raisonSociale ?? "JUB Campus"}</div>
                 </div>
-                <Icon.ChevronRight size={14} style={{ color: "var(--sage-400)" }} />
+                <Icon.ChevronRight size={14} className="text-sage-400" />
               </Link>
             ))}
           </div>
         </div>
       </div>
-
-      <style>{`
-        @media (min-width: 900px) {
-          .tdb-grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) !important; gap: 24px !important; }
-        }
-      `}</style>
     </main>
   );
 }

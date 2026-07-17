@@ -1,12 +1,17 @@
 "use client";
 
-// Portfolio étudiant — port 1:1 de la maquette (screens-app.jsx ·
-// PagePortfolio + BlocKpiClick + ModalPartager).
+// Portfolio étudiant — identité, KPIs, compétences, jobs certifiés, partage.
+// Migré maquette → classes ; FeuilleModale ; BarreProgression ; primitives ui/.
 
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { Bouton } from "@/composants/ui/bouton";
+import { LienBouton } from "@/composants/ui/lien-bouton";
+import { BarreProgression } from "@/composants/ui/barre-progression";
+import { FeuilleModale } from "@/composants/ui/feuille-modale";
 import { Icon } from "./icones";
-import { Bouton } from "./primitifs";
 import { AvatarModifiable } from "@/composants/site/avatar-modifiable";
 import { PHOTOS } from "@/lib/medias";
 
@@ -27,205 +32,98 @@ export function MonPortfolio({ data: e }: { data: PortfolioData }) {
   const nomComplet = `${e.prenom} ${e.nom}`;
 
   return (
-    <main className="fadein" style={{ padding: "8px 20px 32px", maxWidth: 800, margin: "0 auto" }}>
+    <main className="fadein mx-auto max-w-[800px] px-5 pb-8 pt-2">
       {/* Identité */}
-      <div
-        style={{
-          position: "relative",
-          padding: "24px",
-          borderRadius: 18,
-          overflow: "hidden",
-          background: "linear-gradient(135deg, var(--sage-900), var(--sage-800))",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            opacity: 0.18,
-            backgroundImage: `url(${PHOTOS.travail})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "radial-gradient(circle at 90% 10%, color-mix(in oklab, var(--orange-500) 30%, transparent), transparent 55%)",
-          }}
-        />
-        <div style={{ position: "relative", color: "white" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+      <div className="relative overflow-hidden rounded-[18px] bg-gradient-to-br from-sage-900 to-sage-800 p-6">
+        <Image src={PHOTOS.travail} alt="" fill sizes="800px" className="object-cover opacity-[0.18]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_10%,rgba(255,170,0,0.3),transparent_55%)]" />
+        <div className="relative text-white">
+          <div className="flex flex-wrap items-center gap-4">
             <AvatarModifiable nom={nomComplet} src={e.avatarUrl} taille={64} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h1
-                style={{
-                  fontSize: "clamp(1.25rem, 3vw, 1.75rem)",
-                  fontWeight: 600,
-                  letterSpacing: "-0.02em",
-                  margin: 0,
-                  color: "white",
-                }}
-              >
+            <div className="min-w-0 flex-1">
+              <h1 className="m-0 text-[clamp(1.25rem,3vw,1.75rem)] font-semibold tracking-[-0.02em] text-white">
                 {nomComplet}
               </h1>
-              <div className="t-small" style={{ marginTop: 2, color: "var(--sage-100)" }}>
-                {e.universite}
-              </div>
+              <div className="t-small mt-0.5 text-sage-100">{e.universite}</div>
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap", justifyContent: "flex-end" }}>
-            <Bouton variant="accent" taille="sm" onClick={() => setShowShare(true)} icon={<Icon.Share size={13} />}>
-              Partager
+          <div className="mt-[18px] flex flex-wrap justify-end gap-2">
+            <Bouton apparence="accent" taille="sm" onClick={() => setShowShare(true)}>
+              <Icon.Share size={13} /> Partager
             </Bouton>
-            <Bouton
-              as="a"
-              href="/api/portfolio/pdf"
-              variant="sombre"
-              taille="sm"
-              icon={<Icon.Download size={13} />}
-            >
-              PDF
-            </Bouton>
-            <Bouton
-              as={Link}
-              href="/app/profil/modifier"
-              variant="sombre"
-              taille="sm"
-              icon={<Icon.FileText size={13} />}
-            >
+            <a href="/api/portfolio/pdf" className="btn btn--sombre btn--sm">
+              <Icon.Download size={13} /> PDF
+            </a>
+            <LienBouton href="/app/profil/modifier" apparence="sombre" taille="sm" icone={<Icon.FileText size={13} />}>
               Modifier
-            </Bouton>
+            </LienBouton>
           </div>
         </div>
       </div>
 
       {/* KPIs */}
-      <div
-        style={{
-          display: "grid",
-          gap: 1,
-          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-          marginTop: 20,
-          background: "var(--bordure)",
-          border: "1px solid var(--bordure)",
-          borderRadius: 12,
-          overflow: "hidden",
-        }}
-      >
+      <div className="liste-bordee mt-5 grid-cols-3 rounded-xl">
         <BlocKpi libelle="Certificats" valeur={e.jobs.length} icon={<Icon.ShieldCheck size={17} />} href="/app/certificats" />
         <BlocKpi libelle="Note" valeur={e.note} icon={<Icon.Star size={17} />} href="/app/mes-projets" />
         <BlocKpi libelle="Score JUB" valeur={e.scoreJub} icon={<Icon.TrendingUp size={17} />} href="/app" />
       </div>
 
       {/* Compétences + Jobs réalisés — alignés horizontalement */}
-      <div
-        className="profil-sections"
-        style={{
-          marginTop: 36,
-          display: "grid",
-          gap: 28,
-          gridTemplateColumns: "minmax(0, 1fr)",
-        }}
-      >
-      <section>
-        <SectionTitre icon={<Icon.Sparkles size={18} />}>Compétences</SectionTitre>
-        {e.competences.length === 0 ? (
-          <p className="t-small" style={{ marginTop: 12 }}>Aucune compétence ajoutée.</p>
-        ) : (
-          <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-            {e.competences.map((c) => (
-              <div key={c.nom} style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-                <div
-                  style={{
-                    flex: "1 1 120px",
-                    fontSize: 13.5,
-                    fontWeight: 500,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                  }}
-                >
-                  {c.nom}
-                  {c.valide ? <Icon.ShieldCheck size={11} style={{ color: "var(--orange-500)" }} /> : null}
-                </div>
-                <div
-                  style={{
-                    flex: "1 1 140px",
-                    minWidth: 120,
-                    height: 4,
-                    borderRadius: 999,
-                    background: "var(--sage-50)",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${(c.niveau / 5) * 100}%`,
-                      height: "100%",
-                      background: c.valide ? "var(--orange-500)" : "var(--sage-400)",
-                    }}
+      <div className="mt-9 grid gap-7 md:grid-cols-2">
+        <section>
+          <SectionTitre icon={<Icon.Sparkles size={18} />}>Compétences</SectionTitre>
+          {e.competences.length === 0 ? (
+            <p className="t-small mt-3">Aucune compétence ajoutée.</p>
+          ) : (
+            <div className="mt-3 grid gap-2.5">
+              {e.competences.map((c) => (
+                <div key={c.nom} className="flex flex-wrap items-center gap-3.5">
+                  <div className="flex flex-[1_1_120px] items-center gap-[5px] text-[13.5px] font-medium">
+                    {c.nom}
+                    {c.valide ? <Icon.ShieldCheck size={11} className="text-orange-500" /> : null}
+                  </div>
+                  <BarreProgression
+                    valeur={c.niveau}
+                    max={5}
+                    accent={c.valide}
+                    etiquette={`Niveau en ${c.nom}`}
+                    className={cn("h-1 min-w-[120px] flex-[1_1_140px]", !c.valide && "[&>span]:bg-sage-400")}
                   />
+                  <div className="t-xs t-discret min-w-7 text-right">{c.niveau}/5</div>
                 </div>
-                <div className="t-xs t-discret" style={{ minWidth: 28, textAlign: "right" }}>
-                  {c.niveau}/5
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+              ))}
+            </div>
+          )}
+        </section>
 
-      {/* Jobs réalisés */}
-      <section>
-        <SectionTitre icon={<Icon.Briefcase size={18} />}>Jobs réalisés</SectionTitre>
-        {e.jobs.length === 0 ? (
-          <p className="t-small" style={{ marginTop: 12 }}>Tes jobs certifiés apparaîtront ici.</p>
-        ) : (
-          <div
-            style={{
-              marginTop: 12,
-              display: "grid",
-              gap: 1,
-              background: "var(--bordure)",
-              border: "1px solid var(--bordure)",
-              borderRadius: 12,
-              overflow: "hidden",
-            }}
-          >
-            {e.jobs.map((p) => (
-              <Link
-                key={p.numeroPublic}
-                href={`/v/${p.numeroPublic}`}
-                style={{
-                  background: "var(--fond-eleve)",
-                  border: 0,
-                  padding: "14px 16px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                  textAlign: "left",
-                  cursor: "pointer",
-                }}
-              >
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{p.titre}</div>
-                  <div className="t-xs t-discret">{p.organisation}</div>
-                </div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--orange-700)" }}>
-                  {p.score.toFixed(1).replace(".", ",")}
-                </span>
-                <Icon.ChevronRight size={14} style={{ color: "var(--sage-400)" }} />
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+        {/* Jobs réalisés */}
+        <section>
+          <SectionTitre icon={<Icon.Briefcase size={18} />}>Jobs réalisés</SectionTitre>
+          {e.jobs.length === 0 ? (
+            <p className="t-small mt-3">Tes jobs certifiés apparaîtront ici.</p>
+          ) : (
+            <div className="liste-bordee mt-3 rounded-xl">
+              {e.jobs.map((p) => (
+                <Link
+                  key={p.numeroPublic}
+                  href={`/v/${p.numeroPublic}`}
+                  className="flex items-center gap-3.5 bg-fond-eleve px-4 py-3.5 text-left no-underline text-inherit hover:bg-white"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold">{p.titre}</div>
+                    <div className="t-xs t-discret">{p.organisation}</div>
+                  </div>
+                  <span className="t-mono text-[13px] font-bold text-orange-700">
+                    {p.score.toFixed(1).replace(".", ",")}
+                  </span>
+                  <Icon.ChevronRight size={14} className="text-sage-400" />
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
-      <style>{`@media (min-width: 720px) { .profil-sections { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } }`}</style>
 
       {showShare ? <ModalPartager slug={e.slug} onClose={() => setShowShare(false)} /> : null}
     </main>
@@ -243,37 +141,12 @@ function BlocKpi({
   return (
     <Link
       href={href}
-      style={{
-        padding: "20px 10px",
-        background: "var(--fond-eleve)",
-        border: 0,
-        cursor: "pointer",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        gap: 8,
-      }}
+      className="flex cursor-pointer flex-col items-center justify-center gap-2 bg-fond-eleve px-2.5 py-5 text-center no-underline text-inherit hover:bg-white"
     >
-      <span
-        style={{
-          width: 38,
-          height: 38,
-          borderRadius: 10,
-          background: "var(--sage-700)",
-          color: "var(--orange-400)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
+      <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] bg-sage-700 text-orange-400">
         {icon}
       </span>
-      <span style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1 }}>
-        {valeur}
-      </span>
+      <span className="text-2xl font-semibold leading-none tracking-[-0.02em]">{valeur}</span>
       <span className="t-eyebrow">{libelle}</span>
     </Link>
   );
@@ -281,31 +154,8 @@ function BlocKpi({
 
 function SectionTitre({ children, icon }: { children: ReactNode; icon?: ReactNode }) {
   return (
-    <h2
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        margin: 0,
-        fontSize: 17,
-        fontWeight: 600,
-        letterSpacing: "-0.015em",
-        color: "var(--sage-900)",
-      }}
-    >
-      {icon ? (
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "var(--sage-500)",
-            flexShrink: 0,
-          }}
-        >
-          {icon}
-        </span>
-      ) : null}
+    <h2 className="m-0 flex items-center gap-2 text-[17px] font-semibold tracking-[-0.015em] text-sage-900">
+      {icon ? <span className="inline-flex shrink-0 items-center justify-center text-sage-500">{icon}</span> : null}
       {children}
     </h2>
   );
@@ -330,65 +180,28 @@ function ModalPartager({ slug, onClose }: { slug: string; onClose: () => void })
     { l: "Email", icon: <Icon.Mail size={16} />, href: `mailto:?subject=Mon portfolio JUB&body=${encodeURIComponent(url)}` },
   ];
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 100,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-      }}
-    >
-      <div style={{ position: "absolute", inset: 0, background: "rgba(20,26,19,0.5)" }} onClick={onClose} />
-      <div style={{ position: "relative", width: "100%", maxWidth: 420, background: "white", borderRadius: 16, padding: 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-          <h2 style={{ fontSize: 17, fontWeight: 600, margin: 0, letterSpacing: "-0.01em" }}>Partager mon portfolio</h2>
-          <button
-            onClick={onClose}
-            style={{ background: "var(--sage-50)", border: 0, width: 32, height: 32, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
-          >
-            <Icon.X size={16} />
-          </button>
-        </div>
-
-        <div style={{ display: "flex", gap: 6, alignItems: "center", background: "var(--fond-eleve)", borderRadius: 10, padding: "8px 10px 8px 12px" }}>
-          <span style={{ flex: 1, fontSize: 13, color: "var(--sage-700)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {url}
-          </span>
-          <Bouton variant="primaire" taille="sm" onClick={onCopy} icon={copie ? <Icon.Check size={12} /> : <Icon.Copy size={12} />}>
-            {copie ? "Copié" : "Copier"}
-          </Bouton>
-        </div>
-
-        <div className="t-eyebrow" style={{ marginTop: 18, marginBottom: 10 }}>
-          Partager sur
-        </div>
-        <div style={{ display: "grid", gap: 6, gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
-          {partages.map((s) => (
-            <a
-              key={s.l}
-              href={s.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "12px 14px",
-                borderRadius: 10,
-                background: "var(--fond-eleve)",
-                color: "var(--sage-800)",
-                fontSize: 13.5,
-                fontWeight: 600,
-              }}
-            >
-              <span style={{ color: "var(--sage-600)" }}>{s.icon}</span> {s.l}
-            </a>
-          ))}
-        </div>
+    <FeuilleModale onClose={onClose} titre="Partager mon portfolio" className="max-w-[420px]">
+      <div className="flex items-center gap-1.5 rounded-[10px] bg-fond-eleve py-2 pl-3 pr-2.5">
+        <span className="min-w-0 flex-1 truncate text-[13px] text-sage-700">{url}</span>
+        <Bouton apparence="primaire" taille="sm" onClick={onCopy}>
+          {copie ? <Icon.Check size={12} /> : <Icon.Copy size={12} />} {copie ? "Copié" : "Copier"}
+        </Bouton>
       </div>
-    </div>
+
+      <div className="t-eyebrow mb-2.5 mt-[18px]">Partager sur</div>
+      <div className="grid grid-cols-2 gap-1.5">
+        {partages.map((s) => (
+          <a
+            key={s.l}
+            href={s.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2.5 rounded-[10px] bg-fond-eleve px-3.5 py-3 text-[13.5px] font-semibold text-sage-800 no-underline hover:bg-sage-50"
+          >
+            <span className="text-sage-600">{s.icon}</span> {s.l}
+          </a>
+        ))}
+      </div>
+    </FeuilleModale>
   );
 }

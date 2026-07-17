@@ -6,7 +6,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bouton } from "@/composants/maquette/primitifs";
+import { Bouton } from "@/composants/ui/bouton";
 import { Icon } from "@/composants/maquette/icones";
 
 const ROLES = [
@@ -20,58 +20,52 @@ export default function PageInscription() {
   const [role, setRole] = useState("etudiant");
 
   return (
-    <main className="fadein" style={{ padding: "40px 20px 64px" }}>
-      <div style={{ maxWidth: 440, margin: "0 auto" }}>
-        <h1 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2rem)", fontWeight: 600, letterSpacing: "-0.025em", margin: 0 }}>
+    <main className="fadein px-5 pb-16 pt-10">
+      <div className="mx-auto max-w-[440px]">
+        <h1 className="m-0 text-[clamp(1.5rem,3.5vw,2rem)] font-semibold tracking-[-0.025em]">
           Tu es…
         </h1>
-        <p className="t-small" style={{ marginTop: 6 }}>
+        <p className="t-small mt-1.5">
           Choisis ton profil pour créer ton compte.
         </p>
 
-        <div style={{ display: "grid", gap: 8, marginTop: 24 }}>
+        <div className="mt-6 grid gap-2">
           {ROLES.map((r) => (
             <button
               key={r.v}
               onClick={() => setRole(r.v)}
-              style={{
-                textAlign: "left",
-                padding: "16px 18px",
-                borderRadius: 12,
-                background: role === r.v ? "var(--sage-700)" : "white",
-                color: role === r.v ? "white" : "inherit",
-                border: "1px solid " + (role === r.v ? "var(--sage-700)" : "var(--bordure-forte)"),
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                cursor: "pointer",
-              }}
+              aria-pressed={role === r.v}
+              className={
+                role === r.v
+                  ? "flex cursor-pointer items-center justify-between rounded-xl border border-sage-700 bg-sage-700 px-[18px] py-4 text-left text-white"
+                  : "flex cursor-pointer items-center justify-between rounded-xl border border-bordure-forte bg-white px-[18px] py-4 text-left"
+              }
             >
               <div>
-                <div style={{ fontWeight: 600 }}>{r.titre}</div>
-                <div style={{ fontSize: 12.5, opacity: role === r.v ? 0.8 : 0.65, marginTop: 2 }}>{r.desc}</div>
+                <div className="font-semibold">{r.titre}</div>
+                <div className={role === r.v ? "mt-0.5 text-[12.5px] opacity-80" : "mt-0.5 text-[12.5px] opacity-65"}>{r.desc}</div>
               </div>
               {role === r.v ? (
-                <Icon.Check size={18} style={{ color: "var(--orange-400)" }} />
+                <Icon.Check size={18} className="text-orange-400" />
               ) : (
-                <Icon.ChevronRight size={16} style={{ color: "var(--sage-400)" }} />
+                <Icon.ChevronRight size={16} className="text-sage-400" />
               )}
             </button>
           ))}
           <Bouton
-            variant="accent"
+            apparence="accent"
             taille="lg"
-            iconRight={<Icon.Arrow size={15} />}
+            pleineLargeur
             onClick={() => router.push(`/inscription/${role}`)}
-            style={{ marginTop: 10, width: "100%" }}
+            className="mt-2.5"
           >
-            Continuer
+            Continuer <Icon.Arrow size={15} />
           </Bouton>
         </div>
 
-        <p className="t-xs t-discret" style={{ marginTop: 24, textAlign: "center" }}>
+        <p className="t-xs t-discret mt-6 text-center">
           Déjà un compte ?{" "}
-          <Link href="/connexion" style={{ color: "var(--orange-600)", fontWeight: 600 }}>
+          <Link href="/connexion" className="font-semibold text-orange-600">
             Se connecter
           </Link>
         </p>

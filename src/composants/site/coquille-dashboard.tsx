@@ -8,7 +8,8 @@ import {
   Handshake,
   type LucideIcon,
 } from "lucide-react";
-import { Logo } from "@/composants/maquette/primitifs";
+import { cn } from "@/lib/utils";
+import { Logo } from "@/composants/ui/logo";
 import { MenuUtilisateur } from "@/composants/site/menu-utilisateur";
 import { NotificationCloche } from "@/composants/site/notification-cloche";
 import type { Role } from "@/generated/prisma/client";
@@ -108,13 +109,12 @@ export function CoquilleDashboard({ variante, session, notifications, nbNonLues,
               <Link
                 key={href}
                 href={href}
-                className="flex items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-sm font-medium transition-colors"
-                style={{
-                  background: actif ? "var(--sage-700)" : "transparent",
-                  color: actif ? "#fff" : "var(--sage-800)",
-                }}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-sm font-medium transition-colors",
+                  actif ? "bg-sage-700 text-white" : "text-sage-800 hover:bg-sage-50",
+                )}
               >
-                <span style={{ color: actif ? "var(--orange-400)" : "var(--sage-500)" }}>
+                <span className={actif ? "text-orange-400" : "text-sage-500"}>
                   <Icone size={17} />
                 </span>
                 {libelle}
@@ -145,11 +145,10 @@ export function CoquilleDashboard({ variante, session, notifications, nbNonLues,
               <Link
                 key={href}
                 href={href}
-                className="whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-semibold transition-colors"
-                style={{
-                  background: actif ? "var(--sage-700)" : "transparent",
-                  color: actif ? "#fff" : "var(--sage-600)",
-                }}
+                className={cn(
+                  "whitespace-nowrap rounded-full px-3 py-1.5 text-[13px] font-semibold transition-colors",
+                  actif ? "bg-sage-700 text-white" : "text-sage-600",
+                )}
               >
                 {libelle}
               </Link>

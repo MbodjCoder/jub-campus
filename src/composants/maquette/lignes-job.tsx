@@ -1,9 +1,9 @@
-"use client";
-
-// Lignes de job — port 1:1 de la maquette (LignePrjet / LigneCatalogue).
-// Conversion : <button onClick> → <Link>, survol JS conservé tel quel.
+// Lignes de job — liste compacte cliquable (landing, catalogue).
+// Migré maquette → classes : hover CSS (.ligne-item), zéro style inline
+// hors image de fond (valeur dynamique).
 
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { Icon } from "./icones";
 import { fmt } from "./format";
 
@@ -18,160 +18,46 @@ export interface ProjetApercu {
   montant: number | null;
 }
 
-export function LignePrjet({ projet: p }: { projet: ProjetApercu }) {
+function LigneJob({ projet: p, compacte }: { projet: ProjetApercu; compacte: boolean }) {
   return (
-    <Link
-      href={`/projets/${p.slug}`}
-      style={{
-        background: "var(--fond-eleve)",
-        border: 0,
-        padding: "14px 18px",
-        textAlign: "left",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: 16,
-        transition: "background 120ms",
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = "white")}
-      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--fond-eleve)")}
-    >
+    <Link href={`/projets/${p.slug}`} className="ligne-item">
       <div
-        style={{
-          width: 52,
-          height: 52,
-          borderRadius: 10,
-          flexShrink: 0,
-          backgroundImage: `url(${p.image})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          position: "relative",
-        }}
+        className={cn(
+          "relative shrink-0 rounded-[10px] bg-cover bg-center",
+          compacte ? "h-[52px] w-[52px]" : "h-14 w-14",
+        )}
+        // eslint-disable-next-line react/forbid-dom-props -- URL d'image dynamique
+        style={{ backgroundImage: `url(${p.image})` }}
       >
         {p.matchScore != null && p.matchScore >= 80 ? (
-          <span
-            style={{
-              position: "absolute",
-              top: -5,
-              right: -5,
-              background: "var(--orange-500)",
-              color: "var(--sage-950)",
-              fontSize: 9,
-              fontWeight: 800,
-              padding: "2px 5px",
-              borderRadius: 999,
-              border: "2px solid var(--fond-eleve)",
-            }}
-          >
+          <span className="absolute -right-1.5 -top-1.5 rounded-full border-2 border-fond-eleve bg-orange-500 px-1.5 py-0.5 text-[9px] font-extrabold text-sage-950">
             {p.matchScore}%
           </span>
         ) : null}
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="min-w-0 flex-1">
         <div className="t-xs t-discret">
           {p.organisation} · {p.categorieLibelle}
         </div>
-        <div
-          style={{
-            fontSize: 15,
-            fontWeight: 600,
-            marginTop: 2,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {p.titre}
-        </div>
+        <div className="mt-0.5 truncate text-[15px] font-semibold">{p.titre}</div>
       </div>
-      <div className="hide-sm" style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <span className="t-xs t-discret" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+      <div className={cn("hide-sm flex shrink-0 items-center", compacte ? "gap-3.5" : "gap-4")}>
+        <span className="t-xs t-discret inline-flex items-center gap-1">
           <Icon.Clock size={12} /> {fmt.duree(p.duree)}
         </span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--sage-900)" }}>
+        <span className={cn("text-[13px] font-bold text-sage-900", !compacte && "min-w-[90px] text-right")}>
           {p.montant != null ? fmt.fcfa(p.montant) : "Apprentissage"}
         </span>
       </div>
-      <Icon.ChevronRight size={16} style={{ color: "var(--sage-400)", flexShrink: 0 }} />
+      <Icon.ChevronRight size={16} className="shrink-0 text-sage-400" />
     </Link>
   );
 }
 
-export function LigneCatalogue({ projet: p }: { projet: ProjetApercu }) {
-  return (
-    <Link
-      href={`/projets/${p.slug}`}
-      style={{
-        background: "var(--fond-eleve)",
-        border: 0,
-        padding: "14px 18px",
-        textAlign: "left",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: 16,
-        transition: "background 120ms",
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = "white")}
-      onMouseLeave={(e) => (e.currentTarget.style.background = "var(--fond-eleve)")}
-    >
-      <div
-        style={{
-          width: 56,
-          height: 56,
-          borderRadius: 10,
-          flexShrink: 0,
-          backgroundImage: `url(${p.image})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          position: "relative",
-        }}
-      >
-        {p.matchScore != null && p.matchScore >= 80 ? (
-          <span
-            style={{
-              position: "absolute",
-              top: -6,
-              right: -6,
-              background: "var(--orange-500)",
-              color: "var(--sage-950)",
-              fontSize: 9.5,
-              fontWeight: 800,
-              padding: "2px 6px",
-              borderRadius: 999,
-              border: "2px solid var(--fond-eleve)",
-            }}
-          >
-            {p.matchScore}%
-          </span>
-        ) : null}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="t-xs t-discret">
-          {p.organisation} · {p.categorieLibelle}
-        </div>
-        <div
-          style={{
-            fontSize: 15,
-            fontWeight: 600,
-            marginTop: 2,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {p.titre}
-        </div>
-      </div>
-      <div className="hide-sm" style={{ display: "flex", alignItems: "center", gap: 18, flexShrink: 0 }}>
-        <span className="t-xs t-discret" style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-          <Icon.Clock size={12} /> {fmt.duree(p.duree)}
-        </span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "var(--sage-900)", minWidth: 90, textAlign: "right" }}>
-          {p.montant != null ? fmt.fcfa(p.montant) : "Apprentissage"}
-        </span>
-      </div>
-      <Icon.ChevronRight size={16} style={{ color: "var(--sage-400)", flexShrink: 0 }} />
-    </Link>
-  );
+export function LignePrjet({ projet }: { projet: ProjetApercu }) {
+  return <LigneJob projet={projet} compacte />;
+}
+
+export function LigneCatalogue({ projet }: { projet: ProjetApercu }) {
+  return <LigneJob projet={projet} compacte={false} />;
 }

@@ -2,7 +2,7 @@
 
 import { Suspense, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Bouton } from "@/composants/maquette/primitifs";
+import { Bouton } from "@/composants/ui/bouton";
 import { Icon } from "@/composants/maquette/icones";
 import { reinitialiserMotDePasse } from "../mot-de-passe-oublie/actions";
 
@@ -48,7 +48,7 @@ function Formulaire() {
 
   return (
     <>
-      <form ref={formRef} onSubmit={soumettre} style={{ marginTop: 20, display: "grid", gap: 12 }}>
+      <form ref={formRef} onSubmit={soumettre} className="mt-5 grid gap-3">
         <input type="hidden" name="email" value={email} />
         <input type="hidden" name="jeton" value={jeton} />
         <label className="grid gap-1">
@@ -59,9 +59,9 @@ function Formulaire() {
           <span className="text-xs font-semibold">Confirme le mot de passe</span>
           <input className="champ" type="password" name="motDePasseConfirme" minLength={8} required />
         </label>
-        {erreur ? <p style={{ margin: 0, color: "var(--danger)", fontSize: 13 }}>{erreur}</p> : null}
-        <Bouton variant="accent" type="submit" disabled={enCours} iconRight={<Icon.Check size={15} />}>
-          {enCours ? "Mise à jour…" : "Réinitialiser"}
+        {erreur ? <p className="m-0 text-[13px] text-danger">{erreur}</p> : null}
+        <Bouton apparence="accent" type="submit" disabled={enCours}>
+          {enCours ? "Mise à jour…" : "Réinitialiser"} <Icon.Check size={15} />
         </Bouton>
       </form>
 
@@ -69,26 +69,18 @@ function Formulaire() {
         <div
           role="alertdialog"
           aria-modal="true"
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 120,
-            display: "grid",
-            placeItems: "center",
-            padding: 16,
-            background: "rgba(20,26,19,0.5)",
-          }}
+          className="fixed inset-0 z-[120] grid place-items-center bg-sage-950/50 p-4"
         >
-          <div style={{ width: "100%", maxWidth: 420, borderRadius: 16, background: "white", padding: 20 }}>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Confirmer le changement</h2>
-            <p className="t-small" style={{ marginTop: 10 }}>
+          <div className="w-full max-w-[420px] rounded-2xl bg-white p-5">
+            <h2 className="m-0 text-lg font-semibold">Confirmer le changement</h2>
+            <p className="t-small mt-2.5">
               Tu vas modifier ton mot de passe. Le lien de réinitialisation sera immédiatement invalidé.
             </p>
-            <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 10 }}>
-              <Bouton variant="fantome" type="button" onClick={() => setConfirmationOuverte(false)}>
+            <div className="mt-4 flex justify-end gap-2.5">
+              <Bouton apparence="fantome" type="button" onClick={() => setConfirmationOuverte(false)}>
                 Annuler
               </Bouton>
-              <Bouton variant="accent" type="button" onClick={confirmer}>
+              <Bouton apparence="accent" type="button" onClick={confirmer}>
                 Confirmer
               </Bouton>
             </div>
@@ -101,11 +93,11 @@ function Formulaire() {
 
 export default function PageReinitialiser() {
   return (
-    <main className="fadein" style={{ padding: "48px 20px 64px", maxWidth: 440, margin: "0 auto" }}>
-      <h1 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2rem)", fontWeight: 600, letterSpacing: "-0.025em", margin: 0 }}>
+    <main className="fadein mx-auto max-w-[440px] px-5 pb-16 pt-12">
+      <h1 className="m-0 text-[clamp(1.5rem,3.5vw,2rem)] font-semibold tracking-[-0.025em]">
         Nouveau mot de passe
       </h1>
-      <Suspense fallback={<p className="t-small" style={{ marginTop: 12 }}>Chargement…</p>}>
+      <Suspense fallback={<p className="t-small mt-3">Chargement…</p>}>
         <Formulaire />
       </Suspense>
     </main>

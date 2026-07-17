@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { Avatar } from "@/composants/maquette/primitifs";
+import { Avatar } from "@/composants/ui/avatar";
 import { Icon } from "@/composants/maquette/icones";
 
 export const metadata = {
@@ -36,16 +36,16 @@ export default async function PageClassements({ searchParams }: { searchParams: 
   ]);
 
   return (
-    <main className="fadein" style={{ padding: "32px 20px 64px", maxWidth: 760, margin: "0 auto" }}>
-      <h1 style={{ fontSize: "clamp(1.75rem, 4vw, 2.5rem)", fontWeight: 600, letterSpacing: "-0.025em", margin: 0 }}>
+    <main className="fadein mx-auto max-w-[760px] px-5 pb-16 pt-8">
+      <h1 className="m-0 text-[clamp(1.75rem,4vw,2.5rem)] font-semibold tracking-[-0.025em]">
         Classements
       </h1>
-      <p className="t-small" style={{ marginTop: 6 }}>
+      <p className="t-small mt-1.5">
         Les étudiants qui prouvent le plus, par score JUB cumulé.
       </p>
 
       {/* Filtre université */}
-      <div style={{ marginTop: 20, display: "flex", gap: 6, flexWrap: "wrap" }}>
+      <div className="mt-5 flex flex-wrap gap-1.5">
         <Filtre href="/classements" actif={!filtreUniv} libelle="National" />
         {universites.map((u) => (
           <Filtre
@@ -58,51 +58,31 @@ export default async function PageClassements({ searchParams }: { searchParams: 
       </div>
 
       {etudiants.length === 0 ? (
-        <div className="carte" style={{ marginTop: 24, padding: 48, textAlign: "center" }}>
-          <p className="t-small" style={{ margin: 0 }}>
+        <div className="carte mt-6 p-12 text-center">
+          <p className="t-small m-0">
             Aucun étudiant classé pour l&apos;instant. Les scores montent avec les premiers projets livrés.
           </p>
         </div>
       ) : (
-        <div
-          style={{
-            marginTop: 24,
-            display: "grid",
-            gap: 1,
-            background: "var(--bordure)",
-            border: "1px solid var(--bordure)",
-            borderRadius: 14,
-            overflow: "hidden",
-          }}
-        >
+        <div className="liste-bordee mt-6">
           {etudiants.map((e, i) => (
             <Link
               key={e.slug}
               href={`/u/${e.slug}`}
-              style={{
-                background: "var(--fond-eleve)",
-                padding: "12px 16px",
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-              }}
+              className="flex items-center gap-3.5 bg-fond-eleve px-4 py-3 no-underline text-inherit hover:bg-white"
             >
               <span
-                style={{
-                  width: 28,
-                  textAlign: "center",
-                  fontWeight: 700,
-                  fontSize: i < 3 ? 16 : 13,
-                  fontFamily: i < 3 ? "var(--fonte-display)" : "inherit",
-                  fontStyle: i < 3 ? "italic" : "normal",
-                  color: i < 3 ? "var(--orange-600)" : "var(--sage-400)",
-                }}
+                className={
+                  i < 3
+                    ? "t-display w-7 text-center text-base font-bold text-orange-600"
+                    : "w-7 text-center text-[13px] font-bold text-sage-400"
+                }
               >
                 {i + 1}
               </span>
-              <Avatar nom={`${e.prenom} ${e.nom}`} src={e.avatarUrl} size={36} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600 }}>
+              <Avatar nom={`${e.prenom} ${e.nom}`} src={e.avatarUrl} taille={36} />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold">
                   {e.prenom} {e.nom}
                 </div>
                 <div className="t-xs t-discret">
@@ -110,17 +90,8 @@ export default async function PageClassements({ searchParams }: { searchParams: 
                   {e._count.certificats > 1 ? "s" : ""}
                 </div>
               </div>
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 4,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  color: "var(--sage-900)",
-                }}
-              >
-                <Icon.TrendingUp size={13} style={{ color: "var(--orange-500)" }} />
+              <span className="inline-flex items-center gap-1 text-sm font-bold text-sage-900">
+                <Icon.TrendingUp size={13} className="text-orange-500" />
                 {e.scoreJub}
               </span>
             </Link>
@@ -135,15 +106,7 @@ function Filtre({ href, actif, libelle }: { href: string; actif: boolean; libell
   return (
     <Link
       href={href}
-      style={{
-        padding: "6px 12px",
-        borderRadius: 999,
-        fontSize: 12.5,
-        fontWeight: 600,
-        background: actif ? "var(--sage-700)" : "transparent",
-        color: actif ? "white" : "var(--sage-700)",
-        border: "1px solid " + (actif ? "var(--sage-700)" : "var(--bordure)"),
-      }}
+      className={actif ? "filtre-jeton filtre-jeton--actif no-underline" : "filtre-jeton no-underline"}
     >
       {libelle}
     </Link>

@@ -1,13 +1,16 @@
-// Landing — port 1:1 de la maquette (screens-public.jsx · Landing).
-// setEcran → liens Next ; PROJETS mock → projets réels Prisma.
+// Landing publique — migrée hors styles inline (fondation UI, sprint R1).
+// Visuel identique à la maquette ; layout en classes Tailwind + tokens,
+// photos via next/image (priorité hero, lazy pour le reste).
 
 import Link from "next/link";
+import Image from "next/image";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { urlsParRole } from "@/lib/role";
 import { PHOTOS } from "@/lib/medias";
 import { versApercu, SELECT_APERCU } from "@/lib/projet-apercu";
-import { Bouton } from "@/composants/maquette/primitifs";
+import { LienBouton } from "@/composants/ui/lien-bouton";
+import { EtatVide } from "@/composants/ui/etat-vide";
 import { Icon } from "@/composants/maquette/icones";
 import { LignePrjet } from "@/composants/maquette/lignes-job";
 import type { StatutProjet } from "@/generated/prisma/client";
@@ -41,84 +44,36 @@ export default async function PageAccueil() {
 // ── Hero ────────────────────────────────────────────────────────
 function Hero({ urlEspace }: { urlEspace: string | null }) {
   return (
-    <section
-      style={{
-        position: "relative",
-        marginTop: -64,
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "flex-end",
-        color: "white",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage: `url(${PHOTOS.hero})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          filter: "saturate(0.85)",
-        }}
+    <section className="relative -mt-16 flex min-h-screen items-end overflow-hidden text-white">
+      <Image
+        src={PHOTOS.hero}
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover saturate-[0.85]"
       />
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(180deg, rgba(20,26,19,0.55) 0%, rgba(20,26,19,0.40) 40%, rgba(20,26,19,0.88) 100%)",
-        }}
-      />
+      <div className="absolute inset-0 bg-gradient-to-b from-sage-950/55 via-sage-950/40 to-sage-950/90" />
 
-      <div style={{ position: "relative", maxWidth: 1180, margin: "0 auto", padding: "120px 20px 64px", width: "100%" }}>
-        <h1
-          style={{
-            marginTop: 0,
-            fontSize: "clamp(2.75rem, 8vw, 5.5rem)",
-            fontWeight: 600,
-            letterSpacing: "-0.035em",
-            lineHeight: 0.98,
-            color: "white",
-            textShadow: "0 4px 30px rgba(0,0,0,0.3)",
-          }}
-        >
+      <div className="relative mx-auto w-full max-w-[1180px] px-5 pb-16 pt-[120px]">
+        <h1 className="mt-0 text-[clamp(2.75rem,8vw,5.5rem)] font-semibold leading-[0.98] tracking-[-0.035em] text-white [text-shadow:0_4px_30px_rgba(0,0,0,0.3)]">
           L&apos;expérience pro
           <br />
-          <span className="t-display" style={{ color: "var(--orange-400)", fontSize: "1.08em" }}>
-            qui change tout.
-          </span>
+          <span className="t-display text-[1.08em] text-orange-400">qui change tout.</span>
         </h1>
 
-        <div style={{ marginTop: 32, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end" }}>
-          <Bouton
-            as={Link}
+        <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
+          <LienBouton
             href={urlEspace ?? "/inscription"}
-            variant="accent"
+            apparence="accent"
             taille="lg"
-            iconRight={<Icon.Arrow size={16} />}
+            iconeDroite={<Icon.Arrow size={16} />}
           >
             {urlEspace ? "Mon espace" : "Commencer"}
-          </Bouton>
-          <Link
-            href="/projets"
-            style={{
-              background: "rgba(255,255,255,0.12)",
-              backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255,255,255,0.22)",
-              color: "white",
-              fontWeight: 600,
-              fontSize: 14,
-              padding: "12px 20px",
-              borderRadius: 999,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              cursor: "pointer",
-            }}
-          >
-            Voir les jobs <Icon.Arrow size={14} />
-          </Link>
+          </LienBouton>
+          <LienBouton href="/projets" apparence="verre" iconeDroite={<Icon.Arrow size={14} />}>
+            Voir les jobs
+          </LienBouton>
         </div>
       </div>
     </section>
@@ -128,55 +83,24 @@ function Hero({ urlEspace }: { urlEspace: string | null }) {
 // ── Jobs ouverts ────────────────────────────────────────────────
 function JobsOuverts({ projets }: { projets: ReturnType<typeof versApercu>[] }) {
   return (
-    <section style={{ padding: "64px 20px 32px", maxWidth: 1180, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 24 }}>
-        <h2
-          style={{
-            fontSize: "clamp(1.25rem, 2vw, 1.375rem)",
-            fontWeight: 600,
-            letterSpacing: "-0.01em",
-            margin: 0,
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-          }}
-        >
-          <Icon.Briefcase size={18} style={{ color: "var(--sage-500)" }} />
+    <section className="mx-auto max-w-[1180px] px-5 pb-8 pt-16">
+      <div className="mb-6 flex items-baseline justify-between">
+        <h2 className="m-0 flex items-center gap-2.5 text-[clamp(1.25rem,2vw,1.375rem)] font-semibold tracking-[-0.01em]">
+          <Icon.Briefcase size={18} className="text-sage-500" />
           Jobs ouverts
         </h2>
-        <Link
-          href="/projets"
-          className="t-small"
-          style={{
-            background: "transparent",
-            border: 0,
-            color: "var(--orange-600)",
-            fontWeight: 600,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4,
-          }}
-        >
+        <Link href="/projets" className="t-small inline-flex items-center gap-1 font-semibold text-orange-600">
           Tout voir <Icon.Arrow size={13} />
         </Link>
       </div>
       {projets.length === 0 ? (
-        <div className="carte" style={{ padding: 48, textAlign: "center" }}>
-          <p className="t-small" style={{ margin: 0 }}>
-            Aucun job ouvert pour l&apos;instant. Reviens vite&nbsp;!
-          </p>
-        </div>
+        <EtatVide
+          icone={<Icon.Briefcase size={20} />}
+          titre="Aucun job ouvert pour l'instant"
+          description="De nouvelles missions arrivent régulièrement. Reviens vite !"
+        />
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gap: 1,
-            background: "var(--bordure)",
-            border: "1px solid var(--bordure)",
-            borderRadius: 14,
-            overflow: "hidden",
-          }}
-        >
+        <div className="liste-bordee">
           {projets.map((p) => (
             <LignePrjet key={p.slug} projet={p} />
           ))}
@@ -194,80 +118,34 @@ function Parcours() {
     { n: "03", icon: <Icon.ShieldCheck size={20} />, t: "Certifier", d: "PDF + QR vérifiable", href: "/verifier" },
   ];
   return (
-    <section style={{ padding: "56px 20px 32px", maxWidth: 1180, margin: "0 auto" }}>
-      <h2
-        style={{
-          fontSize: "clamp(1.25rem, 2vw, 1.375rem)",
-          fontWeight: 600,
-          letterSpacing: "-0.01em",
-          margin: "0 0 24px",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <Icon.Sparkles size={18} style={{ color: "var(--sage-500)" }} />
+    <section className="mx-auto max-w-[1180px] px-5 pb-8 pt-14">
+      <h2 className="mb-6 mt-0 flex items-center gap-2.5 text-[clamp(1.25rem,2vw,1.375rem)] font-semibold tracking-[-0.01em]">
+        <Icon.Sparkles size={18} className="text-sage-500" />
         En 3 temps
       </h2>
-      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "minmax(0, 1fr)" }} className="parcours-grid">
+      <div className="grid gap-3 md:grid-cols-3">
         {etapes.map((e) => (
           <Link
             key={e.n}
             href={e.href}
-            className="lift"
-            style={{
-              textAlign: "left",
-              cursor: "pointer",
-              background: "var(--fond-eleve)",
-              border: "1px solid var(--bordure)",
-              borderRadius: 16,
-              padding: 20,
-              display: "flex",
-              flexDirection: "column",
-              gap: 14,
-            }}
+            className="lift carte flex cursor-pointer flex-col gap-3.5 rounded-2xl p-5 text-left no-underline"
           >
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  background: "var(--sage-700)",
-                  color: "var(--orange-400)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+            <div className="flex items-start justify-between">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sage-700 text-orange-400">
                 {e.icon}
               </div>
-              <span className="t-display" style={{ fontSize: 22, color: "var(--orange-600)", lineHeight: 1 }}>
-                {e.n}
-              </span>
+              <span className="t-display text-[22px] leading-none text-orange-600">{e.n}</span>
             </div>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 600 }}>{e.t}</div>
-              <div className="t-small" style={{ marginTop: 2 }}>
-                {e.d}
-              </div>
+              <div className="text-base font-semibold">{e.t}</div>
+              <div className="t-small mt-0.5">{e.d}</div>
             </div>
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-                fontSize: 12,
-                fontWeight: 600,
-                color: "var(--orange-600)",
-              }}
-            >
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-600">
               Y aller <Icon.Arrow size={12} />
             </span>
           </Link>
         ))}
       </div>
-      <style>{`@media (min-width: 720px) { .parcours-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; } }`}</style>
     </section>
   );
 }
@@ -275,65 +153,25 @@ function Parcours() {
 // ── CTA final ───────────────────────────────────────────────────
 function CtaFinal({ urlEspace }: { urlEspace: string | null }) {
   return (
-    <section style={{ padding: "64px 20px 32px", maxWidth: 1180, margin: "0 auto" }}>
-      <div
-        style={{
-          position: "relative",
-          borderRadius: 20,
-          overflow: "hidden",
-          minHeight: 240,
-          padding: "48px 28px",
-          color: "white",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 24,
-          flexWrap: "wrap",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage: `url(${PHOTOS.campus})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(135deg, rgba(20,26,19,0.88), rgba(20,26,19,0.70))",
-          }}
-        />
-        <div style={{ position: "relative", maxWidth: 540 }}>
-          <h2
-            style={{
-              fontSize: "clamp(1.75rem, 4vw, 2.5rem)",
-              fontWeight: 600,
-              letterSpacing: "-0.025em",
-              margin: 0,
-              lineHeight: 1.05,
-              color: "white",
-            }}
-          >
+    <section className="mx-auto max-w-[1180px] px-5 pb-8 pt-16">
+      <div className="relative flex min-h-60 flex-wrap items-center justify-between gap-6 overflow-hidden rounded-[20px] px-7 py-12 text-white">
+        <Image src={PHOTOS.campus} alt="" fill sizes="1180px" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-br from-sage-950/90 to-sage-950/70" />
+        <div className="relative max-w-[540px]">
+          <h2 className="m-0 text-[clamp(1.75rem,4vw,2.5rem)] font-semibold leading-[1.05] tracking-[-0.025em] text-white">
             Ton prochain job{" "}
-            <span className="t-display" style={{ color: "var(--orange-400)", fontSize: "1.1em" }}>
-              t&apos;attend.
-            </span>
+            <span className="t-display text-[1.1em] text-orange-400">t&apos;attend.</span>
           </h2>
         </div>
-        <div style={{ position: "relative" }}>
-          <Bouton
-            as={Link}
+        <div className="relative">
+          <LienBouton
             href={urlEspace ?? "/inscription"}
-            variant="accent"
+            apparence="accent"
             taille="lg"
-            iconRight={<Icon.Arrow size={16} />}
+            iconeDroite={<Icon.Arrow size={16} />}
           >
             {urlEspace ? "Rejoindre mon espace" : "Créer mon compte"}
-          </Bouton>
+          </LienBouton>
         </div>
       </div>
     </section>

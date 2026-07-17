@@ -23,6 +23,7 @@ const IconBase = ({
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
+    // eslint-disable-next-line react/forbid-dom-props -- passe-plat hérité (appelants legacy)
     style={style}
     aria-hidden="true"
   >

@@ -67,8 +67,9 @@ export default async function PagePortfolio({ params }: ParametresPage) {
         <div className="flex flex-col gap-4 rounded-xl border border-bordure bg-fond-eleve p-6 shadow-sm sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-end gap-5">
             <div
-              className="h-24 w-24 shrink-0 rounded-full border-4 border-fond-eleve bg-gradient-to-br from-jub-vert-700 to-jub-vert-950 flex items-center justify-center text-white text-3xl font-bold -mt-12 shadow-md"
-              style={p.avatarUrl ? { backgroundImage: `url(${p.avatarUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+              className="h-24 w-24 shrink-0 rounded-full border-4 border-fond-eleve bg-gradient-to-br from-jub-vert-700 to-jub-vert-950 flex items-center justify-center text-white text-3xl font-bold -mt-12 shadow-md bg-cover bg-center"
+              // eslint-disable-next-line react/forbid-dom-props -- URL d'avatar dynamique
+              style={p.avatarUrl ? { backgroundImage: `url(${p.avatarUrl})` } : undefined}
             >
               {p.avatarUrl ? null : initiales}
             </div>

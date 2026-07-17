@@ -191,6 +191,7 @@ function BarreCritere({ valeur }: { valeur: number }) {
     valeur >= 5 ? "bg-jub-orange-500" : "bg-red-500";
   return (
     <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-jub-sage-100">
+      {/* eslint-disable-next-line react/forbid-dom-props -- largeur réellement dynamique */}
       <div className={cn("h-full rounded-full transition-all", ton)} style={{ width: `${pourcent}%` }} />
     </div>
   );
