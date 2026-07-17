@@ -28,6 +28,12 @@ const schema = z.object({
   SUPABASE_BUCKET_PRIVE: z.string().optional(),
   AUTORISER_CERTIFICAT_DEMO: z.enum(["true", "false"]).optional(),
   JUB_ENV: z.enum(["development", "preview", "production"]).optional(),
+
+  // Paiements Wave (Payout API). Absents = envoi d'argent désactivé,
+  // l'écran paie ops l'affiche clairement. WAVE_SIMULATION=true permet
+  // de tester le parcours complet sans compte Wave (hors production).
+  WAVE_CLE_API: z.string().optional(),
+  WAVE_SIMULATION: z.enum(["true", "false"]).optional(),
 });
 
 export type Env = z.infer<typeof schema>;
@@ -71,6 +77,9 @@ function valider(): Env {
     }
     if (donnees.AUTORISER_CERTIFICAT_DEMO === "true") {
       erreurs.push("AUTORISER_CERTIFICAT_DEMO doit rester désactivé en production.");
+    }
+    if (donnees.WAVE_SIMULATION === "true") {
+      erreurs.push("WAVE_SIMULATION doit rester désactivé en production (paiements simulés).");
     }
   }
 
