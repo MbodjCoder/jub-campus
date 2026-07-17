@@ -45,6 +45,8 @@ const NAV: Record<Variante, { etiquette: string; liens: Lien[] }> = {
     etiquette: "Entreprise",
     liens: [
       { libelle: "Tableau de bord", href: "/entreprise", Icone: LayoutDashboard },
+      { libelle: "Mes demandes", href: "/entreprise/brief", Icone: FileText },
+      { libelle: "Mes missions", href: "/entreprise/missions", Icone: Briefcase },
       { libelle: "Publier un job", href: "/entreprise/publier", Icone: FolderPlus },
       { libelle: "Candidatures", href: "/entreprise/candidatures", Icone: Inbox },
       { libelle: "Partenariats", href: "/entreprise/partenariats", Icone: Handshake },
@@ -68,6 +70,7 @@ const NAV: Record<Variante, { etiquette: string; liens: Lien[] }> = {
     etiquette: "Administration",
     liens: [
       { libelle: "Vue d'ensemble", href: "/admin", Icone: LayoutDashboard },
+      { libelle: "Briefs", href: "/admin/briefs", Icone: Inbox },
       { libelle: "Missions", href: "/admin/missions", Icone: Briefcase },
       { libelle: "Contrôle qualité", href: "/admin/qc", Icone: FileCheck },
       { libelle: "Utilisateurs", href: "/admin/utilisateurs", Icone: Users },

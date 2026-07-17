@@ -23,19 +23,32 @@ export default async function PageAccueil() {
   const session = await auth();
   const urlEspace = session?.user?.id ? urlsParRole(session.user.role).espace : null;
 
-  const projets = await prisma.projet.findMany({
-    where: { statut: { in: STATUTS_OUVERTS }, visibilite: "PUBLIQUE" },
-    orderBy: { publieLe: "desc" },
-    take: 3,
-    select: SELECT_APERCU,
-  });
+  const [projets, gains, nbTalents, nbMissionsLivrees] = await Promise.all([
+    prisma.projet.findMany({
+      where: { statut: { in: STATUTS_OUVERTS }, visibilite: "PUBLIQUE" },
+      orderBy: { publieLe: "desc" },
+      take: 3,
+      select: SELECT_APERCU,
+    }),
+    prisma.transactionPortefeuille.aggregate({
+      where: { type: "GAIN_TACHE" },
+      _sum: { montantFcfa: true },
+    }),
+    prisma.etudiant.count(),
+    prisma.projet.count({
+      where: { montantClientFcfa: { not: null }, statut: { in: ["TERMINE", "CERTIFIE"] } },
+    }),
+  ]);
   const apercus = projets.map(versApercu);
+  const fcfaReverses = gains._sum.montantFcfa ?? 0;
 
   return (
     <main className="fadein">
       <Hero urlEspace={urlEspace} />
+      <Chiffres fcfaReverses={fcfaReverses} nbTalents={nbTalents} nbMissions={nbMissionsLivrees} />
       <JobsOuverts projets={apercus} />
       <Parcours />
+      <BandeOrganisations />
       <CtaFinal urlEspace={urlEspace} />
     </main>
   );
@@ -62,6 +75,11 @@ function Hero({ urlEspace }: { urlEspace: string | null }) {
           <span className="t-display text-[1.08em] text-orange-400">qui change tout.</span>
         </h1>
 
+        <p className="mt-5 max-w-[520px] text-[15px] leading-relaxed text-white/85">
+          Missions payées pour les étudiants — enquêtes terrain, annotation de données, études.
+          Chaque livrable validé est payé sur Wave et certifié par QR code.
+        </p>
+
         <div className="mt-8 flex flex-wrap items-center justify-end gap-3">
           <LienBouton
             href={urlEspace ?? "/inscription"}
@@ -69,10 +87,74 @@ function Hero({ urlEspace }: { urlEspace: string | null }) {
             taille="lg"
             iconeDroite={<Icon.Arrow size={16} />}
           >
-            {urlEspace ? "Mon espace" : "Commencer"}
+            {urlEspace ? "Mon espace" : "Je suis étudiant·e"}
           </LienBouton>
-          <LienBouton href="/projets" apparence="verre" iconeDroite={<Icon.Arrow size={14} />}>
-            Voir les jobs
+          <LienBouton href="/entreprises" apparence="verre" iconeDroite={<Icon.Arrow size={14} />}>
+            Confier une mission
+          </LienBouton>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Chiffres (preuve sociale — argument massue de recrutement) ──
+function Chiffres({
+  fcfaReverses,
+  nbTalents,
+  nbMissions,
+}: {
+  fcfaReverses: number;
+  nbTalents: number;
+  nbMissions: number;
+}) {
+  const fmtCompact = new Intl.NumberFormat("fr-FR");
+  const stats = [
+    { v: `${fmtCompact.format(fcfaReverses)} FCFA`, l: "reversés aux étudiants" },
+    { v: fmtCompact.format(nbTalents), l: "talents inscrits" },
+    { v: fmtCompact.format(nbMissions), l: "missions livrées" },
+  ];
+  return (
+    <section className="border-b border-bordure bg-fond-eleve">
+      <div className="mx-auto grid max-w-[1180px] grid-cols-1 gap-4 px-5 py-8 sm:grid-cols-3">
+        {stats.map((s) => (
+          <div key={s.l} className="text-center">
+            <div className="t-mono text-[clamp(1.4rem,3vw,2rem)] font-semibold tracking-tight text-sage-900">
+              {s.v}
+            </div>
+            <div className="t-eyebrow mt-1">{s.l}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ── Bande organisations (double audience) ───────────────────────
+function BandeOrganisations() {
+  const points = [
+    { t: "Vous payez le résultat", d: "Devis gratuit sous 72 h. Facturation au livrable validé." },
+    { t: "Qualité garantie", d: "Chaque livrable passe notre contrôle qualité avant livraison." },
+    { t: "Traçabilité totale", d: "Qui a produit quoi : certificats vérifiables par QR code." },
+  ];
+  return (
+    <section className="mx-auto max-w-[1180px] px-5 pb-8 pt-14">
+      <div className="rounded-[20px] bg-sage-900 p-7 text-white sm:p-10">
+        <div className="t-eyebrow text-orange-400">ONG · Instituts · Entreprises</div>
+        <h2 className="mb-0 mt-2 max-w-[560px] text-[clamp(1.5rem,3.5vw,2.25rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-white">
+          Des données fiables, collectées et vérifiées par les meilleurs talents universitaires.
+        </h2>
+        <div className="mt-7 grid gap-5 sm:grid-cols-3">
+          {points.map((p) => (
+            <div key={p.t}>
+              <div className="text-[15px] font-semibold">{p.t}</div>
+              <p className="mt-1 mb-0 text-sm leading-relaxed text-sage-100">{p.d}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-8">
+          <LienBouton href="/entreprises" apparence="accent" iconeDroite={<Icon.Arrow size={15} />}>
+            Confier une mission
           </LienBouton>
         </div>
       </div>
