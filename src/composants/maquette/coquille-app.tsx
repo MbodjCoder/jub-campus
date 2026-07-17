@@ -43,12 +43,14 @@ interface Proprietes {
 const LIENS = [
   { id: "/app", l: "Accueil", icon: <Icon.Home size={17} /> },
   { id: "/app/mes-projets", l: "Projets", icon: <Icon.Kanban size={17} /> },
+  { id: "/app/portefeuille", l: "Portefeuille", icon: <Icon.Wallet size={17} /> },
   { id: "/app/profil", l: "Profil", icon: <Icon.Globe size={17} /> },
 ];
 
 const TITRES: Record<string, string> = {
   "/app": "Tableau de bord",
   "/app/mes-projets": "Mes jobs",
+  "/app/portefeuille": "Mon portefeuille",
   "/app/profil": "Mon profil",
 };
 
