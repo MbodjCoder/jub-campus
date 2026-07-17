@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, FolderPlus, Inbox, Users, BarChart3, Settings,
   FolderKanban, FileCheck, Star, Building2, Award, AlertTriangle, FileText,
-  Handshake,
+  Handshake, Briefcase,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -68,6 +68,8 @@ const NAV: Record<Variante, { etiquette: string; liens: Lien[] }> = {
     etiquette: "Administration",
     liens: [
       { libelle: "Vue d'ensemble", href: "/admin", Icone: LayoutDashboard },
+      { libelle: "Missions", href: "/admin/missions", Icone: Briefcase },
+      { libelle: "Contrôle qualité", href: "/admin/qc", Icone: FileCheck },
       { libelle: "Utilisateurs", href: "/admin/utilisateurs", Icone: Users },
       { libelle: "Entreprises", href: "/admin/entreprises", Icone: Building2 },
       { libelle: "Jobs", href: "/admin/projets", Icone: FolderKanban },
