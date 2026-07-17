@@ -259,31 +259,58 @@ model Retrait {
 
 ---
 
-## 5. Roadmap — 8 sprints (2 semaines chacun)
+## 5. Roadmap — replanifiée le 17 juillet 2026
 
-> Remplace les sprints 4–12 de l'ancien README. Objectif : **première mission payante
-> réelle au sprint R4**, plateforme complète au sprint R8.
+> R1–R3 livrés (commits `5c8e68a`, `7f86d99`, `a517752`, `63331fa`, `f4e65a6`).
+> La suite n'est plus découpée en sprints calendaires mais en **phases à
+> déclencheur business** : on ne code une brique que quand la réalité la réclame.
+> Critère de tri unique : *qu'est-ce qui bloque la première mission payée ?*
 
-| Sprint | Contenu | Jalon business |
+### ✅ Livré
+
+| Sprint | Contenu |
+|---|---|
+| **R1 — Fondation UI** | Primitives fusionnées, zéro style inline injustifié, 12 composants nouveaux, ratchet ESLint |
+| **R2 — Cœur mission + argent interne** | Schéma agence, portefeuille (invariant solde = somme des transactions, crédit idempotent), constructeur de mission ops, file QC clavier, écran portefeuille talent |
+| **R3 — Face client** | Stepper de brief, pipeline briefs ops, suivi mission client lecture seule, landing double audience avec compteurs en direct |
+
+### Phase A — Débloquer (cette semaine)
+
+| Qui | Tâche | Pourquoi bloquant |
 |---|---|---|
-| **R1 — Fondation UI** | Fusion des primitives, éradication des styles inline (landing + espaces), composants nouveaux (StatTuile, PastilleStatut, Stepper, TableDonnees, Squelette, Toast, EtatVide), barre d'onglets mobile talent. Règle ESLint anti-inline | Design system unique et documenté |
-| **R2 — Cœur mission** | Migration schéma (Brief, montants, Portefeuille, Transaction, Retrait), constructeur de mission ops, tarif par tâche, crédit portefeuille à la validation QC, file QC clavier | Une mission interne de bout en bout (données de test) |
-| **R3 — Face client** | Stepper de brief (2 verticales), pipeline briefs ops, page suivi mission client, rapport de traçabilité (réutilise le PDF certificat), landing refondue double audience | Démo client montrable — **début prospection réelle** |
-| **R4 — Argent réel** | Compte Wave Business actif, intégration Payout (unitaire + batch, idempotence), OTP numéro de retrait, écran portefeuille talent, paie ops, double validation | **Première mission client payée, premiers FCFA reversés** |
-| **R5 — Qualification talents** | Test d'entrée par verticale, niveaux de talent (Vérifié/Confirmé/Expert) branchés sur score JUB, candidature 1 tap, notifications email + (option) WhatsApp/SMS | Vivier ≥ 100 talents vérifiés UGB |
-| **R6 — Verticale annotation** | Types de tâches d'annotation (texte, audio wolof/français, image) avec UI de tâche dédiée in-app, import/export datasets (CSV/JSONL), consignes par lot, double annotation + arbitrage QC | Premier contrat annotation (prospection labs IA / plateformes data) |
-| **R7 — Verticale terrain** | Mode hors-ligne léger (PWA — l'enregistreur SW existe), géotag des soumissions, intégration Kobo/ODK en import, tableaux de suivi de collecte par zone | Premier contrat ONG/cabinet signé sur plateforme |
-| **R8 — Industrialisation** | Facturation client (PDF, échéances), contrats-cadres, statistiques ops (marge par mission, coût QC), audit a11y + perf 3G, E2E Playwright sur les 3 parcours critiques (brief→devis, tâche→paie, retrait) | Bilan pilote, dossier levée/subvention |
+| Fondateur | Docker + `pnpm bdd:migrer`, `git push` | La plateforme ne tourne pas sans la migration ; la CI n'a rien vu |
+| Fondateur | Ouvrir le compte **Wave Business** | Activation 5–10 j ouvrés — chemin critique incompressible |
+| Fondateur | Décrocher le 1er rendez-vous client (ONG Saint-Louis/Dakar, cabinet) | LE goulot. Tout le code du monde ne remplace pas un client |
+| Dev | **R4 minimal** : client HTTP Wave Payout (unitaire + batch, idempotence, suivi de statut) + écran ops « Paie » (file des retraits DEMANDE → payer → réconcilier) | Sans ça le solde talent est virtuel — promesse cassée |
 
-**Parallèle non-code (critique)** : dès R3, une personne à plein temps sur la prospection
-(ONG à Saint-Louis/Dakar, cabinets, labs IA pour l'annotation). La plateforme attire le
-client, elle ne le remplace pas.
+### Phase B — Première mission payée (déclencheur : client signé)
 
-### Dépriorisé (retiré du MVP)
+- Exécuter le pilote avec l'outillage existant (brief → mission → tâches → QC → crédit → retrait).
+- Facture : document simple + virement, PAS de module de facturation. Le code rattrape après.
+- Accepté de gérer à moitié à la main (Excel + app Wave si besoin) — la validation du modèle prime sur l'outillage.
+
+### Phase C — Sécuriser l'échelle talents (déclencheur : 2e mission OU > 20 candidats)
+
+- OTP de vérification du numéro de retrait avant premier paiement.
+- Double validation ops des lots de paie au-dessus d'un seuil.
+- Test de qualification par verticale + niveaux Vérifié/Confirmé/Expert (score JUB).
+
+### Phase D — Outiller les verticales (déclencheur : contrat signé dans la verticale)
+
+- **Si contrat annotation** : UI de tâche d'annotation in-app (texte, audio wolof/français), import/export CSV/JSONL, double annotation + arbitrage. Avant ça : dépôt de fichiers générique suffit.
+- **Si 2e contrat terrain** : import Kobo/ODK, géotag, suivi de collecte par zone, PWA hors-ligne. Avant ça : les enquêteurs utilisent Kobo directement et déposent les exports.
+
+### Phase E — Industrialisation (déclencheur : 3+ clients actifs)
+
+- Facturation automatisée (PDF, échéances), contrats-cadres, stats de marge par mission.
+- E2E Playwright sur les 3 parcours critiques (brief→devis, tâche→paie, retrait), audit a11y + perf 3G.
+- Renommage Entreprise → Client, dépréciation du flux marketplace (publier un job / candidatures).
+
+### Dépriorisé (inchangé)
 
 Classements publics, thèmes de portfolio, partenariats multi-entreprises,
-messagerie 1-à-1 généralisée (messagerie par mission suffit), programmes sponsors
-(reviennent quand un sponsor réel se présente).
+messagerie 1-à-1 généralisée, programmes sponsors, notifications WhatsApp/SMS
+(email suffit au pilote).
 
 ---
 
