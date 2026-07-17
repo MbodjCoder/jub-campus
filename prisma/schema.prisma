@@ -244,6 +244,39 @@ enum StatutPartenariat {
   ANNULEE
 }
 
+// ── Agence opérée (missions vendues au livrable) ──────────────
+
+enum TypeMission {
+  ENQUETE_TERRAIN
+  ANNOTATION
+  ETUDE
+  REDACTION
+  AUTRE
+}
+
+enum StatutBrief {
+  RECU
+  EN_QUALIFICATION
+  DEVIS_ENVOYE
+  ACCEPTE
+  PERDU
+}
+
+enum TypeTransaction {
+  GAIN_TACHE
+  RETRAIT
+  AJUSTEMENT
+  BONUS
+}
+
+enum StatutRetrait {
+  DEMANDE
+  EN_COURS
+  PAYE
+  ECHEC
+  ANNULE
+}
+
 // ─────────────────────────────────────────────────────────────
 // Authentification (compatible Auth.js v5)
 // ─────────────────────────────────────────────────────────────
@@ -358,6 +391,8 @@ model Etudiant {
   recommandations   Recommandation[]
   portfolio         Portfolio?
   tachesAssignees   Tache[]
+  portefeuille      Portefeuille?
+  retraits          Retrait[]
 
   @@index([universiteId])
   @@index([scoreJub])
@@ -387,6 +422,7 @@ model Entreprise {
   projetsPublies Projet[]
   demandesPartenariat DemandePartenariat[]
   partenariats        PartenaireProjet[]
+  briefs              Brief[]
 
   @@index([statutValidation])
 }
@@ -511,6 +547,11 @@ model Projet {
   dateFin            DateTime?
   statut             StatutProjet     @default(BROUILLON)
   visibilite         Visibilite       @default(PUBLIQUE)
+  // Mode agence : montant facturé au client et enveloppe reversée aux
+  // talents. Null = projet hors mode agence (candidature classique).
+  montantClientFcfa    Int?
+  enveloppeTalentsFcfa Int?
+  chefMissionId        String?
   publieParId        String
   entrepriseId       String?
   universiteId        String?
@@ -539,6 +580,7 @@ model Projet {
   certificats         Certificat[]
   demandesPartenariat DemandePartenariat[]
   partenaires          PartenaireProjet[]
+  brief               Brief?
 
   @@index([statut])
   @@index([categorie, niveau])
@@ -615,13 +657,18 @@ model Tache {
   statut      StatutTache @default(A_FAIRE)
   priorite    Priorite    @default(NORMALE)
   echeance    DateTime?
+  // Gain du talent à la validation (mode agence). Null = tâche non payée.
+  montantFcfa Int?
+  // Renseigné quand le gain a été crédité — garde-fou anti double crédit.
+  crediteeLe  DateTime?
   creeLe      DateTime    @default(now())
   termineeLe  DateTime?
   misAJourLe  DateTime    @updatedAt
 
-  projet    Projet     @relation(fields: [projetId], references: [id], onDelete: Cascade)
-  assignee  Etudiant?  @relation(fields: [assigneeId], references: [id])
-  livrables Livrable[]
+  projet       Projet                    @relation(fields: [projetId], references: [id], onDelete: Cascade)
+  assignee     Etudiant?                 @relation(fields: [assigneeId], references: [id])
+  livrables    Livrable[]
+  transactions TransactionPortefeuille[]
 
   @@index([projetId, statut])
 }
@@ -840,6 +887,91 @@ model Programme {
 
   sponsor Sponsor  @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
   projets Projet[]
+}
+
+// ─────────────────────────────────────────────────────────────
+// Agence opérée : briefs clients, portefeuille talent, retraits
+// ─────────────────────────────────────────────────────────────
+
+// Entonnoir commercial : demande client → qualification → devis →
+// gagné (projet créé) ou perdu.
+model Brief {
+  id                  String      @id @default(cuid())
+  clientId            String
+  typeMission         TypeMission
+  titre               String
+  // Réponses du stepper, structurées par verticale (zone, volume,
+  // langues, consignes…). Schéma libre validé côté application (Zod).
+  details             Json
+  budgetIndicatifFcfa Int?
+  statut              StatutBrief @default(RECU)
+  devisUrl            String?
+  motifPerte          String?
+  projetId            String?     @unique
+  creeLe              DateTime    @default(now())
+  misAJourLe          DateTime    @updatedAt
+
+  client Entreprise @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  projet Projet?    @relation(fields: [projetId], references: [id])
+
+  @@index([statut])
+  @@index([clientId])
+}
+
+// Solde du talent. Toute variation passe par une TransactionPortefeuille
+// dans la même transaction SQL — le solde est toujours la somme des
+// transactions (invariant vérifiable).
+model Portefeuille {
+  id         String   @id @default(cuid())
+  etudiantId String   @unique
+  soldeFcfa  Int      @default(0)
+  creeLe     DateTime @default(now())
+  misAJourLe DateTime @updatedAt
+
+  etudiant     Etudiant                  @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  transactions TransactionPortefeuille[]
+}
+
+model TransactionPortefeuille {
+  id             String          @id @default(cuid())
+  portefeuilleId String
+  // Positif = crédit (gain), négatif = débit (retrait).
+  montantFcfa    Int
+  type           TypeTransaction
+  libelle        String
+  tacheId        String?
+  retraitId      String?
+  creeLe         DateTime        @default(now())
+
+  portefeuille Portefeuille @relation(fields: [portefeuilleId], references: [id], onDelete: Cascade)
+  tache        Tache?       @relation(fields: [tacheId], references: [id])
+  retrait      Retrait?     @relation(fields: [retraitId], references: [id])
+
+  // Une tâche ne peut créditer un portefeuille qu'une seule fois.
+  @@unique([portefeuilleId, tacheId])
+  @@index([portefeuilleId, creeLe])
+}
+
+model Retrait {
+  id              String        @id @default(cuid())
+  etudiantId      String
+  montantFcfa     Int
+  methode         MethodePaiement
+  numeroTelephone String
+  statut          StatutRetrait @default(DEMANDE)
+  // Clé d'idempotence exigée par l'API Wave Payout — générée à la
+  // création de la demande, réutilisée à chaque tentative d'envoi.
+  cleIdempotence  String        @unique
+  referenceExterne String?
+  motifEchec      String?
+  creeLe          DateTime      @default(now())
+  finaliseLe      DateTime?
+
+  etudiant     Etudiant                  @relation(fields: [etudiantId], references: [id])
+  transactions TransactionPortefeuille[]
+
+  @@index([etudiantId])
+  @@index([statut])
 }
 
 // ─────────────────────────────────────────────────────────────

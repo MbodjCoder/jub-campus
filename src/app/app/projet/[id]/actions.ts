@@ -14,6 +14,9 @@ import {
   emailEvaluationRecue,
 } from "@/lib/email";
 import { env } from "@/lib/env";
+import { crediterGainTache } from "@/domaine/portefeuille";
+import { creerNotification } from "@/domaine/notifications";
+import { formaterMontantFcfa } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────
 // Garde-fou : récupère l'utilisateur connecté.
@@ -599,7 +602,7 @@ export async function changerStatutLivrable(livrableId: string, statut: string) 
   const session = await exigerSession();
   const livrable = await prisma.livrable.findUnique({
     where: { id: livrableId },
-    select: { projetId: true },
+    select: { projetId: true, tacheId: true },
   });
   if (!livrable) return { succes: false };
   const projet = await exigerValidateur(livrable.projetId, session.user.id);
@@ -612,6 +615,35 @@ export async function changerStatutLivrable(livrableId: string, statut: string) 
     where: { id: livrableId },
     data: { statut: statut as (typeof statuts)[number] },
   });
+
+  // Mode agence : la validation QC d'un livrable rattaché à une tâche
+  // payée termine la tâche et crédite le gain sur le portefeuille du
+  // talent. crediterGainTache est idempotent (jamais de double crédit).
+  if (statut === "VALIDE" && livrable.tacheId) {
+    await prisma.tache.update({
+      where: { id: livrable.tacheId },
+      data: { statut: "TERMINEE", termineeLe: new Date() },
+    });
+    const credit = await crediterGainTache(livrable.tacheId);
+    if (credit.succes) {
+      const tache = await prisma.tache.findUnique({
+        where: { id: livrable.tacheId },
+        select: {
+          montantFcfa: true,
+          assignee: { select: { utilisateurId: true } },
+        },
+      });
+      if (tache?.assignee) {
+        await creerNotification({
+          destinataireId: tache.assignee.utilisateurId,
+          type: "SYSTEME",
+          titre: `Gain crédité : ${formaterMontantFcfa(tache.montantFcfa ?? 0)}`,
+          contenu: "Ton livrable a été validé. Le gain est disponible dans ton portefeuille.",
+          lien: "/app/portefeuille",
+        });
+      }
+    }
+  }
 
   revalidatePath(`/app/projet/${livrable.projetId}`);
   return { succes: true };
