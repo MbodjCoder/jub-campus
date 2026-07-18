@@ -17,7 +17,8 @@
     "bdd:migrer": "prisma migrate dev",
     "bdd:deployer": "prisma migrate deploy",
     "bdd:semer": "tsx prisma/seed/index.ts",
-    "bdd:studio": "prisma studio"
+    "bdd:studio": "prisma studio",
+    "test:bdd": "vitest run -c vitest.bdd.config.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
